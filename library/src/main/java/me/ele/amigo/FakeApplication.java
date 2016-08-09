@@ -44,29 +44,12 @@ public class FakeApplication extends Application {
 
 
         try {
-
             Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
             if (hackApk.exists()) {
-//                PathClassLoader hackClassLoader = new PathClassLoader(hackApk.getAbsolutePath(), hackApk.getParent() + "/lib/" + Build.CPU_ABI, getRootClassLoader());
                 AmigoClassLoader hackClassLoader = new AmigoClassLoader(hackApk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(hackClassLoader);
 
-                setNativeLibraryDirectories();
-
-                try {
-                    for (Object o : DexUtils.getNativeLibraryDirectories()) {
-                        Log.e(TAG, "native-->" + o);
-                    }
-
-                    Object object = DexUtils.getPathList(hackClassLoader);
-                    Method method = object.getClass().getDeclaredMethod("findLibrary", String.class);
-                    method.setAccessible(true);
-                    Log.e(TAG, "ImageBlur-->" + method.invoke(object, "ImageBlur"));
-                } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                }
+                setNativeLibraryDirectories(hackClassLoader);
 
                 AssetManager assetManager = AssetManager.class.newInstance();
                 Method addAssetPath = getMethod(AssetManager.class, "addAssetPath", String.class);
@@ -97,13 +80,24 @@ public class FakeApplication extends Application {
         }
     }
 
-    private void setNativeLibraryDirectories() {
+    private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader) {
         try {
+
             SoReleaser.release(hackApk.getAbsolutePath(), directory.getAbsolutePath());
-//            File copiedFile = new File(hackApk.getParentFile(), "hack2.apk");
-//            FileUtils.copyFile(hackApk, copiedFile);
-            DexUtils.injectSoAtFirst(hackApk.getParent() + "/lib/" + Build.CPU_ABI);
-//            DexUtils.injectSoAtFirst(hackApk.getAbsolutePath());
+
+            String nativeLibPath = hackApk.getParent() + "/lib/" + Build.CPU_ABI;
+            DexUtils.injectSoAtFirst(hackClassLoader, nativeLibPath);
+
+            File nativeLibDir = new File(nativeLibPath);
+            nativeLibDir.setReadOnly();
+
+            File[] libs = nativeLibDir.listFiles();
+            if (libs == null && libs.length > 0) {
+                for (File lib : libs) {
+                    lib.setReadOnly();
+                }
+            }
+
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

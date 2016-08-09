@@ -24,9 +24,8 @@ public class DexUtils {
         ReflectionUtils.setField(pathList, pathList.getClass(), "dexElements", allDexElements);
     }
 
-    public static void injectSoAtFirst(String soPath) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException {
-
-        Object[] baseDexElements = getNativeLibraryDirectories();
+    public static void injectSoAtFirst(ClassLoader hackClassLoader, String soPath) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException {
+        Object[] baseDexElements = getNativeLibraryDirectories(hackClassLoader);
         Object newElement;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Constructor constructor = baseDexElements[0].getClass().getConstructors()[0];
@@ -48,7 +47,7 @@ public class DexUtils {
         Object newDexElements = Array.newInstance(baseDexElements[0].getClass(), 1);
         Array.set(newDexElements, 0, newElement);
         Object allDexElements = combineArray(newDexElements, baseDexElements);
-        Object pathList = getPathList(getPathClassLoader());
+        Object pathList = getPathList(hackClassLoader);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ReflectionUtils.setField(pathList, pathList.getClass(), "nativeLibraryPathElements", allDexElements);
@@ -57,8 +56,8 @@ public class DexUtils {
         }
     }
 
-    public static Object[] getNativeLibraryDirectories() throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
-        Object pathList = getPathList(getPathClassLoader());
+    public static Object[] getNativeLibraryDirectories(ClassLoader hackClassLoader) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+        Object pathList = getPathList(hackClassLoader);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return (Object[]) ReflectionUtils.getField(pathList, pathList.getClass(), "nativeLibraryPathElements");
         } else {
@@ -66,7 +65,7 @@ public class DexUtils {
         }
     }
 
-    private static PathClassLoader getPathClassLoader() {
+    public static PathClassLoader getPathClassLoader() {
         PathClassLoader pathClassLoader = (PathClassLoader) DexUtils.class.getClassLoader();
         Log.e(TAG, "pathClassLoader-->" + pathClassLoader);
         return pathClassLoader;

@@ -23,7 +23,6 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
-    compile 'me.ele:hot-fix:1.0.2'
     compile 'me.ele:blur:1.0.3'
     compile project(':library')
 }

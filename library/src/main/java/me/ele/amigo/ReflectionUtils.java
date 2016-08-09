@@ -2,7 +2,7 @@ package me.ele.amigo;
 
 import java.lang.reflect.Field;
 
-class ReflectionUtils {
+public class ReflectionUtils {
     public static Object getField(Object obj, Class<?> cl, String field)
             throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         Field localField = cl.getDeclaredField(field);

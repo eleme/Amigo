@@ -15,13 +15,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.alipay.euler.andfix.AndFix;
-
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import me.ele.amigo.DexUtils;
+import me.ele.amigo.ReflectionUtils;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,13 +33,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         Log.e(TAG, "resources--->" + getResources());
         Log.e(TAG, "onCreate");
         Log.e(TAG, "added string--->" + getString(R.string.added_string));
         Log.e(TAG, "app_name--->" + getString(R.string.app_name));
         Log.e(TAG, "getApplication from MainActivity-->" + getApplication());
         Log.e(TAG, "NewAddedClass-->" + new NewAddedClass());
-        Log.e(TAG, "AndFix-->" + AndFix.class);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -53,8 +53,27 @@ public class MainActivity extends AppCompatActivity {
         });
 
         try {
-            for (Object o : DexUtils.getNativeLibraryDirectories()) {
+            for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
                 Log.e(TAG, "native-->" + o);
+
+                Class IoUtils = Class.forName("libcore.io.IoUtils");
+                Method canOpenReadOnly = IoUtils.getDeclaredMethod("canOpenReadOnly", String.class);
+                canOpenReadOnly.setAccessible(true);
+
+                File dir = (File) ReflectionUtils.getField(o, o.getClass(), "dir");
+                boolean b = (boolean) canOpenReadOnly.invoke(null, dir.getAbsolutePath());
+                Log.e(TAG, "canOpenReadOnly 1--->" + b);
+
+                boolean isDirectory = (boolean) ReflectionUtils.getField(o, o.getClass(), "isDirectory");
+                Log.e(TAG, "isDirectory-->" + isDirectory);
+                String path = new File(dir, "libImageBlur.so").getAbsolutePath();
+                b = (boolean) canOpenReadOnly.invoke(null, path);
+                Log.e(TAG, "canOpenReadOnly 2-->" + b);
+
+                Method findNativeLibrary = o.getClass().getDeclaredMethod("findNativeLibrary", String.class);
+                findNativeLibrary.setAccessible(true);
+                String path2 = (String) findNativeLibrary.invoke(o, "libImageBlur.so");
+                Log.e(TAG, "path2-->" + path2);
             }
 
             Object object = DexUtils.getPathList(getClassLoader());
