@@ -15,13 +15,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
-import java.io.File;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import me.ele.amigo.DexUtils;
-import me.ele.amigo.ReflectionUtils;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -45,8 +42,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
                 startActivity(new Intent(MainActivity.this, SecondActivity.class));
 
             }
@@ -55,45 +51,16 @@ public class MainActivity extends AppCompatActivity {
         try {
             for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
                 Log.e(TAG, "native-->" + o);
-
-                Class IoUtils = Class.forName("libcore.io.IoUtils");
-                Method canOpenReadOnly = IoUtils.getDeclaredMethod("canOpenReadOnly", String.class);
-                canOpenReadOnly.setAccessible(true);
-
-                File dir = (File) ReflectionUtils.getField(o, o.getClass(), "dir");
-                boolean b = (boolean) canOpenReadOnly.invoke(null, dir.getAbsolutePath());
-                Log.e(TAG, "canOpenReadOnly 1--->" + b);
-
-                boolean isDirectory = (boolean) ReflectionUtils.getField(o, o.getClass(), "isDirectory");
-                Log.e(TAG, "isDirectory-->" + isDirectory);
-                String path = new File(dir, "libImageBlur.so").getAbsolutePath();
-                b = (boolean) canOpenReadOnly.invoke(null, path);
-                Log.e(TAG, "canOpenReadOnly 2-->" + b);
-
-                Method findNativeLibrary = o.getClass().getDeclaredMethod("findNativeLibrary", String.class);
-                findNativeLibrary.setAccessible(true);
-                String path2 = (String) findNativeLibrary.invoke(o, "libImageBlur.so");
-                Log.e(TAG, "path2-->" + path2);
             }
-
-            Object object = DexUtils.getPathList(getClassLoader());
-            Method method = object.getClass().getDeclaredMethod("findLibrary", String.class);
-            method.setAccessible(true);
-            Log.e(TAG, "ImageBlur-->" + method.invoke(object, "ImageBlur"));
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         ImageView imageView = (ImageView) findViewById(R.id.imageview);
-
         try {
             Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
             Class clazz = Class.forName("me.ele.blur.JniStackBlur");

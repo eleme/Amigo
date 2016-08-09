@@ -26,7 +26,7 @@ public class SoReleaser {
 
             while (ze != null) {
                 String fileName = ze.getName();
-                if (!fileName.startsWith("lib/" + Build.CPU_ABI)) {
+                if (!fileName.startsWith("lib/" + Build.CPU_ABI) && !fileName.startsWith("classes")) {
                     ze = zis.getNextEntry();
                     continue;
                 }

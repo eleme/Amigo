@@ -9,12 +9,15 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
+
+import dalvik.system.DexFile;
 
 public class FakeApplication extends Application {
 
@@ -23,6 +26,7 @@ public class FakeApplication extends Application {
     private Application application;
     private File directory;
     private File hackApk;
+    private File optimizedDir;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -41,7 +45,10 @@ public class FakeApplication extends Application {
             directory.mkdirs();
         }
         hackApk = new File(directory, "demo.apk");
-
+        optimizedDir = new File(directory, "opt");
+        if (!optimizedDir.exists()) {
+            optimizedDir.mkdir();
+        }
 
         try {
             Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
@@ -64,7 +71,27 @@ public class FakeApplication extends Application {
             attach.invoke(application, getBaseContext());
             setAPKApplication(application);
 
+            Log.e(TAG, "getClassLoader-->" + getClassLoader());
+            try {
+                for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
+                    Log.e(TAG, "native-->" + o);
+                }
 
+                Object dexPathList = DexUtils.getPathList(getClassLoader());
+                Log.e(TAG, "definingContext-->" + ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "definingContext"));
+                Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+                for (Object dexElement : dexElements) {
+                    Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "file"));
+                    Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "zip"));
+                    Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile"));
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -92,7 +119,7 @@ public class FakeApplication extends Application {
             nativeLibDir.setReadOnly();
 
             File[] libs = nativeLibDir.listFiles();
-            if (libs == null && libs.length > 0) {
+            if (libs != null && libs.length > 0) {
                 for (File lib : libs) {
                     lib.setReadOnly();
                 }
@@ -217,9 +244,28 @@ public class FakeApplication extends Application {
             Field mClassLoader = getField(apkClass, "mClassLoader");
             mClassLoader.setAccessible(true);
             mClassLoader.set(apk, classLoader);
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                Object dexPathList = DexUtils.getPathList(getClassLoader());
+                Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+                for (Object dexElement : dexElements) {
+                    Object dexFile = ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile");
+                    if (dexFile == null) {
+                        File optimizedFile = new File(optimizedDir, "classes.dex");
+                        dexFile = DexFile.loadDex(hackApk.getAbsolutePath(),optimizedFile.getAbsolutePath(), 0);
+                        ReflectionUtils.setField(dexElement, dexElement.getClass(), "dexFile", dexFile);
+                    }
+                }
+            }
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
