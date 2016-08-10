@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'eradle'
 
 android {
     compileSdkVersion 23
@@ -21,3 +22,13 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
+
+modifyPom {
+    project {
+        groupId 'me.ele'
+        artifactId 'amigo-lib'
+        version '0.0.1'
+        packaging 'aar'
+    }
+}
+

@@ -1,4 +1,17 @@
+buildscript {
+    repositories {
+        maven {
+            url "http://172.16.10.156:8081/nexus/content/groups/mobile"
+        }
+    }
+    dependencies {
+        classpath 'me.ele:eradle:1.5.+'
+    }
+}
+
 apply plugin: 'groovy'
+apply plugin: 'java'
+apply plugin: 'eradle'
 
 repositories {
     jcenter()
@@ -17,6 +30,19 @@ sourceSets {
 
 
 dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.tools.build:gradle:1.5.0'
+}
+
+
+modifyPom {
+    project {
+        groupId 'me.ele'
+        artifactId 'amigo'
+        version '0.0.1'
+        packaging 'jar'
+    }
 }
