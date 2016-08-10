@@ -9,24 +9,27 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-
-import dalvik.system.DexFile;
+import java.util.List;
 
 public class FakeApplication extends Application {
 
     private static final String TAG = FakeApplication.class.getSimpleName();
 
     private Application application;
+
     private File directory;
     private File hackApk;
     private File optimizedDir;
+    private File dexDir;
+    private File nativeLibraryDir;
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -45,14 +48,25 @@ public class FakeApplication extends Application {
             directory.mkdirs();
         }
         hackApk = new File(directory, "demo.apk");
-        optimizedDir = new File(directory, "opt");
+        optimizedDir = new File(directory, "dex_opt");
         if (!optimizedDir.exists()) {
             optimizedDir.mkdir();
+        }
+        dexDir = new File(directory, "dex");
+        if (!dexDir.exists()) {
+            dexDir.mkdir();
+        }
+        nativeLibraryDir = new File(dexDir.getAbsolutePath() + "/lib/" + Build.CPU_ABI);
+        if (!nativeLibraryDir.exists()) {
+            nativeLibraryDir.mkdirs();
         }
 
         try {
             Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
             if (hackApk.exists()) {
+
+                SoReleaser.release(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
+
                 AmigoClassLoader hackClassLoader = new AmigoClassLoader(hackApk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(hackClassLoader);
 
@@ -71,26 +85,16 @@ public class FakeApplication extends Application {
             attach.invoke(application, getBaseContext());
             setAPKApplication(application);
 
-            Log.e(TAG, "getClassLoader-->" + getClassLoader());
-            try {
-                for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
-                    Log.e(TAG, "native-->" + o);
-                }
+            for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
+                Log.e(TAG, "native-->" + o);
+            }
 
-                Object dexPathList = DexUtils.getPathList(getClassLoader());
-                Log.e(TAG, "definingContext-->" + ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "definingContext"));
-                Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
-                for (Object dexElement : dexElements) {
-                    Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "file"));
-                    Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "zip"));
-                    Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile"));
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+            Object dexPathList = DexUtils.getPathList(getClassLoader());
+            Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+            for (Object dexElement : dexElements) {
+                Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "file"));
+                Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "zip"));
+                Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile"));
             }
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -99,6 +103,8 @@ public class FakeApplication extends Application {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
 
@@ -109,16 +115,9 @@ public class FakeApplication extends Application {
 
     private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader) {
         try {
-
-            SoReleaser.release(hackApk.getAbsolutePath(), directory.getAbsolutePath());
-
-            String nativeLibPath = hackApk.getParent() + "/lib/" + Build.CPU_ABI;
-            DexUtils.injectSoAtFirst(hackClassLoader, nativeLibPath);
-
-            File nativeLibDir = new File(nativeLibPath);
-            nativeLibDir.setReadOnly();
-
-            File[] libs = nativeLibDir.listFiles();
+            DexUtils.injectSoAtFirst(hackClassLoader, nativeLibraryDir.getAbsolutePath());
+            nativeLibraryDir.setReadOnly();
+            File[] libs = nativeLibraryDir.listFiles();
             if (libs != null && libs.length > 0) {
                 for (File lib : libs) {
                     lib.setReadOnly();
@@ -128,8 +127,6 @@ public class FakeApplication extends Application {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -245,27 +242,30 @@ public class FakeApplication extends Application {
             mClassLoader.setAccessible(true);
             mClassLoader.set(apk, classLoader);
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                Object dexPathList = DexUtils.getPathList(getClassLoader());
-                Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
-                for (Object dexElement : dexElements) {
-                    Object dexFile = ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile");
-                    if (dexFile == null) {
-                        File optimizedFile = new File(optimizedDir, "classes.dex");
-                        dexFile = DexFile.loadDex(hackApk.getAbsolutePath(),optimizedFile.getAbsolutePath(), 0);
-                        ReflectionUtils.setField(dexElement, dexElement.getClass(), "dexFile", dexFile);
-                    }
+
+            Object dexPathList = DexUtils.getPathList(getClassLoader());
+            File[] listFiles = dexDir.listFiles();
+
+            List<File> validDexes = new ArrayList<>();
+            for (File listFile : listFiles) {
+                if (listFile.getName().endsWith(".dex")) {
+                    validDexes.add(listFile);
                 }
             }
+            File[] dexes = validDexes.toArray(new File[validDexes.size()]);
+            Object originDexElements = ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+            Class<?> localClass = originDexElements.getClass().getComponentType();
+            int length = dexes.length;
+            Object dexElements = Array.newInstance(localClass, length);
+            for (int k = 0; k < length; k++) {
+                Array.set(dexElements, k, DexUtils.getElementWithDex(dexes[k], optimizedDir));
+            }
+            ReflectionUtils.setField(dexPathList, dexPathList.getClass(), "dexElements", dexElements);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }

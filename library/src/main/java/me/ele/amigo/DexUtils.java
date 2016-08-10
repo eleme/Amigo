@@ -8,6 +8,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
 
@@ -15,7 +16,7 @@ public class DexUtils {
 
     private static final String TAG = DexUtils.class.getSimpleName();
 
-    public static void injectDexAtFirst(String dexPath, String defaultDexOptPath) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+    public static void injectDexAtFirst(String dexPath, String defaultDexOptPath) throws NoSuchFieldException, IllegalAccessException {
         DexClassLoader dexClassLoader = new DexClassLoader(dexPath, defaultDexOptPath, dexPath, getPathClassLoader());
         Object baseDexElements = getDexElements(getPathList(getPathClassLoader()));
         Object newDexElements = getDexElements(getPathList(dexClassLoader));
@@ -24,7 +25,17 @@ public class DexUtils {
         ReflectionUtils.setField(pathList, pathList.getClass(), "dexElements", allDexElements);
     }
 
-    public static void injectSoAtFirst(ClassLoader hackClassLoader, String soPath) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException {
+    public static Object getElementWithDex(File dex, File dexOptDir) throws NoSuchFieldException, IllegalAccessException {
+        DexClassLoader dexClassLoader = new DexClassLoader(dex.getAbsolutePath(), dexOptDir.getAbsolutePath(), null, getPathClassLoader());
+        Object elements = getDexElements(getPathList(dexClassLoader));
+        int length = Array.getLength(elements);
+        if (length == 0) {
+            return null;
+        }
+        return Array.get(elements, 0);
+    }
+
+    public static void injectSoAtFirst(ClassLoader hackClassLoader, String soPath) throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
         Object[] baseDexElements = getNativeLibraryDirectories(hackClassLoader);
         Object newElement;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -56,7 +67,7 @@ public class DexUtils {
         }
     }
 
-    public static Object[] getNativeLibraryDirectories(ClassLoader hackClassLoader) throws NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
+    public static Object[] getNativeLibraryDirectories(ClassLoader hackClassLoader) throws NoSuchFieldException, IllegalAccessException {
         Object pathList = getPathList(hackClassLoader);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return (Object[]) ReflectionUtils.getField(pathList, pathList.getClass(), "nativeLibraryPathElements");
@@ -71,14 +82,12 @@ public class DexUtils {
         return pathClassLoader;
     }
 
-    private static Object getDexElements(Object paramObject)
-            throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        return ReflectionUtils.getField(paramObject, paramObject.getClass(), "dexElements");
+    private static Object getDexElements(Object dexPathList) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        return ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
     }
 
-    public static Object getPathList(Object baseDexClassLoader)
-            throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException, ClassNotFoundException {
-        return ReflectionUtils.getField(baseDexClassLoader, Class.forName("dalvik.system.BaseDexClassLoader"), "pathList");
+    public static Object getPathList(Object baseDexClassLoader) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        return ReflectionUtils.getField(baseDexClassLoader, BaseDexClassLoader.class, "pathList");
     }
 
     private static Object combineArray(Object firstArray, Object secondArray) {

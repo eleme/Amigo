@@ -56,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         }
 
         ImageView imageView = (ImageView) findViewById(R.id.imageview);
