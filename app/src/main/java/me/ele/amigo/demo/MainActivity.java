@@ -1,6 +1,5 @@
 package me.ele.amigo.demo;
 
-import android.app.Application;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,10 +14,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import me.ele.amigo.DexUtils;
+import me.ele.amigo.utils.DexUtils;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -69,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -92,49 +90,5 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-        Method method = null;
-
-        while (method == null) {
-            try {
-                method = clazz.getDeclaredMethod(methodName, parameterTypes);
-                break;
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                clazz = clazz.getSuperclass();
-            }
-
-            if (clazz == Object.class) {
-                break;
-            }
-        }
-        return method;
-    }
-
-    private Field getField(Class<?> clazz, String fieldName) {
-        Field field = null;
-
-        while (field == null) {
-            try {
-                field = clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-                clazz = clazz.getSuperclass();
-            }
-
-            if (clazz == Object.class) {
-                break;
-            }
-        }
-
-        return field;
-    }
-
-    private Object getLoadedApk() throws IllegalAccessException {
-        Field mLoadedApk = getField(Application.class, "mLoadedApk");
-        mLoadedApk.setAccessible(true);
-        return mLoadedApk.get(getApplication());
     }
 }

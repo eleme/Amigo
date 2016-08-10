@@ -19,13 +19,24 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-import static me.ele.amigo.DexUtils.getRootClassLoader;
-import static me.ele.amigo.ReflectionUtils.getField;
-import static me.ele.amigo.ReflectionUtils.getMethod;
+import static me.ele.amigo.compat.ActivityThreadCompat.instance;
+import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
+import static me.ele.amigo.reflect.FieldUtils.getField;
+import static me.ele.amigo.reflect.FieldUtils.readField;
+import static me.ele.amigo.reflect.FieldUtils.writeField;
+import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
+import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
+import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
+import static me.ele.amigo.utils.DexReleaser.release;
+import static me.ele.amigo.utils.DexUtils.getElementWithDex;
+import static me.ele.amigo.utils.DexUtils.getNativeLibraryDirectories;
+import static me.ele.amigo.utils.DexUtils.getPathList;
+import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
+import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 
-public class FakeApplication extends Application {
+public class Amigo extends Application {
 
-    private static final String TAG = FakeApplication.class.getSimpleName();
+    private static final String TAG = Amigo.class.getSimpleName();
 
     private Application application;
 
@@ -69,8 +80,8 @@ public class FakeApplication extends Application {
             Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
             if (hackApk.exists()) {
 
-                DexReleaser.release(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
-                NativeLibraryHelperCompat.copyNativeBinaries(hackApk, nativeLibraryDir);
+                release(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
+                copyNativeBinaries(hackApk, nativeLibraryDir);
 
                 AmigoClassLoader hackClassLoader = new AmigoClassLoader(hackApk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(hackClassLoader);
@@ -78,28 +89,29 @@ public class FakeApplication extends Application {
                 setNativeLibraryDirectories(hackClassLoader);
 
                 AssetManager assetManager = AssetManager.class.newInstance();
-                Method addAssetPath = getMethod(AssetManager.class, "addAssetPath", String.class);
+                Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
                 addAssetPath.setAccessible(true);
                 addAssetPath.invoke(assetManager, hackApk.getAbsolutePath());
                 setAPKResources(assetManager);
             }
 
             application = (Application) Class.forName("me.ele.amigo.demo.ApplicationContext").newInstance();
-            Method attach = getMethod(Application.class, "attach", Context.class);
+            Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
             attach.setAccessible(true);
             attach.invoke(application, getBaseContext());
+            Log.e(TAG, "baseContext--->" + getBaseContext());
             setAPKApplication(application);
 
-            for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
+            for (Object o : getNativeLibraryDirectories(getClassLoader())) {
                 Log.e(TAG, "native-->" + o);
             }
 
-            Object dexPathList = DexUtils.getPathList(getClassLoader());
-            Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, "dexElements");
+            Object dexPathList = getPathList(getClassLoader());
+            Object[] dexElements = (Object[]) readField(dexPathList, "dexElements");
             for (Object dexElement : dexElements) {
-                Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, "file"));
-                Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, "zip"));
-                Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, "dexFile"));
+                Log.e(TAG, "file-->" + readField(dexElement, "file"));
+                Log.e(TAG, "zip-->" + readField(dexElement, "zip"));
+                Log.e(TAG, "dexFile-->" + readField(dexElement, "dexFile"));
             }
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -111,6 +123,8 @@ public class FakeApplication extends Application {
             e.printStackTrace();
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
         }
 
         if (application != null) {
@@ -120,7 +134,7 @@ public class FakeApplication extends Application {
 
     private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader) {
         try {
-            DexUtils.injectSoAtFirst(hackClassLoader, nativeLibraryDir.getAbsolutePath());
+            injectSoAtFirst(hackClassLoader, nativeLibraryDir.getAbsolutePath());
             nativeLibraryDir.setReadOnly();
             File[] libs = nativeLibraryDir.listFiles();
             if (libs != null && libs.length > 0) {
@@ -128,7 +142,6 @@ public class FakeApplication extends Application {
                     lib.setReadOnly();
                 }
             }
-
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -144,36 +157,22 @@ public class FakeApplication extends Application {
 
     private void setAPKResources(AssetManager newAssetManager) {
         try {
-            Method mEnsureStringBlocks = AssetManager.class.getDeclaredMethod("ensureStringBlocks", new Class[0]);
-            mEnsureStringBlocks.setAccessible(true);
-            mEnsureStringBlocks.invoke(newAssetManager, new Object[0]);
+            invokeMethod(newAssetManager, "ensureStringBlocks");
 
             Collection<WeakReference<Resources>> references;
 
-            if (Build.VERSION.SDK_INT >= 19) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 Class<?> resourcesManagerClass = Class.forName("android.app.ResourcesManager");
-                Method mGetInstance = resourcesManagerClass.getDeclaredMethod("getInstance", new Class[0]);
-                mGetInstance.setAccessible(true);
-                Object resourcesManager = mGetInstance.invoke(null, new Object[0]);
-                try {
-                    Field fMActiveResources = resourcesManagerClass.getDeclaredField("mActiveResources");
-                    fMActiveResources.setAccessible(true);
+                Object resourcesManager = invokeStaticMethod(resourcesManagerClass, "getInstance");
 
-                    ArrayMap<?, WeakReference<Resources>> arrayMap = (ArrayMap) fMActiveResources.get(resourcesManager);
+                if (getField(resourcesManagerClass, "mActiveResources") != null) {
+                    ArrayMap<?, WeakReference<Resources>> arrayMap = (ArrayMap) readField(resourcesManager, "mActiveResources", true);
                     references = arrayMap.values();
-                } catch (NoSuchFieldException ignore) {
-                    Field mResourceReferences = resourcesManagerClass.getDeclaredField("mResourceReferences");
-                    mResourceReferences.setAccessible(true);
-
-                    references = (Collection) mResourceReferences.get(resourcesManager);
+                } else {
+                    references = (Collection) readField(resourcesManager, "mResourceReferences", true);
                 }
             } else {
-                Field fMActiveResources = ActivityThreadCompat.clazz().getDeclaredField("mActiveResources");
-                fMActiveResources.setAccessible(true);
-                Object thread = ActivityThreadCompat.instance();
-
-                HashMap<?, WeakReference<Resources>> map = (HashMap) fMActiveResources.get(thread);
-
+                HashMap<?, WeakReference<Resources>> map = (HashMap) readField(instance(), "mActiveResources", true);
                 references = map.values();
             }
 
@@ -182,41 +181,31 @@ public class FakeApplication extends Application {
                 if (resources == null) continue;
 
                 try {
-                    Field mAssets = Resources.class.getDeclaredField("mAssets");
-                    mAssets.setAccessible(true);
-                    mAssets.set(resources, newAssetManager);
+                    writeField(resources, "mAssets", newAssetManager);
                 } catch (Throwable ignore) {
-                    Field mResourcesImpl = Resources.class.getDeclaredField("mResourcesImpl");
-                    mResourcesImpl.setAccessible(true);
-                    Object resourceImpl = mResourcesImpl.get(resources);
-                    Field implAssets = resourceImpl.getClass().getDeclaredField("mAssets");
-                    implAssets.setAccessible(true);
-                    implAssets.set(resourceImpl, newAssetManager);
+                    Object resourceImpl = readField(resources, "mResourcesImpl", true);
+                    writeField(resourceImpl, "mAssets", newAssetManager);
                 }
 
                 resources.updateConfiguration(resources.getConfiguration(), resources.getDisplayMetrics());
             }
 
-            if (Build.VERSION.SDK_INT >= 21) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 for (WeakReference<Resources> wr : references) {
                     Resources resources = wr.get();
                     if (resources == null) continue;
 
                     // android.util.Pools$SynchronizedPool<TypedArray>
-                    Field mTypedArrayPool = Resources.class.getDeclaredField("mTypedArrayPool");
-                    mTypedArrayPool.setAccessible(true);
-                    Object typedArrayPool = mTypedArrayPool.get(resources);
+                    Object typedArrayPool = readField(resources, "mTypedArrayPool", true);
+
                     // Clear all the pools
-                    Method acquire = typedArrayPool.getClass().getMethod("acquire");
-                    acquire.setAccessible(true);
-                    while (acquire.invoke(typedArrayPool) != null) ;
+                    while (invokeMethod(typedArrayPool, "acquire") != null) ;
                 }
             }
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
     }
-
 
     private void setAPKClassLoader(ClassLoader classLoader) {
         try {
@@ -227,7 +216,7 @@ public class FakeApplication extends Application {
             mClassLoader.set(apk, classLoader);
 
 
-            Object dexPathList = DexUtils.getPathList(getClassLoader());
+            Object dexPathList = getPathList(getClassLoader());
             File[] listFiles = dexDir.listFiles();
 
             List<File> validDexes = new ArrayList<>();
@@ -237,14 +226,14 @@ public class FakeApplication extends Application {
                 }
             }
             File[] dexes = validDexes.toArray(new File[validDexes.size()]);
-            Object originDexElements = ReflectionUtils.getField(dexPathList, "dexElements");
+            Object originDexElements = readField(dexPathList, "dexElements");
             Class<?> localClass = originDexElements.getClass().getComponentType();
             int length = dexes.length;
             Object dexElements = Array.newInstance(localClass, length);
             for (int k = 0; k < length; k++) {
-                Array.set(dexElements, k, DexUtils.getElementWithDex(dexes[k], optimizedDir));
+                Array.set(dexElements, k, getElementWithDex(dexes[k], optimizedDir));
             }
-            ReflectionUtils.setField(dexPathList, "dexElements", dexElements);
+            writeField(dexPathList, "dexElements", dexElements);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

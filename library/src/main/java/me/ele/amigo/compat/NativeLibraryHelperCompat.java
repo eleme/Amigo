@@ -1,4 +1,4 @@
-package me.ele.amigo;
+package me.ele.amigo.compat;
 
 
 import android.annotation.TargetApi;

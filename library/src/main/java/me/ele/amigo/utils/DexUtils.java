@@ -1,7 +1,6 @@
-package me.ele.amigo;
+package me.ele.amigo.utils;
 
 import android.os.Build;
-import android.util.Log;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -11,9 +10,10 @@ import java.lang.reflect.InvocationTargetException;
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
 
-public class DexUtils {
+import static me.ele.amigo.reflect.FieldUtils.readField;
+import static me.ele.amigo.reflect.FieldUtils.writeField;
 
-    private static final String TAG = DexUtils.class.getSimpleName();
+public class DexUtils {
 
     public static Object getElementWithDex(File dex, File dexOptDir) throws NoSuchFieldException, IllegalAccessException {
         DexClassLoader dexClassLoader = new DexClassLoader(dex.getAbsolutePath(), dexOptDir.getAbsolutePath(), null, getPathClassLoader());
@@ -51,24 +51,23 @@ public class DexUtils {
         Object pathList = getPathList(hackClassLoader);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ReflectionUtils.setField(pathList, "nativeLibraryPathElements", allDexElements);
+            writeField(pathList, "nativeLibraryPathElements", allDexElements);
         } else {
-            ReflectionUtils.setField(pathList, "nativeLibraryDirectories", allDexElements);
+            writeField(pathList, "nativeLibraryDirectories", allDexElements);
         }
     }
 
     public static Object[] getNativeLibraryDirectories(ClassLoader hackClassLoader) throws NoSuchFieldException, IllegalAccessException {
         Object pathList = getPathList(hackClassLoader);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return (Object[]) ReflectionUtils.getField(pathList, "nativeLibraryPathElements");
+            return (Object[]) readField(pathList, "nativeLibraryPathElements");
         } else {
-            return (Object[]) ReflectionUtils.getField(pathList, "nativeLibraryDirectories");
+            return (Object[]) readField(pathList, "nativeLibraryDirectories");
         }
     }
 
     public static PathClassLoader getPathClassLoader() {
         PathClassLoader pathClassLoader = (PathClassLoader) DexUtils.class.getClassLoader();
-        Log.e(TAG, "pathClassLoader-->" + pathClassLoader);
         return pathClassLoader;
     }
 
@@ -83,11 +82,11 @@ public class DexUtils {
     }
 
     private static Object getDexElements(Object dexPathList) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        return ReflectionUtils.getField(dexPathList, "dexElements");
+        return readField(dexPathList, "dexElements");
     }
 
     public static Object getPathList(Object baseDexClassLoader) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        return ReflectionUtils.getField(baseDexClassLoader, "pathList");
+        return readField(baseDexClassLoader, "pathList");
     }
 
     private static Object combineArray(Object firstArray, Object secondArray) {

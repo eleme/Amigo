@@ -1,4 +1,4 @@
-package me.ele.amigo;
+package me.ele.amigo.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
