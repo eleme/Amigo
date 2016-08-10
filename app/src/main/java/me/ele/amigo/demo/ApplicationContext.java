@@ -5,6 +5,8 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 import android.util.Log;
 
+import me.ele.amigo.Amigo;
+
 public class ApplicationContext extends Application {
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
@@ -12,16 +14,14 @@ public class ApplicationContext extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        Log.e(TAG, "attachBaseContext: ");
+        Log.e(TAG, "attachBaseContext: " + base);
         MultiDex.install(base);
+        Amigo.init(base, getClass());
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.e(TAG, "onCreate: ");
-        Log.e(TAG, "resources--->" + getResources());
+        Log.e(TAG, "onCreate: " + this);
     }
-
-
 }

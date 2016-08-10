@@ -9,7 +9,7 @@ import java.util.zip.ZipInputStream;
 
 public class DexReleaser {
 
-    public static void release(String zipFile, String outputFolder) {
+    public static void releaseDexes(String zipFile, String outputFolder) {
 
         byte[] buffer = new byte[1024];
 
