@@ -19,6 +19,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import static me.ele.amigo.DexUtils.getRootClassLoader;
+import static me.ele.amigo.ReflectionUtils.getField;
+import static me.ele.amigo.ReflectionUtils.getMethod;
+
 public class FakeApplication extends Application {
 
     private static final String TAG = FakeApplication.class.getSimpleName();
@@ -56,16 +60,17 @@ public class FakeApplication extends Application {
         if (!dexDir.exists()) {
             dexDir.mkdir();
         }
-        nativeLibraryDir = new File(dexDir.getAbsolutePath() + "/lib/" + Build.CPU_ABI);
+        nativeLibraryDir = new File(directory, "lib");
         if (!nativeLibraryDir.exists()) {
-            nativeLibraryDir.mkdirs();
+            nativeLibraryDir.mkdir();
         }
 
         try {
             Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
             if (hackApk.exists()) {
 
-                SoReleaser.release(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
+                DexReleaser.release(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
+                NativeLibraryHelperCompat.copyNativeBinaries(hackApk, nativeLibraryDir);
 
                 AmigoClassLoader hackClassLoader = new AmigoClassLoader(hackApk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(hackClassLoader);
@@ -90,11 +95,11 @@ public class FakeApplication extends Application {
             }
 
             Object dexPathList = DexUtils.getPathList(getClassLoader());
-            Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+            Object[] dexElements = (Object[]) ReflectionUtils.getField(dexPathList, "dexElements");
             for (Object dexElement : dexElements) {
-                Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "file"));
-                Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "zip"));
-                Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, dexElement.getClass(), "dexFile"));
+                Log.e(TAG, "file-->" + ReflectionUtils.getField(dexElement, "file"));
+                Log.e(TAG, "zip-->" + ReflectionUtils.getField(dexElement, "zip"));
+                Log.e(TAG, "dexFile-->" + ReflectionUtils.getField(dexElement, "dexFile"));
             }
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -163,10 +168,9 @@ public class FakeApplication extends Application {
                     references = (Collection) mResourceReferences.get(resourcesManager);
                 }
             } else {
-                Class<?> activityThread = Class.forName("android.app.ActivityThread");
-                Field fMActiveResources = activityThread.getDeclaredField("mActiveResources");
+                Field fMActiveResources = ActivityThreadCompat.clazz().getDeclaredField("mActiveResources");
                 fMActiveResources.setAccessible(true);
-                Object thread = getActivityThread(activityThread);
+                Object thread = ActivityThreadCompat.instance();
 
                 HashMap<?, WeakReference<Resources>> map = (HashMap) fMActiveResources.get(thread);
 
@@ -213,26 +217,6 @@ public class FakeApplication extends Application {
         }
     }
 
-    private Object getActivityThread(Class<?> activityThread) {
-        try {
-            // ActivityThread.currentActivityThread()
-            Method m = activityThread.getMethod("currentActivityThread", new Class[0]);
-            m.setAccessible(true);
-            Object thread = m.invoke(null, new Object[0]);
-            if (thread != null) return thread;
-
-            // context.@mLoadedApk.@mActivityThread
-            Field mLoadedApk = getClass().getField("mLoadedApk");
-            mLoadedApk.setAccessible(true);
-            Object apk = mLoadedApk.get(this);
-            Field mActivityThreadField = apk.getClass().getDeclaredField("mActivityThread");
-            mActivityThreadField.setAccessible(true);
-            return mActivityThreadField.get(apk);
-        } catch (Throwable ignore) {
-        }
-
-        return null;
-    }
 
     private void setAPKClassLoader(ClassLoader classLoader) {
         try {
@@ -253,14 +237,14 @@ public class FakeApplication extends Application {
                 }
             }
             File[] dexes = validDexes.toArray(new File[validDexes.size()]);
-            Object originDexElements = ReflectionUtils.getField(dexPathList, dexPathList.getClass(), "dexElements");
+            Object originDexElements = ReflectionUtils.getField(dexPathList, "dexElements");
             Class<?> localClass = originDexElements.getClass().getComponentType();
             int length = dexes.length;
             Object dexElements = Array.newInstance(localClass, length);
             for (int k = 0; k < length; k++) {
                 Array.set(dexElements, k, DexUtils.getElementWithDex(dexes[k], optimizedDir));
             }
-            ReflectionUtils.setField(dexPathList, dexPathList.getClass(), "dexElements", dexElements);
+            ReflectionUtils.setField(dexPathList, "dexElements", dexElements);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -290,50 +274,5 @@ public class FakeApplication extends Application {
         return mLoadedApk.get(this);
     }
 
-    private Field getField(Class<?> clazz, String fieldName) {
-        Field field = null;
-
-        while (field == null) {
-            try {
-                field = clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                clazz = clazz.getSuperclass();
-            }
-
-            if (clazz == Object.class) {
-                break;
-            }
-        }
-
-        return field;
-    }
-
-    private Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-        Method method = null;
-
-        while (method == null) {
-            try {
-                method = clazz.getDeclaredMethod(methodName, parameterTypes);
-                break;
-            } catch (NoSuchMethodException e) {
-                clazz = clazz.getSuperclass();
-            }
-
-            if (clazz == Object.class) {
-                break;
-            }
-        }
-        return method;
-    }
-
-    private ClassLoader getRootClassLoader() {
-        ClassLoader rootClassLoader = null;
-        ClassLoader classLoader = getClassLoader();
-        while (classLoader != null) {
-            rootClassLoader = classLoader;
-            classLoader = classLoader.getParent();
-        }
-        return rootClassLoader;
-    }
 
 }

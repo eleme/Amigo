@@ -1,7 +1,5 @@
 package me.ele.amigo;
 
-import android.os.Build;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -9,7 +7,7 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class SoReleaser {
+public class DexReleaser {
 
     public static void release(String zipFile, String outputFolder) {
 
@@ -26,7 +24,7 @@ public class SoReleaser {
 
             while (ze != null) {
                 String fileName = ze.getName();
-                if (!fileName.startsWith("lib/" + Build.CPU_ABI) && !fileName.startsWith("classes")) {
+                if (!fileName.startsWith("classes") || !fileName.endsWith(".dex")) {
                     ze = zis.getNextEntry();
                     continue;
                 }

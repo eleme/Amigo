@@ -64,7 +64,6 @@ dependencies {
     compile 'me.ele:warlock-jsbridge:2.2.0'
     compile 'me.ele:hawk:1.3'
     compile 'me.ele:omniknight-extension:0.0.1'
-    compile 'me.ele:blur:1.0.3'
     compile 'me.ele:net-doctor:1.0.0'
     compile 'me.ele:hot-fix:1.0.2'
     compile 'me.ele:resource_downloader:1.0.2'
