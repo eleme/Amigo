@@ -24,6 +24,7 @@ import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
 import static me.ele.amigo.reflect.FieldUtils.getField;
 import static me.ele.amigo.reflect.FieldUtils.readField;
+import static me.ele.amigo.reflect.FieldUtils.readStaticField;
 import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
@@ -35,39 +36,27 @@ import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
 import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 
-public class Amigo {
+public class Amigo extends Application {
 
-    private static final String TAG = Amigo.class.getSimpleName();
-    private static final String SP_NAME = "Amigo";
-    private static final String KEY = "pid";
+    private final String TAG = Amigo.class.getSimpleName();
 
-    private static File directory;
-    private static File hackApk;
-    private static File optimizedDir;
-    private static File dexDir;
-    private static File nativeLibraryDir;
+    private File directory;
+    private File demoAPk;
+    private File optimizedDir;
+    private File dexDir;
+    private File nativeLibraryDir;
 
-    public static void init(Context baseContext, Class<? extends Application> applicationClazz) {
-        Log.e(TAG, "init");
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.e(TAG, "onCreate");
 
-        int pid = android.os.Process.myPid();
-        int savedPid = baseContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE).getInt(KEY, -1);
-        if (pid == savedPid) {
-            return;
-        }
-
-        baseContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE).edit().putInt(KEY, pid).commit();
-
-        //// TODO: 16/8/8 hack ClassLoader
-        directory = new File(baseContext.getFilesDir(), "amigo");
+        directory = new File(getFilesDir(), "amigo");
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        hackApk = new File(directory, "demo.apk");
-        Log.e(TAG, "hackApk.exists-->" + hackApk.exists());
-        if (!hackApk.exists()) {
-            return;
-        }
+        demoAPk = new File(directory, "demo.apk");
+
         optimizedDir = new File(directory, "dex_opt");
         if (!optimizedDir.exists()) {
             optimizedDir.mkdir();
@@ -82,41 +71,48 @@ public class Amigo {
         }
 
         try {
-            releaseDexes(hackApk.getAbsolutePath(), dexDir.getAbsolutePath());
-            copyNativeBinaries(hackApk, nativeLibraryDir);
 
-            AmigoClassLoader hackClassLoader = new AmigoClassLoader(hackApk.getAbsolutePath(), getRootClassLoader());
-            setAPKClassLoader(hackClassLoader);
+            AmigoClassLoader amigoClassLoader = null;
+            Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
+            if (demoAPk.exists()) {
+                releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
+                copyNativeBinaries(demoAPk, nativeLibraryDir);
 
-            setNativeLibraryDirectories(hackClassLoader);
+                amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
+                setAPKClassLoader(amigoClassLoader);
 
-            AssetManager assetManager = AssetManager.class.newInstance();
-            Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
-            addAssetPath.setAccessible(true);
-            addAssetPath.invoke(assetManager, hackApk.getAbsolutePath());
-            setAPKResources(assetManager);
+                setNativeLibraryDirectories(amigoClassLoader);
 
-            Application application = applicationClazz.newInstance();
+                AssetManager assetManager = AssetManager.class.newInstance();
+                Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
+                addAssetPath.setAccessible(true);
+                addAssetPath.invoke(assetManager, demoAPk.getAbsolutePath());
+                setAPKResources(assetManager);
+            }
+
+
+            Class acd = Class.forName(getPackageName() + ".acd");
+            String applicationName = (String) readStaticField(acd, "n");
+            Application application = (Application) Class.forName(applicationName).newInstance();
             Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
             attach.setAccessible(true);
-            attach.invoke(application, baseContext);
+            attach.invoke(application, getBaseContext());
             setAPKApplication(application);
 
-            for (Object o : getNativeLibraryDirectories(hackClassLoader)) {
-                Log.e(TAG, "native-->" + o);
-            }
+            if (amigoClassLoader != null) {
+                for (Object o : getNativeLibraryDirectories(amigoClassLoader)) {
+                    Log.e(TAG, "native-->" + o);
+                }
 
-            Object dexPathList = getPathList(hackClassLoader);
-            Object[] dexElements = (Object[]) readField(dexPathList, "dexElements");
-            for (Object dexElement : dexElements) {
-                Log.e(TAG, "file-->" + readField(dexElement, "file"));
-                Log.e(TAG, "zip-->" + readField(dexElement, "zip"));
-                Log.e(TAG, "dexFile-->" + readField(dexElement, "dexFile"));
+                Object dexPathList = getPathList(amigoClassLoader);
+                Object[] dexElements = (Object[]) readField(dexPathList, "dexElements");
+                for (Object dexElement : dexElements) {
+                    Log.e(TAG, "file-->" + readField(dexElement, "file"));
+                    Log.e(TAG, "zip-->" + readField(dexElement, "zip"));
+                    Log.e(TAG, "dexFile-->" + readField(dexElement, "dexFile"));
+                }
             }
-
-            if (application != null) {
-                application.onCreate();
-            }
+            application.onCreate();
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -132,7 +128,7 @@ public class Amigo {
         }
     }
 
-    private static void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader)
+    private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader)
             throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, NoSuchFieldException {
         injectSoAtFirst(hackClassLoader, nativeLibraryDir.getAbsolutePath());
         nativeLibraryDir.setReadOnly();
@@ -144,7 +140,7 @@ public class Amigo {
         }
     }
 
-    private static void setAPKResources(AssetManager newAssetManager)
+    private void setAPKResources(AssetManager newAssetManager)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
         invokeMethod(newAssetManager, "ensureStringBlocks");
 
@@ -193,7 +189,7 @@ public class Amigo {
         }
     }
 
-    private static void setAPKClassLoader(ClassLoader classLoader)
+    private void setAPKClassLoader(ClassLoader classLoader)
             throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException {
         Object apk = getLoadedApk();
         Class apkClass = apk.getClass();
@@ -222,7 +218,7 @@ public class Amigo {
         writeField(dexPathList, "dexElements", dexElements);
     }
 
-    private static void setAPKApplication(Application application)
+    private void setAPKApplication(Application application)
             throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
         Object apk = getLoadedApk();
         Class apkClass = apk.getClass();
@@ -231,7 +227,7 @@ public class Amigo {
         mApplication.set(apk, application);
     }
 
-    private static Object getLoadedApk()
+    private Object getLoadedApk()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         Map<String, WeakReference<Object>> mPackages = (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
         for (String s : mPackages.keySet()) {

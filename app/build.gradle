@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'me.ele.amigo'
 
 android {
     compileSdkVersion 23
