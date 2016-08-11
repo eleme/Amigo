@@ -2,6 +2,7 @@ package me.ele.amigo;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -23,8 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import me.ele.amigo.utils.MD5;
-
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
 import static me.ele.amigo.reflect.FieldUtils.getField;
@@ -40,6 +39,9 @@ import static me.ele.amigo.utils.DexUtils.getNativeLibraryDirectories;
 import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
 import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
+import static me.ele.amigo.utils.FileUtils.copyFile;
+import static me.ele.amigo.utils.FileUtils.removeFile;
+import static me.ele.amigo.utils.MD5.checksum;
 
 public class Amigo extends Application {
 
@@ -58,6 +60,17 @@ public class Amigo extends Application {
     public void onCreate() {
         super.onCreate();
         Log.e(TAG, "onCreate");
+
+        if (getBaseContext() == null) {
+            try {
+                Object apk = getLoadedApk();
+                Application app = (Application) readField(apk, "mApplication", true);
+                attachBaseContext(app.getBaseContext());
+            } catch (Exception e) {
+                e.printStackTrace();
+                crash();
+            }
+        }
 
         directory = new File(getFilesDir(), "amigo");
         if (!directory.exists()) {
@@ -82,9 +95,9 @@ public class Amigo extends Application {
 
             AmigoClassLoader amigoClassLoader = null;
             Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
-            if (demoAPk.exists() && isSignatureRight()) {
+            if (demoAPk.exists() && isSignatureRight(this, demoAPk)) {
                 SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
-                String demoApkChecksum = MD5.checksum(demoAPk);
+                String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
                     releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
@@ -157,7 +170,7 @@ public class Amigo extends Application {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
-            String checksum = MD5.checksum(dexFile);
+            String checksum = checksum(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
     }
@@ -167,7 +180,7 @@ public class Amigo extends Application {
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = MD5.checksum(dexFile);
+            String checksum = checksum(dexFile);
             if (!savedChecksum.equals(checksum)) {
                 crash();
             }
@@ -178,14 +191,14 @@ public class Amigo extends Application {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
-            String checksum = MD5.checksum(dexFile);
+            String checksum = checksum(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
 
         File[] nativeFiles = nativeLibraryDir.listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
-                String checksum = MD5.checksum(nativeFile);
+                String checksum = checksum(nativeFile);
                 sp.edit().putString(nativeFile.getAbsolutePath(), checksum).commit();
             }
         }
@@ -196,7 +209,7 @@ public class Amigo extends Application {
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = MD5.checksum(dexFile);
+            String checksum = checksum(dexFile);
             if (!savedChecksum.equals(checksum)) {
                 crash();
             }
@@ -206,31 +219,12 @@ public class Amigo extends Application {
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
-                String checksum = MD5.checksum(nativeFile);
+                String checksum = checksum(nativeFile);
                 if (!savedChecksum.equals(checksum)) {
                     crash();
                 }
             }
         }
-    }
-
-    private void crash() {
-        String str = null;
-        int a = str.length();
-    }
-
-    private boolean isSignatureRight() {
-        try {
-            Signature appSig = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
-            Signature demoSig = getPackageManager().getPackageArchiveInfo(demoAPk.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
-            return appSig.hashCode() == demoSig.hashCode();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        crash();
-
-        return false;
     }
 
     private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader)
@@ -327,10 +321,7 @@ public class Amigo extends Application {
     private void setAPKApplication(Application application)
             throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
         Object apk = getLoadedApk();
-        Class apkClass = apk.getClass();
-        Field mApplication = getField(apkClass, "mApplication");
-        mApplication.setAccessible(true);
-        mApplication.set(apk, application);
+        writeField(apk, "mApplication", application);
     }
 
     private Object getLoadedApk()
@@ -345,6 +336,70 @@ public class Amigo extends Application {
         return null;
     }
 
+    private static void crash() {
+        String str = null;
+        int a = str.length();
+    }
+
+    public static void work(Context context) {
+        File directory = new File(context.getFilesDir(), "amigo");
+        File demoAPk = new File(directory, "demo.apk");
+        work(context, demoAPk);
+    }
+
+    public static void work(Context context, File apkFile) {
+        // TODO: 16/8/11 auto restart the whole app
+        if (context == null) {
+            throw new NullPointerException("param context cannot be null");
+        }
+
+        if (apkFile == null) {
+            throw new NullPointerException("param apkFile cannot be null");
+        }
+
+        if (!apkFile.exists()) {
+            throw new IllegalArgumentException("param apkFile doesn't exist");
+        }
+
+        if (!apkFile.canRead()) {
+            throw new IllegalArgumentException("param apkFile cannot be read");
+        }
+
+        if (!isSignatureRight(context, apkFile)) {
+            Log.e(TAG, "no valid apk");
+            return;
+        }
+
+        File directory = new File(context.getFilesDir(), "amigo");
+        File demoAPk = new File(directory, "demo.apk");
+        if (!apkFile.getAbsolutePath().equals(demoAPk.getAbsolutePath())) {
+            copyFile(apkFile, demoAPk);
+        }
+
+        try {
+            Amigo amigo = Amigo.class.newInstance();
+            amigo.onCreate();
+            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+            launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            context.startActivity(launchIntent);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean isSignatureRight(Context context, File apkFile) {
+        try {
+            Signature appSig = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
+            Signature demoSig = context.getPackageManager().getPackageArchiveInfo(apkFile.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
+            return appSig.hashCode() == demoSig.hashCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public static void clear(Context context) {
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
@@ -354,30 +409,8 @@ public class Amigo extends Application {
             return;
         }
 
-        deleteFile(directory);
+        removeFile(directory);
     }
 
-    private static void deleteFile(File file) {
-        if (file == null || !file.exists()) {
-            return;
-        }
 
-        file.setWritable(true);
-
-        if (file.isFile()) {
-            file.delete();
-            return;
-        }
-
-        if (file.isDirectory()) {
-
-            File[] listFiles = file.listFiles();
-            if (listFiles != null && listFiles.length > 0) {
-                for (File f : listFiles) {
-                    deleteFile(f);
-                }
-            }
-            file.delete();
-        }
-    }
 }
