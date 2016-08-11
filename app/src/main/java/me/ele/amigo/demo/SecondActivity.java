@@ -5,6 +5,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import me.ele.amigo.Amigo;
+
 public class SecondActivity extends AppCompatActivity {
 
     public static final String TAG = SecondActivity.class.getSimpleName();
@@ -16,5 +18,7 @@ public class SecondActivity extends AppCompatActivity {
         Log.e(TAG, "resources--->" + getResources());
 
         setContentView(R.layout.activity_main);
+
+        Amigo.clear(this);
     }
 }

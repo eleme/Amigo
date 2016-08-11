@@ -12,9 +12,9 @@ class AmigoPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
 
-        project.dependencies {
-            compile 'me.ele:amigo-lib:0.0.1'
-        }
+//        project.dependencies {
+//            compile 'me.ele:amigo-lib:0.0.1'
+//        }
 
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->

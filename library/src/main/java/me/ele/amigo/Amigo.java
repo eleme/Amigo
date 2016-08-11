@@ -2,6 +2,9 @@ package me.ele.amigo;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
@@ -19,6 +22,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import me.ele.amigo.utils.MD5;
 
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
@@ -38,7 +43,10 @@ import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 
 public class Amigo extends Application {
 
-    private final String TAG = Amigo.class.getSimpleName();
+    private static final String TAG = Amigo.class.getSimpleName();
+
+    private static final String SP_NAME = "Amigo";
+    private static final String NEW_APK_SIG = "new_apk_sig";
 
     private File directory;
     private File demoAPk;
@@ -74,13 +82,30 @@ public class Amigo extends Application {
 
             AmigoClassLoader amigoClassLoader = null;
             Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
-            if (demoAPk.exists()) {
-                releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
-                copyNativeBinaries(demoAPk, nativeLibraryDir);
+            if (demoAPk.exists() && isSignatureRight()) {
+                SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+                String demoApkChecksum = MD5.checksum(demoAPk);
+                boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
+                if (isFirstRun) {
+                    releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
+                    copyNativeBinaries(demoAPk, nativeLibraryDir);
+
+                    sp.edit().putString(NEW_APK_SIG, demoApkChecksum).commit();
+                    saveDexAndSoChecksum();
+                    Log.e(TAG, "release apk once");
+                } else {
+                    checkDexAndSoChecksum();
+                }
 
                 amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(amigoClassLoader);
 
+                setDexElements(amigoClassLoader);
+                if (isFirstRun) {
+                    saveDexOptChecksum();
+                } else {
+                    checkDexOptChecksum();
+                }
                 setNativeLibraryDirectories(amigoClassLoader);
 
                 AssetManager assetManager = AssetManager.class.newInstance();
@@ -126,6 +151,86 @@ public class Amigo extends Application {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    private void saveDexOptChecksum() {
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        File[] dexFiles = optimizedDir.listFiles();
+        for (File dexFile : dexFiles) {
+            String checksum = MD5.checksum(dexFile);
+            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
+        }
+    }
+
+    private void checkDexOptChecksum() {
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        File[] dexFiles = optimizedDir.listFiles();
+        for (File dexFile : dexFiles) {
+            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
+            String checksum = MD5.checksum(dexFile);
+            if (!savedChecksum.equals(checksum)) {
+                crash();
+            }
+        }
+    }
+
+    private void saveDexAndSoChecksum() {
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        File[] dexFiles = dexDir.listFiles();
+        for (File dexFile : dexFiles) {
+            String checksum = MD5.checksum(dexFile);
+            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
+        }
+
+        File[] nativeFiles = nativeLibraryDir.listFiles();
+        if (nativeFiles != null && nativeFiles.length > 0) {
+            for (File nativeFile : nativeFiles) {
+                String checksum = MD5.checksum(nativeFile);
+                sp.edit().putString(nativeFile.getAbsolutePath(), checksum).commit();
+            }
+        }
+    }
+
+    private void checkDexAndSoChecksum() {
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        File[] dexFiles = dexDir.listFiles();
+        for (File dexFile : dexFiles) {
+            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
+            String checksum = MD5.checksum(dexFile);
+            if (!savedChecksum.equals(checksum)) {
+                crash();
+            }
+        }
+
+        File[] nativeFiles = nativeLibraryDir.listFiles();
+        if (nativeFiles != null && nativeFiles.length > 0) {
+            for (File nativeFile : nativeFiles) {
+                String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
+                String checksum = MD5.checksum(nativeFile);
+                if (!savedChecksum.equals(checksum)) {
+                    crash();
+                }
+            }
+        }
+    }
+
+    private void crash() {
+        String str = null;
+        int a = str.length();
+    }
+
+    private boolean isSignatureRight() {
+        try {
+            Signature appSig = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
+            Signature demoSig = getPackageManager().getPackageArchiveInfo(demoAPk.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
+            return appSig.hashCode() == demoSig.hashCode();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        crash();
+
+        return false;
     }
 
     private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader)
@@ -196,8 +301,9 @@ public class Amigo extends Application {
         Field mClassLoader = getField(apkClass, "mClassLoader");
         mClassLoader.setAccessible(true);
         mClassLoader.set(apk, classLoader);
+    }
 
-
+    private void setDexElements(ClassLoader classLoader) throws NoSuchFieldException, IllegalAccessException {
         Object dexPathList = getPathList(classLoader);
         File[] listFiles = dexDir.listFiles();
 
@@ -237,5 +343,41 @@ public class Amigo extends Application {
             }
         }
         return null;
+    }
+
+    public static void clear(Context context) {
+        if (context == null) {
+            throw new NullPointerException("param context cannot be null");
+        }
+        File directory = new File(context.getFilesDir(), "amigo");
+        if (!directory.exists()) {
+            return;
+        }
+
+        deleteFile(directory);
+    }
+
+    private static void deleteFile(File file) {
+        if (file == null || !file.exists()) {
+            return;
+        }
+
+        file.setWritable(true);
+
+        if (file.isFile()) {
+            file.delete();
+            return;
+        }
+
+        if (file.isDirectory()) {
+
+            File[] listFiles = file.listFiles();
+            if (listFiles != null && listFiles.length > 0) {
+                for (File f : listFiles) {
+                    deleteFile(f);
+                }
+            }
+            file.delete();
+        }
     }
 }
