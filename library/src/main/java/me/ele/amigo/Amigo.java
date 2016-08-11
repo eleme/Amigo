@@ -15,7 +15,6 @@ import android.util.Log;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
 import static me.ele.amigo.utils.DexReleaser.releaseDexes;
 import static me.ele.amigo.utils.DexUtils.getElementWithDex;
-import static me.ele.amigo.utils.DexUtils.getNativeLibraryDirectories;
 import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
 import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
@@ -94,7 +92,6 @@ public class Amigo extends Application {
         }
 
         try {
-
             AmigoClassLoader amigoClassLoader = null;
             Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
             if (demoAPk.exists() && isSignatureRight(this, demoAPk)) {
@@ -130,7 +127,6 @@ public class Amigo extends Application {
                 setAPKResources(assetManager);
             }
 
-
             Class acd = Class.forName(getPackageName() + ".acd");
             String applicationName = (String) readStaticField(acd, "n");
             Application application = (Application) Class.forName(applicationName).newInstance();
@@ -138,33 +134,10 @@ public class Amigo extends Application {
             attach.setAccessible(true);
             attach.invoke(application, getBaseContext());
             setAPKApplication(application);
-
-            if (amigoClassLoader != null) {
-                for (Object o : getNativeLibraryDirectories(amigoClassLoader)) {
-                    Log.e(TAG, "native-->" + o);
-                }
-
-                Object dexPathList = getPathList(amigoClassLoader);
-                Object[] dexElements = (Object[]) readField(dexPathList, "dexElements");
-                for (Object dexElement : dexElements) {
-                    Log.e(TAG, "file-->" + readField(dexElement, "file"));
-                    Log.e(TAG, "zip-->" + readField(dexElement, "zip"));
-                    Log.e(TAG, "dexFile-->" + readField(dexElement, "dexFile"));
-                }
-            }
             application.onCreate();
-        } catch (InstantiationException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -292,11 +265,7 @@ public class Amigo extends Application {
 
     private void setAPKClassLoader(ClassLoader classLoader)
             throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException {
-        Object apk = getLoadedApk();
-        Class apkClass = apk.getClass();
-        Field mClassLoader = getField(apkClass, "mClassLoader");
-        mClassLoader.setAccessible(true);
-        mClassLoader.set(apk, classLoader);
+        writeField(getLoadedApk(), "mClassLoader", classLoader);
     }
 
     private void setDexElements(ClassLoader classLoader) throws NoSuchFieldException, IllegalAccessException {

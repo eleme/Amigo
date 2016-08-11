@@ -16,8 +16,6 @@ import android.widget.ImageView;
 
 import java.lang.reflect.Method;
 
-import me.ele.amigo.utils.DexUtils;
-
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,16 +44,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-        try {
-            for (Object o : DexUtils.getNativeLibraryDirectories(getClassLoader())) {
-                Log.e(TAG, "native-->" + o);
-            }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
 
         ImageView imageView = (ImageView) findViewById(R.id.imageview);
         try {

@@ -13,7 +13,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import me.ele.amigo.Amigo;
-import me.ele.amigo.utils.FileUtils;
 
 public class ApplicationContext extends Application {
 
@@ -43,7 +42,11 @@ public class ApplicationContext extends Application {
                 AssetManager assetManager = getAssets();
                 in = assetManager.open(assetName);
                 out = new FileOutputStream(outFile);
-                FileUtils.copyFile(in, out);
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
                 in.close();
                 out.close();
             }

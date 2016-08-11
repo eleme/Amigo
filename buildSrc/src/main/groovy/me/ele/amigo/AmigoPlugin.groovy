@@ -13,7 +13,7 @@ class AmigoPlugin implements Plugin<Project> {
     void apply(Project project) {
 
         project.dependencies {
-            compile 'me.ele:amigo-lib:0.0.3'
+            compile 'me.ele:amigo-lib:0.0.4'
         }
 
         project.plugins.withId('com.android.application') {
@@ -27,7 +27,6 @@ class AmigoPlugin implements Plugin<Project> {
                         def manifest = new XmlParser().parse(manifestFile)
                         def androidTag = new Namespace("http://schemas.android.com/apk/res/android", 'android')
                         applicationName = manifest.application[0].attribute(androidTag.name)
-                        println "applicationName1-->${applicationName}"
                         manifestFile.text = manifestFile.text.replace(applicationName, "me.ele.amigo.Amigo")
                     }
 
@@ -43,7 +42,6 @@ class AmigoPlugin implements Plugin<Project> {
                                     String value = keyValue[1].subSequence(0, keyValue[1].length() - 1).trim()
                                     if (key.equals(applicationName)) {
                                         applicationName = value
-                                        println "applicationName2-->${applicationName}"
                                     }
                                 }
                             }

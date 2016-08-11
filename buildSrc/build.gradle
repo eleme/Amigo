@@ -42,7 +42,7 @@ modifyPom {
     project {
         groupId 'me.ele'
         artifactId 'amigo'
-        version '0.0.3'
+        version '0.0.4'
         packaging 'jar'
     }
 }

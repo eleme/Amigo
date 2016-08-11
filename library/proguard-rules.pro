@@ -15,3 +15,8 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+-keep class me.ele.amigo.Amigo {
+      public static void clear(...);
+      public static java.io.File getHotfixApk(...);
+      public static void work(...);
+}

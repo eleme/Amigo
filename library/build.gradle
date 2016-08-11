@@ -13,7 +13,7 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -27,7 +27,7 @@ modifyPom {
     project {
         groupId 'me.ele'
         artifactId 'amigo-lib'
-        version '0.0.3'
+        version '0.0.4'
         packaging 'aar'
     }
 }
