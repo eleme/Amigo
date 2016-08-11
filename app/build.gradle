@@ -13,9 +13,19 @@ android {
         versionName "1.0"
         multiDexEnabled true
     }
+    signingConfigs {
+        debug {
+            storeFile file("${project.projectDir}/debug.keystore")
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storePassword 'android'
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            debuggable true
+            signingConfig signingConfigs.debug
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

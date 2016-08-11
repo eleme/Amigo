@@ -2,8 +2,18 @@ package me.ele.amigo.demo;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.support.multidex.MultiDex;
 import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import me.ele.amigo.Amigo;
+import me.ele.amigo.utils.FileUtils;
 
 public class ApplicationContext extends Application {
 
@@ -20,5 +30,44 @@ public class ApplicationContext extends Application {
     public void onCreate() {
         super.onCreate();
         Log.e(TAG, "onCreate: " + this);
+//        copyAsset("demo.apk");
+//        Amigo.work(this);
     }
+
+    private void copyAsset(String assetName) {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            File outFile = Amigo.getHotfixApk(this);
+            if (!outFile.exists()) {
+                AssetManager assetManager = getAssets();
+                in = assetManager.open(assetName);
+                out = new FileOutputStream(outFile);
+                FileUtils.copyFile(in, out);
+                in.close();
+                out.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+
 }

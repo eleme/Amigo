@@ -30,7 +30,7 @@ public class SecondActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Amigo.work(SecondActivity.this, new File(Environment.getExternalStorageDirectory(), "demo2.apk"));
+//                Amigo.work(SecondActivity.this, new File(Environment.getExternalStorageDirectory(), "demo2.apk"));
             }
         });
     }

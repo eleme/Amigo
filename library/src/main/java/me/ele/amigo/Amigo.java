@@ -50,6 +50,8 @@ public class Amigo extends Application {
     private static final String SP_NAME = "Amigo";
     private static final String NEW_APK_SIG = "new_apk_sig";
 
+    private static int pid;
+
     private File directory;
     private File demoAPk;
     private File optimizedDir;
@@ -349,6 +351,12 @@ public class Amigo extends Application {
 
     public static void work(Context context, File apkFile) {
         // TODO: 16/8/11 auto restart the whole app
+        if (pid == android.os.Process.myPid()) {
+            Log.e(TAG, "work in same process, stop");
+            return;
+        }
+        pid = android.os.Process.myPid();
+
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
@@ -380,7 +388,7 @@ public class Amigo extends Application {
             Amigo amigo = Amigo.class.newInstance();
             amigo.onCreate();
             Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-            launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(launchIntent);
         } catch (InstantiationException e) {
             e.printStackTrace();
@@ -410,6 +418,12 @@ public class Amigo extends Application {
         }
 
         removeFile(directory);
+        context.getSharedPreferences(SP_NAME, MODE_PRIVATE).edit().clear().commit();
+    }
+
+    public static File getHotfixApk(Context context) {
+        File directory = new File(context.getFilesDir(), "amigo");
+        return new File(directory, "demo.apk");
     }
 
 
