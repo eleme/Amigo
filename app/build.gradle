@@ -43,7 +43,7 @@ dependencies {
     // google support libraries
     compile 'com.android.support:multidex:1.0.1'
     compile 'me.ele:blur:1.0.3'
-//    compile project(':library')
+    compile project(':library')
 
     // multidex support
 //    compile "com.android.support:support-v4:23.4.0"

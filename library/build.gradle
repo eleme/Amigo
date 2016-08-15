@@ -27,8 +27,7 @@ modifyPom {
     project {
         groupId 'me.ele'
         artifactId 'amigo-lib'
-        version '0.0.4'
+        version '0.0.7'
         packaging 'aar'
     }
 }
-

@@ -27,20 +27,13 @@ public class MD5 {
         return complete.digest();
     }
 
-    public static String checksum(File file) {
-        try {
-            byte[] b = createChecksum(file);
-            String result = "";
-            for (int i = 0; i < b.length; i++) {
-                result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
-            }
-            return result;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+    public static String checksum(File file) throws IOException, NoSuchAlgorithmException {
+        byte[] b = createChecksum(file);
+        String result = "";
+        for (int i = 0; i < b.length; i++) {
+            result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
         }
-        return null;
+        return result;
     }
 
 }

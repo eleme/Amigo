@@ -5,20 +5,37 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.xml.Namespace
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.compile.JavaCompile
 
 class AmigoPlugin implements Plugin<Project> {
+
+    String content = "-keep class me.ele.amigo.** { *; }"
 
     @Override
     void apply(Project project) {
 
         project.dependencies {
-            compile 'me.ele:amigo-lib:0.0.4'
+            compile 'me.ele:amigo-lib:0.0.7'
         }
 
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->
                 variant.outputs.each { BaseVariantOutput output ->
+//                    transformClassesWithMultidexlistForPlatformDevDebug
+                    def mainlistTask = project.tasks.getByName("transformClassesWithMultidexlistFor${variant.name.capitalize()}")
+                    File maindexlist = new File("${project.buildDir}/intermediates/multi-dex/${variant.dirName}/maindexlist.txt")
+                    println "maindexlist-->${maindexlist}"
+                    println "mainlistTask--->${mainlistTask}"
+                    mainlistTask.doFirst {
+                        println "mainlistTask doFirst ${maindexlist.exists()}"
+                    }
+                    mainlistTask.doLast {
+                    //      /Users/caoyubin/Documents/workspace/warlock2/app/build/intermediates/multi-dex
+                        maindexlist << "\n"
+                        maindexlist << "me/ele/amigo/acd.class"
+                        println "mainlistTask doLast ${maindexlist.exists()}"
+                    }
 
                     def applicationName = null
 
@@ -30,11 +47,8 @@ class AmigoPlugin implements Plugin<Project> {
                         manifestFile.text = manifestFile.text.replace(applicationName, "me.ele.amigo.Amigo")
                     }
 
-                    def proguardTaskName = "transformClassesAndResourcesWithProguardFor${variant.name.capitalize()}"
-                    def proguardTask = project.tasks.findByName(proguardTaskName)
-                    def task = proguardTask ? proguardTask : output.processResources;
-                    task.doLast {
-                        if (proguardTask) {
+                    if (hasProguard(project, variant)) {
+                        getProguardTask(project, variant).doLast {
                             variant.mappingFile.eachLine { line ->
                                 if (!line.startsWith(" ")) {
                                     String[] keyValue = line.split("->");
@@ -45,43 +59,137 @@ class AmigoPlugin implements Plugin<Project> {
                                     }
                                 }
                             }
-                        }
 
-                        def generateCodeTask = project.tasks.create(
-                                name: "generate${variant.name.capitalize()}ApplicationInfo",
-                                type: GenerateCodeTask) {
-                            variantDirName variant.dirName
-                            application applicationName
-                            packageName variant.generateBuildConfig.buildConfigPackageName
-                        }
-                        generateCodeTask.execute()
+                            String generateCodeName = "generate${variant.name.capitalize()}ApplicationInfo"
+                            println "output-->${output.name}"
+                            println "generateCodeName-->${generateCodeName}"
 
-                        String taskName = "mapper${variant.name.capitalize()}InnerJavac"
-                        def javac = variant.javaCompiler
-                        project.task(type: JavaCompile, overwrite: true, taskName) { JavaCompile jc ->
-                            jc.source generateCodeTask.outputDir()
-                            jc.destinationDir javac.destinationDir
-                            jc.classpath = project.files(new File(((JavaCompile) javac).options.bootClasspath))
-                            jc.sourceCompatibility javac.sourceCompatibility
-                            jc.targetCompatibility javac.targetCompatibility
-                        }
-                        project.tasks.getByName(taskName).execute()
+                            def generateCodeTask = project.tasks.create(
+                                    name: generateCodeName,
+                                    type: GenerateCodeTask) {
+                                variantDirName variant.dirName
+                                application applicationName
+                            }
+                            generateCodeTask.execute()
 
-                        if (proguardTask) {
-                            def packageName = variant.generateBuildConfig.buildConfigPackageName
-                            def classAddress = "${variant.javaCompiler.destinationDir}/${packageName.replace('.', '/')}/acd.class"
+                            String taskName = "compile${variant.name.capitalize()}CodeForApp"
+                            def javac = variant.javaCompiler
+                            project.task(type: JavaCompile, overwrite: true, taskName) { JavaCompile jc ->
+                                jc.source generateCodeTask.outputDir()
+                                jc.destinationDir javac.destinationDir
+                                jc.classpath = project.files(new File(((JavaCompile) javac).options.bootClasspath))
+                                jc.sourceCompatibility javac.sourceCompatibility
+                                jc.targetCompatibility javac.targetCompatibility
+                            }
+                            project.tasks.getByName(taskName).execute()
+
+                            def classAddress = "${variant.javaCompiler.destinationDir}/me/ele/amigo/acd.class"
                             //add acd class into main.jar
                             File[] files = new File[1]
                             files[0] = new File(classAddress)
                             String proguardDir = "${project.buildDir}/intermediates/transforms/proguard/${variant.flavorName}"
                             String jarPath = Util.findFileInDir("main.jar", proguardDir)
                             Util.addFilesToExistingZip(new File(jarPath), files, Util.classEntryName(variant))
+
+                            if (hasMultiDex(project, variant)) {
+                                collectMultiDexInfo(project, variant)
+                                generateKeepFiles(project, variant)
+                            }
+                        }
+                    } else {
+                        variant.javaCompile.doLast {
+                            GenerateCodeTask generateCodeTask = project.tasks.create(
+                                    name: "generate${variant.name.capitalize()}ApplicationInfo",
+                                    type: GenerateCodeTask) {
+                                variantDirName variant.dirName
+                                application applicationName
+                            }
+                            generateCodeTask.execute()
+                            println "generateCodeTask execute"
+
+                            String taskName = "compile${variant.name.capitalize()}CodeForApp"
+                            def javac = variant.javaCompiler
+                            project.task(type: JavaCompile, overwrite: true, taskName) { JavaCompile jc ->
+                                jc.source generateCodeTask.outputDir()
+                                jc.destinationDir javac.destinationDir
+                                jc.classpath = project.files(new File(((JavaCompile) javac).options.bootClasspath))
+                                jc.sourceCompatibility javac.sourceCompatibility
+                                jc.targetCompatibility javac.targetCompatibility
+                            }
+                            project.tasks.getByName(taskName).execute()
+                            println "compile source-->${generateCodeTask.outputDir()}, des-->${javac.destinationDir}"
+
+                            if (hasMultiDex(project, variant)) {
+                                collectMultiDexInfo(project, variant)
+                                generateKeepFiles(project, variant)
+                            }
                         }
                     }
-
-
                 }
             }
         }
     }
+
+    void collectMultiDexInfo(Project project, ApkVariant variant) {
+        if (!hasProguard(project, variant)) {
+            println "no proguard mainDexPro-->\n${content}"
+            return
+        }
+        content = ""
+        variant.mappingFile.eachLine { line ->
+            if (!line.startsWith(" ")) {
+                String[] keyValue = line.split("->");
+                String key = keyValue[0].trim()
+                String value = keyValue[1].subSequence(0, keyValue[1].length() - 1).trim()
+                if (key.startsWith("me.ele.amigo")) {
+                    content += "\n"
+                    content += "-keep class ${value}"
+                }
+            }
+        }
+        println "proguard mainDexPro-->\n${content}"
+    }
+
+    void generateKeepFiles(Project project, ApkVariant variant) {
+        if (!hasMultiDex(project, variant)) {
+            return
+        }
+
+        //rewrite multiDexKeepFile file
+        File multiDexKeepFile = project.android.defaultConfig.multiDexKeepFile
+        File multiDexDir = project.file("${project.buildDir.absolutePath}/intermediates/multi-dex")
+        if (!multiDexDir.exists()) {
+            multiDexDir.mkdirs()
+        }
+        File multiDexKeepCacheFile = new File(multiDexDir, "amigo_multiDexKeep.pro")
+        multiDexKeepCacheFile.delete()
+        multiDexKeepCacheFile.createNewFile()
+        if (multiDexKeepFile && multiDexKeepFile.exists()) {
+            multiDexKeepCacheFile << multiDexKeepFile.getText('UTF-8')
+            multiDexKeepCacheFile << '\n'
+        }
+        multiDexKeepCacheFile << content
+        project.android.defaultConfig.multiDexKeepFile = multiDexKeepCacheFile
+
+        println multiDexKeepCacheFile.text
+    }
+
+    Task getMultiDexTask(Project project, ApkVariant variant) {
+        String multiDexTaskName = "transformClassesWithMultidexlistFor${variant.name.capitalize()}"
+        return project.tasks.findByName(multiDexTaskName);
+    }
+
+    Task getProguardTask(Project project, ApkVariant variant) {
+        String proguardTaskName = "transformClassesAndResourcesWithProguardFor${variant.name.capitalize()}"
+        return project.tasks.findByName(proguardTaskName)
+    }
+
+    boolean hasProguard(Project project, ApkVariant variant) {
+        return getProguardTask(project, variant) != null
+    }
+
+    boolean hasMultiDex(Project project, ApkVariant variant) {
+        return getMultiDexTask(project, variant) != null
+    }
+
 }

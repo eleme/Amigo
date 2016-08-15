@@ -20,3 +20,5 @@
       public static java.io.File getHotfixApk(...);
       public static void work(...);
 }
+
+-keep class me.ele.amigo.acd { *; }

@@ -11,7 +11,8 @@ buildscript {
 
 apply plugin: 'groovy'
 apply plugin: 'java'
-apply plugin: 'eradle'
+apply plugin: 'maven'
+//apply plugin: 'eradle'
 
 repositories {
     jcenter()
@@ -38,11 +39,25 @@ dependencies {
 }
 
 
-modifyPom {
-    project {
-        groupId 'me.ele'
-        artifactId 'amigo'
-        version '0.0.4'
-        packaging 'jar'
+//modifyPom {
+//    project {
+//        groupId 'me.ele'
+//        artifactId 'amigo'
+//        version '0.0.4'
+//        packaging 'jar'
+//    }
+//}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "file:/Users/caoyubin/Desktop/maven_repo")
+            pom {
+                setGroupId 'me.ele'
+                setArtifactId 'amigo'
+                setVersion '0.0.22'
+                setPackaging 'jar'
+            }
+        }
     }
 }

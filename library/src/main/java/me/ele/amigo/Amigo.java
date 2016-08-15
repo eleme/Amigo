@@ -13,10 +13,12 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -92,7 +94,6 @@ public class Amigo extends Application {
         }
 
         try {
-            AmigoClassLoader amigoClassLoader = null;
             Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
             if (demoAPk.exists() && isSignatureRight(this, demoAPk)) {
                 SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
@@ -109,7 +110,7 @@ public class Amigo extends Application {
                     checkDexAndSoChecksum();
                 }
 
-                amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
+                AmigoClassLoader amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
                 setAPKClassLoader(amigoClassLoader);
 
                 setDexElements(amigoClassLoader);
@@ -127,7 +128,7 @@ public class Amigo extends Application {
                 setAPKResources(assetManager);
             }
 
-            Class acd = Class.forName(getPackageName() + ".acd");
+            Class acd = Class.forName("me.ele.amigo.acd");
             String applicationName = (String) readStaticField(acd, "n");
             Application application = (Application) Class.forName(applicationName).newInstance();
             Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
@@ -141,7 +142,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void saveDexOptChecksum() {
+    private void saveDexOptChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
@@ -150,7 +151,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void checkDexOptChecksum() {
+    private void checkDexOptChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
@@ -162,7 +163,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void saveDexAndSoChecksum() {
+    private void saveDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
@@ -179,7 +180,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void checkDexAndSoChecksum() {
+    private void checkDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {

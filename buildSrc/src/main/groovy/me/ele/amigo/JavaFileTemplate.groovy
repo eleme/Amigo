@@ -4,11 +4,10 @@ class JavaFileTemplate {
 
     String application
 
-    String packageName
 
     def getContent() {
         return """
-package ${packageName};
+package me.ele.amigo;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
