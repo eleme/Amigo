@@ -8,34 +8,24 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.compile.JavaCompile
 
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+
 class AmigoPlugin implements Plugin<Project> {
 
-    String content = "-keep class me.ele.amigo.** { *; }"
+    String content = ""
+    static final VERSION = "0.0.7"
 
     @Override
     void apply(Project project) {
 
         project.dependencies {
-            compile 'me.ele:amigo-lib:0.0.7'
+            compile "me.ele:amigo-lib:${VERSION}"
         }
 
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->
                 variant.outputs.each { BaseVariantOutput output ->
-//                    transformClassesWithMultidexlistForPlatformDevDebug
-                    def mainlistTask = project.tasks.getByName("transformClassesWithMultidexlistFor${variant.name.capitalize()}")
-                    File maindexlist = new File("${project.buildDir}/intermediates/multi-dex/${variant.dirName}/maindexlist.txt")
-                    println "maindexlist-->${maindexlist}"
-                    println "mainlistTask--->${mainlistTask}"
-                    mainlistTask.doFirst {
-                        println "mainlistTask doFirst ${maindexlist.exists()}"
-                    }
-                    mainlistTask.doLast {
-                    //      /Users/caoyubin/Documents/workspace/warlock2/app/build/intermediates/multi-dex
-                        maindexlist << "\n"
-                        maindexlist << "me/ele/amigo/acd.class"
-                        println "mainlistTask doLast ${maindexlist.exists()}"
-                    }
 
                     def applicationName = null
 
@@ -132,10 +122,18 @@ class AmigoPlugin implements Plugin<Project> {
 
     void collectMultiDexInfo(Project project, ApkVariant variant) {
         if (!hasProguard(project, variant)) {
-            println "no proguard mainDexPro-->\n${content}"
+            String jarPath = "${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib/${VERSION}/jars/classes.jar"
+            JarFile jarFile = new JarFile(jarPath)
+            Enumeration<JarEntry> enumeration = jarFile.entries()
+            while (enumeration.hasMoreElements()) {
+                JarEntry entry = enumeration.nextElement()
+                content += "\n"
+                content += entry.name
+            }
+            content += "\n"
+            content += "me/ele/amigo/acd.class"
             return
         }
-        content = ""
         variant.mappingFile.eachLine { line ->
             if (!line.startsWith(" ")) {
                 String[] keyValue = line.split("->");
@@ -143,7 +141,7 @@ class AmigoPlugin implements Plugin<Project> {
                 String value = keyValue[1].subSequence(0, keyValue[1].length() - 1).trim()
                 if (key.startsWith("me.ele.amigo")) {
                     content += "\n"
-                    content += "-keep class ${value}"
+                    content += "${value.replace(".", "/")}.class"
                 }
             }
         }
@@ -154,24 +152,11 @@ class AmigoPlugin implements Plugin<Project> {
         if (!hasMultiDex(project, variant)) {
             return
         }
-
-        //rewrite multiDexKeepFile file
-        File multiDexKeepFile = project.android.defaultConfig.multiDexKeepFile
-        File multiDexDir = project.file("${project.buildDir.absolutePath}/intermediates/multi-dex")
-        if (!multiDexDir.exists()) {
-            multiDexDir.mkdirs()
+        def task = project.tasks.getByName("transformClassesWithMultidexlistFor${variant.name.capitalize()}")
+        File mainDexList = new File("${project.buildDir}/intermediates/multi-dex/${variant.dirName}/maindexlist.txt")
+        task.doLast {
+            mainDexList << content
         }
-        File multiDexKeepCacheFile = new File(multiDexDir, "amigo_multiDexKeep.pro")
-        multiDexKeepCacheFile.delete()
-        multiDexKeepCacheFile.createNewFile()
-        if (multiDexKeepFile && multiDexKeepFile.exists()) {
-            multiDexKeepCacheFile << multiDexKeepFile.getText('UTF-8')
-            multiDexKeepCacheFile << '\n'
-        }
-        multiDexKeepCacheFile << content
-        project.android.defaultConfig.multiDexKeepFile = multiDexKeepCacheFile
-
-        println multiDexKeepCacheFile.text
     }
 
     Task getMultiDexTask(Project project, ApkVariant variant) {

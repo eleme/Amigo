@@ -55,7 +55,7 @@ uploadArchives {
             pom {
                 setGroupId 'me.ele'
                 setArtifactId 'amigo'
-                setVersion '0.0.22'
+                setVersion '0.0.24'
                 setPackaging 'jar'
             }
         }
