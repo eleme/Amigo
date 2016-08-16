@@ -2,7 +2,7 @@ package me.ele.amigo
 
 class JavaFileTemplate {
 
-    String application
+    String appName
 
 
     def getContent() {
@@ -21,7 +21,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 public class acd {
-    public static final String n = "$application";
+    public static final String n = "$appName";
 }
 """
     }

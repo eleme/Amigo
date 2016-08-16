@@ -3,6 +3,7 @@ package me.ele.amigo
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import groovy.xml.Namespace
+import groovy.xml.XmlUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,7 +15,7 @@ import java.util.jar.JarFile
 class AmigoPlugin implements Plugin<Project> {
 
     String content = ""
-    static final VERSION = "0.0.7"
+    static final VERSION = "0.1.0"
 
     @Override
     void apply(Project project) {
@@ -35,6 +36,19 @@ class AmigoPlugin implements Plugin<Project> {
                         def androidTag = new Namespace("http://schemas.android.com/apk/res/android", 'android')
                         applicationName = manifest.application[0].attribute(androidTag.name)
                         manifestFile.text = manifestFile.text.replace(applicationName, "me.ele.amigo.Amigo")
+
+                        //fake original application as an activity, so it will be in main dex
+                        Node node = (new XmlParser()).parse(manifestFile)
+                        Node appNode = null
+                        for (Node n : node.children()) {
+                            if (n.name().equals("application")) {
+                                appNode = n;
+                                break
+                            }
+                        }
+                        Node hackAppNode = new Node(appNode, "activity")
+                        hackAppNode.attributes().put("android:name", applicationName)
+                        manifestFile.text = XmlUtil.serialize(node)
                     }
 
                     if (hasProguard(project, variant)) {
@@ -50,15 +64,11 @@ class AmigoPlugin implements Plugin<Project> {
                                 }
                             }
 
-                            String generateCodeName = "generate${variant.name.capitalize()}ApplicationInfo"
-                            println "output-->${output.name}"
-                            println "generateCodeName-->${generateCodeName}"
-
-                            def generateCodeTask = project.tasks.create(
-                                    name: generateCodeName,
+                            GenerateCodeTask generateCodeTask = project.tasks.create(
+                                    name: "generate${variant.name.capitalize()}ApplicationInfo",
                                     type: GenerateCodeTask) {
                                 variantDirName variant.dirName
-                                application applicationName
+                                appName applicationName
                             }
                             generateCodeTask.execute()
 
@@ -79,7 +89,7 @@ class AmigoPlugin implements Plugin<Project> {
                             files[0] = new File(classAddress)
                             String proguardDir = "${project.buildDir}/intermediates/transforms/proguard/${variant.flavorName}"
                             String jarPath = Util.findFileInDir("main.jar", proguardDir)
-                            Util.addFilesToExistingZip(new File(jarPath), files, Util.classEntryName(variant))
+                            Util.addFilesToExistingZip(new File(jarPath), files, "me/ele/amigo/acd.class")
 
                             if (hasMultiDex(project, variant)) {
                                 collectMultiDexInfo(project, variant)
@@ -92,7 +102,7 @@ class AmigoPlugin implements Plugin<Project> {
                                     name: "generate${variant.name.capitalize()}ApplicationInfo",
                                     type: GenerateCodeTask) {
                                 variantDirName variant.dirName
-                                application applicationName
+                                appName applicationName
                             }
                             generateCodeTask.execute()
                             println "generateCodeTask execute"
@@ -107,7 +117,6 @@ class AmigoPlugin implements Plugin<Project> {
                                 jc.targetCompatibility javac.targetCompatibility
                             }
                             project.tasks.getByName(taskName).execute()
-                            println "compile source-->${generateCodeTask.outputDir()}, des-->${javac.destinationDir}"
 
                             if (hasMultiDex(project, variant)) {
                                 collectMultiDexInfo(project, variant)
@@ -145,7 +154,9 @@ class AmigoPlugin implements Plugin<Project> {
                 }
             }
         }
-        println "proguard mainDexPro-->\n${content}"
+
+        content += "\n"
+        content += "me/ele/amigo/acd.class"
     }
 
     void generateKeepFiles(Project project, ApkVariant variant) {

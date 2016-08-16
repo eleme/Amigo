@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'eradle'
+apply plugin: 'maven'
 
 android {
     compileSdkVersion 23
@@ -27,7 +28,21 @@ modifyPom {
     project {
         groupId 'me.ele'
         artifactId 'amigo-lib'
-        version '0.0.7'
+        version '0.1.0'
         packaging 'aar'
     }
 }
+
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: "file:/Users/caoyubin/Desktop/maven_repo")
+//            pom {
+//                setGroupId 'me.ele'
+//                setArtifactId 'amigo-lib'
+//                setVersion '0.0.17'
+//                setPackaging 'aar'
+//            }
+//        }
+//    }
+//}

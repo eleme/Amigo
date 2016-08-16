@@ -9,7 +9,7 @@ import org.gradle.api.tasks.TaskAction
 class GenerateCodeTask extends DefaultTask {
 
     @Input
-    String application
+    String appName
 
     @Input
     String variantDirName
@@ -26,7 +26,7 @@ class GenerateCodeTask extends DefaultTask {
 
     @TaskAction
     def taskAction() {
-        def source = new JavaFileTemplate(['application': application]).getContent()
+        def source = new JavaFileTemplate(['appName': appName]).getContent()
         def outputFile = outputFile()
         if (!outputFile.isFile()) {
             outputFile.delete()

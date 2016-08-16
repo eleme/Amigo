@@ -1,7 +1,5 @@
 package me.ele.amigo
 
-import com.android.build.gradle.api.ApkVariant
-
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -89,17 +87,5 @@ class Util {
         // Complete the ZIP file
         out.close();
         tempFile.delete();
-    }
-
-    static String packageName(ApkVariant apkVariant) {
-        apkVariant.generateBuildConfig.buildConfigPackageName
-    }
-
-    static String fullClassName(ApkVariant variant) {
-        return "${packageName(variant)}.acd.class"
-    }
-
-    static String classEntryName(ApkVariant variant) {
-        fullClassName(variant).replace(".", "/").replace("/class", ".class");
     }
 }

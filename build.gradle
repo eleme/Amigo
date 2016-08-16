@@ -20,6 +20,9 @@ allprojects {
         maven {
             url "http://172.16.10.156:8081/nexus/content/groups/mobile"
         }
+//        maven {
+//            url "file:/Users/caoyubin/Desktop/maven_repo"
+//        }
     }
 }
 

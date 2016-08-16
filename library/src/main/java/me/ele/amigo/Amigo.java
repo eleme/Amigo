@@ -94,9 +94,12 @@ public class Amigo extends Application {
         }
 
         try {
-            Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists());
+            Log.e(TAG, "demoAPk.exists-->" + demoAPk.exists() + ", this--->" + this);
+
+            ClassLoader classLoader = getClassLoader();
+
             if (demoAPk.exists() && isSignatureRight(this, demoAPk)) {
-                SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+                SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
                 String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
@@ -111,6 +114,7 @@ public class Amigo extends Application {
                 }
 
                 AmigoClassLoader amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
+                classLoader = amigoClassLoader;
                 setAPKClassLoader(amigoClassLoader);
 
                 setDexElements(amigoClassLoader);
@@ -128,22 +132,22 @@ public class Amigo extends Application {
                 setAPKResources(assetManager);
             }
 
-            Class acd = Class.forName("me.ele.amigo.acd");
+            Class acd = classLoader.loadClass("me.ele.amigo.acd");
             String applicationName = (String) readStaticField(acd, "n");
-            Application application = (Application) Class.forName(applicationName).newInstance();
+            Application application = (Application) classLoader.loadClass(applicationName).newInstance();
             Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
             attach.setAccessible(true);
             attach.invoke(application, getBaseContext());
             setAPKApplication(application);
             application.onCreate();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
 
     private void saveDexOptChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
             String checksum = checksum(dexFile);
@@ -152,7 +156,7 @@ public class Amigo extends Application {
     }
 
     private void checkDexOptChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
@@ -164,7 +168,7 @@ public class Amigo extends Application {
     }
 
     private void saveDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
             String checksum = checksum(dexFile);
@@ -181,7 +185,7 @@ public class Amigo extends Application {
     }
 
     private void checkDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
@@ -388,7 +392,7 @@ public class Amigo extends Application {
         }
 
         removeFile(directory);
-        context.getSharedPreferences(SP_NAME, MODE_PRIVATE).edit().clear().commit();
+        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS).edit().clear().commit();
     }
 
     public static File getHotfixApk(Context context) {
