@@ -9,6 +9,7 @@ import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Process;
 import android.util.ArrayMap;
 import android.util.Log;
 
@@ -324,7 +325,7 @@ public class Amigo extends Application {
     }
 
     public static void work(Context context, File apkFile) {
-        // TODO: 16/8/11 auto restart the whole app
+        // auto restart the whole app
         if (pid == android.os.Process.myPid()) {
             Log.e(TAG, "work in same process, stop");
             return;
@@ -358,17 +359,10 @@ public class Amigo extends Application {
             copyFile(apkFile, demoAPk);
         }
 
-        try {
-            Amigo amigo = Amigo.class.newInstance();
-            amigo.onCreate();
-            Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-            launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(launchIntent);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        context.startService(new Intent(context, AmigoService.class));
+
+        System.exit(0);
+        Process.killProcess(Process.myPid());
     }
 
     private static boolean isSignatureRight(Context context, File apkFile) {

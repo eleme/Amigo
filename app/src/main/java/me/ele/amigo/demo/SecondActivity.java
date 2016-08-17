@@ -1,7 +1,6 @@
 package me.ele.amigo.demo;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -30,7 +29,7 @@ public class SecondActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Amigo.work(SecondActivity.this, new File(Environment.getExternalStorageDirectory(), "demo2.apk"));
+                Amigo.work(SecondActivity.this, new File(getApplicationInfo().sourceDir));
             }
         });
     }

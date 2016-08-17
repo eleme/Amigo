@@ -12,7 +12,7 @@ so...
 ### usage
 
 ```groovy
- classpath 'me.ele:amigo:0.1.0'
+ classpath 'me.ele:amigo:0.1.6'
  ...
 
  apply plugin: 'me.ele.amigo'
