@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import me.ele.amigo.utils.ProcessUtils;
+
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
 import static me.ele.amigo.reflect.FieldUtils.getField;
@@ -73,6 +75,10 @@ public class Amigo extends Application {
                 e.printStackTrace();
                 crash();
             }
+        }
+
+        if (!ProcessUtils.isMainProcess(this)) {
+            return;
         }
 
         directory = new File(getFilesDir(), "amigo");

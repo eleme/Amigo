@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Process;
 import android.util.Log;
 
 import static me.ele.amigo.utils.ProcessUtils.isMainProcessRunning;
@@ -30,6 +31,8 @@ public class AmigoService extends Service {
                         context.startActivity(launchIntent);
                         Log.e(TAG, "start launchIntent");
                         stopSelf();
+                        System.exit(0);
+                        Process.killProcess(Process.myPid());
                         return;
                     }
                     sendEmptyMessageDelayed(WHAT, DELAY);
