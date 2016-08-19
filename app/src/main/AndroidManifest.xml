@@ -23,6 +23,16 @@
         </activity>
 
         <activity android:name=".SecondActivity" />
+
+        <meta-data
+            android:name="amigo_layout"
+            android:value="amigo_layout_demo" />
+
+        <meta-data
+            android:name="amigo_theme"
+            android:value="amigoThemeDemo" />
+
+
     </application>
 
 </manifest>

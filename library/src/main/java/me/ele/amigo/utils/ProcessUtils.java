@@ -11,6 +11,7 @@ public class ProcessUtils {
     private ProcessUtils() {
 
     }
+
     public static boolean isMainProcess(Context context) {
         return context.getPackageName().equals(getCurrentProcessName(context));
     }
@@ -28,6 +29,7 @@ public class ProcessUtils {
         }
         return null;
     }
+
     public static boolean isMainProcessRunning(Context context) {
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
@@ -40,5 +42,10 @@ public class ProcessUtils {
         return false;
     }
 
+    public static boolean isLoadDexProcess(Context context) {
+        String currentProcessName = getCurrentProcessName(context);
+        String loadDexProcessName = context.getPackageName() + ":eleme_apk_releaser";
+        return currentProcessName.equals(loadDexProcessName);
+    }
 
 }

@@ -12,7 +12,7 @@ so...
 ### usage
 
 ```groovy
- classpath 'me.ele:amigo:0.1.8'
+ classpath 'me.ele:amigo:0.1.9'
  ...
 
  apply plugin: 'me.ele.amigo'
@@ -42,6 +42,19 @@ Amigo.work(context, apkFile);
 
 ```java
 Amigo.clear(context);
+```
+
+### some time-tense operation is handled in a new process with an activity, you may customize it
+
+```xml
+<meta-data
+    android:name="amigo_layout"
+    android:value="{your-layout-name}" />
+
+<meta-data
+    android:name="amigo_theme"
+    android:value="{your-theme-name}" />
+
 ```
 
 ## now Amigo support to load new Activity and BroadcastReceiver

@@ -4,12 +4,14 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Process;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
 
@@ -26,10 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.ProcessUtils;
 
+import static android.content.pm.PackageManager.GET_META_DATA;
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
-import static me.ele.amigo.compat.NativeLibraryHelperCompat.copyNativeBinaries;
 import static me.ele.amigo.reflect.FieldUtils.getField;
 import static me.ele.amigo.reflect.FieldUtils.readField;
 import static me.ele.amigo.reflect.FieldUtils.readStaticField;
@@ -37,7 +40,6 @@ import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
-import static me.ele.amigo.utils.DexReleaser.releaseDexes;
 import static me.ele.amigo.utils.DexUtils.getElementWithDex;
 import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
@@ -50,7 +52,7 @@ public class Amigo extends Application {
 
     private static final String TAG = Amigo.class.getSimpleName();
 
-    private static final String SP_NAME = "Amigo";
+    public static final String SP_NAME = "Amigo";
     private static final String NEW_APK_SIG = "new_apk_sig";
 
     private static int pid;
@@ -110,8 +112,19 @@ public class Amigo extends Application {
                 String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
-                    releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
-                    copyNativeBinaries(demoAPk, nativeLibraryDir);
+                    //start a new process to handle time-tense operation
+                    ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
+                    String layoutName = appInfo.metaData.getString("amigo_layout");
+                    String themeName = appInfo.metaData.getString("amigo_theme");
+                    int layoutId = 0;
+                    int themeId = 0;
+                    if (!TextUtils.isEmpty(layoutName)) {
+                        layoutId = getResources().getIdentifier(layoutName, "layout", getPackageName());
+                    }
+                    if (!TextUtils.isEmpty(themeName)) {
+                        themeId = getResources().getIdentifier(themeName, "style", getPackageName());
+                    }
+                    ApkReleaser.work(this, layoutId, themeId);
 
                     sp.edit().putString(NEW_APK_SIG, demoApkChecksum).commit();
                     saveDexAndSoChecksum();

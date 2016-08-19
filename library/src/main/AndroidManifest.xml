@@ -10,6 +10,15 @@
             android:name=".AmigoService"
             android:process=":amigo" />
 
+        <activity
+            android:alwaysRetainTaskState="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:name=".release.ApkReleaseActivity"
+            android:process=":eleme_apk_releaser"
+            android:screenOrientation="portrait"
+            />
+
     </application>
 
 </manifest>

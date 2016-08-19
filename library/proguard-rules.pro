@@ -22,3 +22,6 @@
 }
 
 -keep class me.ele.amigo.acd { *; }
+
+-keep class *.R$layout { *; }
+-keep class *.R$style { *; }
