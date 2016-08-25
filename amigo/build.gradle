@@ -29,7 +29,7 @@ def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
 
 group = GROUP
-version = '0.0.2'
+version = '0.0.3'
 
 install {
     repositories.mavenInstaller {
