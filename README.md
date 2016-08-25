@@ -19,7 +19,7 @@ so...
  ...
 ```
 
-you are good to good now, as simple as this.
+you are good to go now, as simple as this.
 
 ### if you don't need hotfix work immediately
 
@@ -62,10 +62,12 @@ Amigo.clear(context);
 you can add activities & receivers whatever you like to add in your hotfix apk,
 waiting for **Service** & **ContentProvider**
 
+if you would like to RTFC, please checkout **support_new_added_components** branch
+
 this's in **beta** version for now, so you may use this
 
 ```groovy
- classpath 'me.ele:amigo:0.1.7'
+ classpath 'me.ele:amigo:0.0.1-beta1'
  ...
 
 ```
