@@ -35,7 +35,7 @@ install {
     repositories.mavenInstaller {
         pom.project {
             name ARTIFACTID
-            description 'A hotfix library for Android plateform'
+            description 'A hotfix library for Android platform'
             url 'https://github.com/eleme/Amigo'
             inceptionYear '2016'
 
