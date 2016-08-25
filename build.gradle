@@ -2,15 +2,16 @@
 
 buildscript {
     repositories {
-        jcenter()
-
         maven {
-            url "http://172.16.10.156:8081/nexus/content/groups/mobile"
+            url "https://dl.bintray.com/jackcho/maven"
         }
+        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.1.2'
-        classpath 'me.ele:eradle:1.5.+'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
+        classpath 'me.ele:amigo:0.0.2'
     }
 }
 
@@ -18,10 +19,7 @@ allprojects {
     repositories {
         jcenter()
         maven {
-            url "http://172.16.10.156:8081/nexus/content/groups/mobile"
-        }
-        maven {
-            url "file:/Users/caoyubin/Desktop/maven_repo"
+            url "https://dl.bintray.com/jackcho/maven"
         }
     }
 }

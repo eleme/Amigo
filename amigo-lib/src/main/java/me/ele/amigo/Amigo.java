@@ -68,17 +68,6 @@ public class Amigo extends Application {
         super.onCreate();
         Log.e(TAG, "onCreate");
 
-        if (getBaseContext() == null) {
-            try {
-                Object apk = getLoadedApk();
-                Application app = (Application) readField(apk, "mApplication", true);
-                attachBaseContext(app.getBaseContext());
-            } catch (Exception e) {
-                e.printStackTrace();
-                crash();
-            }
-        }
-
         if (!ProcessUtils.isMainProcess(this)) {
             return;
         }

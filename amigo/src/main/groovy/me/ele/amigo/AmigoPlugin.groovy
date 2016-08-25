@@ -15,7 +15,7 @@ import java.util.jar.JarFile
 class AmigoPlugin implements Plugin<Project> {
 
     String content = ""
-    static final VERSION = "0.1.9"
+    static final VERSION = "0.0.1"
 
     @Override
     void apply(Project project) {
@@ -143,6 +143,7 @@ class AmigoPlugin implements Plugin<Project> {
             content += "me/ele/amigo/acd.class"
             return
         }
+
         variant.mappingFile.eachLine { line ->
             if (!line.startsWith(" ")) {
                 String[] keyValue = line.split("->");

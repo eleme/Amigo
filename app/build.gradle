@@ -42,6 +42,5 @@ dependencies {
     compile 'com.android.support:design:23.4.0'
     compile 'com.android.support:multidex:1.0.1'
 
-    compile 'me.ele:blur:1.0.3'
-//    compile project(':library')
+//    compile project(':amigo-lib')
 }

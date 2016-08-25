@@ -17,3 +17,7 @@
 #}
 -dontoptimize
 -dontshrink
+
+-keep class me.ele.amigo.** { *; }
+-keep class *.R$layout { *; }
+-keep class *.R$style { *; }

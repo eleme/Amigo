@@ -3,7 +3,6 @@
 
     <application
         android:allowBackup="true"
-        android:label="@string/app_name"
         android:supportsRtl="true">
 
         <service
@@ -11,13 +10,12 @@
             android:process=":amigo" />
 
         <activity
+            android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
-            android:name=".release.ApkReleaseActivity"
             android:process=":eleme_apk_releaser"
-            android:screenOrientation="portrait"
-            />
+            android:screenOrientation="portrait" />
 
     </application>
 
