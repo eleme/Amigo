@@ -83,13 +83,15 @@ class AmigoPlugin implements Plugin<Project> {
                             }
                             project.tasks.getByName(taskName).execute()
 
-                            def classAddress = "${variant.javaCompiler.destinationDir}/me/ele/amigo/acd.class"
+                            String entryName = "me/ele/amigo/acd.class"
+                            def classAddress = "${variant.javaCompiler.destinationDir}/${entryName}"
                             //add acd class into main.jar
                             File[] files = new File[1]
                             files[0] = new File(classAddress)
                             String proguardDir = "${project.buildDir}/intermediates/transforms/proguard/${variant.flavorName}"
-                            String jarPath = Util.findFileInDir("main.jar", proguardDir)
-                            Util.addFilesToExistingZip(new File(jarPath), files, "me/ele/amigo/acd.class")
+                            File mainJarFile = new File(Util.findFileInDir("main.jar", proguardDir))
+                            Util.deleteZipEntry(mainJarFile, [entryName])
+                            Util.addFilesToExistingZip(mainJarFile, files, entryName)
 
                             if (hasMultiDex(project, variant)) {
                                 collectMultiDexInfo(project, variant)
