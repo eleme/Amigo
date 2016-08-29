@@ -9,6 +9,9 @@ import android.util.Log;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import dalvik.system.DexClassLoader;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
@@ -22,7 +25,7 @@ public class ApkReleaseActivity extends Activity {
     static final int WHAT_DEX_OPT_DONE = 1;
     static final int WHAT_FINISH = 2;
 
-    static final int DELAY_FINISH_TIME = 2000;
+    static final int DELAY_FINISH_TIME = 4000;
     static final String LAYOUT_ID = "layout_id";
     static final String THEME_ID = "theme_id";
 
@@ -34,6 +37,9 @@ public class ApkReleaseActivity extends Activity {
     private File optimizedDir;
     private File dexDir;
     private File nativeLibraryDir;
+
+    private AtomicInteger counter = new AtomicInteger();
+    private ExecutorService service = Executors.newFixedThreadPool(3);
 
     private Handler handler = new Handler() {
         @Override
@@ -79,12 +85,9 @@ public class ApkReleaseActivity extends Activity {
             @Override
             public void run() {
                 super.run();
-
                 DexReleaser.releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
                 NativeLibraryHelperCompat.copyNativeBinaries(demoAPk, nativeLibraryDir);
                 dexOptimization();
-
-                handler.sendEmptyMessage(WHAT_DEX_OPT_DONE);
             }
         }.start();
     }
@@ -92,16 +95,26 @@ public class ApkReleaseActivity extends Activity {
     private void dexOptimization() {
         File[] listFiles = dexDir.listFiles();
 
-        List<File> validDexes = new ArrayList<>();
+        final List<File> validDexes = new ArrayList<>();
         for (File listFile : listFiles) {
             if (listFile.getName().endsWith(".dex")) {
                 validDexes.add(listFile);
             }
         }
 
-        for (File dex : validDexes) {
-            new DexClassLoader(dex.getAbsolutePath(), optimizedDir.getAbsolutePath(), null, DexUtils.getPathClassLoader());
-            Log.e(TAG, "dexOptimization finished-->" + dex);
+        for (final File dex : validDexes) {
+            service.submit(new Runnable() {
+                @Override
+                public void run() {
+                    long startTime = System.currentTimeMillis();
+                    new DexClassLoader(dex.getAbsolutePath(), optimizedDir.getAbsolutePath(), null, DexUtils.getPathClassLoader());
+                    Log.e(TAG, String.format("dex %s consume %d ms", dex.getAbsolutePath(), System.currentTimeMillis() - startTime));
+                    int num = counter.incrementAndGet();
+                    if (num == validDexes.size()) {
+                        handler.sendEmptyMessage(WHAT_DEX_OPT_DONE);
+                    }
+                }
+            });
         }
     }
 
