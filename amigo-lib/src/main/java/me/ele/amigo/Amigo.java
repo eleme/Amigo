@@ -101,6 +101,9 @@ public class Amigo extends Application {
                 String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
+                    //clear previous apk
+                    Amigo.clear(this);
+
                     //start a new process to handle time-tense operation
                     ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
                     String layoutName = appInfo.metaData.getString("amigo_layout");
