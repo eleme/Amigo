@@ -55,8 +55,6 @@ public class Amigo extends Application {
     public static final String SP_NAME = "Amigo";
     private static final String NEW_APK_SIG = "new_apk_sig";
 
-    private static int pid;
-
     private File directory;
     private File demoAPk;
     private File optimizedDir;
@@ -332,14 +330,8 @@ public class Amigo extends Application {
         work(context, demoAPk);
     }
 
+    // auto restart the whole app
     public static void work(Context context, File apkFile) {
-        // auto restart the whole app
-        if (pid == android.os.Process.myPid()) {
-            Log.e(TAG, "work in same process, stop");
-            return;
-        }
-        pid = android.os.Process.myPid();
-
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
