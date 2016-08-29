@@ -23,7 +23,7 @@ def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo-lib'
 
 group = GROUP
-version = '0.0.4'
+version = '0.0.5'
 
 install {
     repositories.mavenInstaller {
