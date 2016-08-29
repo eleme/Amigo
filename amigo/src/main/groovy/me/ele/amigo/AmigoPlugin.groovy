@@ -15,7 +15,7 @@ import java.util.jar.JarFile
 class AmigoPlugin implements Plugin<Project> {
 
     String content = ""
-    static final VERSION = "0.0.3"
+    static final VERSION = "0.0.4"
 
     @Override
     void apply(Project project) {
