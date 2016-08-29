@@ -9,9 +9,9 @@ import android.util.Log;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import dalvik.system.DexClassLoader;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
@@ -38,7 +38,6 @@ public class ApkReleaseActivity extends Activity {
     private File dexDir;
     private File nativeLibraryDir;
 
-    private AtomicInteger counter = new AtomicInteger();
     private ExecutorService service = Executors.newFixedThreadPool(3);
 
     private Handler handler = new Handler() {
@@ -81,15 +80,14 @@ public class ApkReleaseActivity extends Activity {
         dexDir = new File(directory, "dex");
         nativeLibraryDir = new File(directory, "lib");
 
-        new Thread() {
+        service.submit(new Runnable() {
             @Override
             public void run() {
-                super.run();
                 DexReleaser.releaseDexes(demoAPk.getAbsolutePath(), dexDir.getAbsolutePath());
                 NativeLibraryHelperCompat.copyNativeBinaries(demoAPk, nativeLibraryDir);
                 dexOptimization();
             }
-        }.start();
+        });
     }
 
     private void dexOptimization() {
@@ -102,6 +100,8 @@ public class ApkReleaseActivity extends Activity {
             }
         }
 
+        final CountDownLatch countDownLatch = new CountDownLatch(validDexes.size());
+
         for (final File dex : validDexes) {
             service.submit(new Runnable() {
                 @Override
@@ -109,13 +109,18 @@ public class ApkReleaseActivity extends Activity {
                     long startTime = System.currentTimeMillis();
                     new DexClassLoader(dex.getAbsolutePath(), optimizedDir.getAbsolutePath(), null, DexUtils.getPathClassLoader());
                     Log.e(TAG, String.format("dex %s consume %d ms", dex.getAbsolutePath(), System.currentTimeMillis() - startTime));
-                    int num = counter.incrementAndGet();
-                    if (num == validDexes.size()) {
-                        handler.sendEmptyMessage(WHAT_DEX_OPT_DONE);
-                    }
+                    countDownLatch.countDown();
                 }
             });
         }
+
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        handler.sendEmptyMessage(WHAT_DEX_OPT_DONE);
     }
 
 
