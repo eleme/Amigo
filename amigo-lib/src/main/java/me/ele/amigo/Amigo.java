@@ -55,8 +55,6 @@ public class Amigo extends Application {
     public static final String SP_NAME = "Amigo";
     private static final String NEW_APK_SIG = "new_apk_sig";
 
-    private static int pid;
-
     private File directory;
     private File demoAPk;
     private File optimizedDir;
@@ -101,6 +99,9 @@ public class Amigo extends Application {
                 String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
+                    //clear previous working dir
+                    Amigo.clearWithoutApk(this);
+
                     //start a new process to handle time-tense operation
                     ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
                     String layoutName = appInfo.metaData.getString("amigo_layout");
@@ -108,11 +109,14 @@ public class Amigo extends Application {
                     int layoutId = 0;
                     int themeId = 0;
                     if (!TextUtils.isEmpty(layoutName)) {
-                        layoutId = getResources().getIdentifier(layoutName, "layout", getPackageName());
+                        layoutId = (int) readStaticField(Class.forName(getPackageName() + ".R$layout"), layoutName);
                     }
                     if (!TextUtils.isEmpty(themeName)) {
-                        themeId = getResources().getIdentifier(themeName, "style", getPackageName());
+                        themeId = (int) readStaticField(Class.forName(getPackageName() + ".R$style"), themeName);
                     }
+                    Log.e(TAG, String.format("layoutName-->%s, themeName-->%s", layoutName, themeName));
+                    Log.e(TAG, String.format("layoutId-->%d, themeId-->%d", layoutId, themeId));
+
                     ApkReleaser.work(this, layoutId, themeId);
 
                     sp.edit().putString(NEW_APK_SIG, demoApkChecksum).commit();
@@ -127,6 +131,7 @@ public class Amigo extends Application {
                 setAPKClassLoader(amigoClassLoader);
 
                 setDexElements(amigoClassLoader);
+
                 if (isFirstRun) {
                     saveDexOptChecksum();
                 } else {
@@ -278,7 +283,7 @@ public class Amigo extends Application {
     }
 
     private void setAPKClassLoader(ClassLoader classLoader)
-            throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException, NoSuchFieldException {
+            throws IllegalAccessException, NoSuchMethodException, ClassNotFoundException, InvocationTargetException {
         writeField(getLoadedApk(), "mClassLoader", classLoader);
     }
 
@@ -309,7 +314,7 @@ public class Amigo extends Application {
         writeField(apk, "mApplication", application);
     }
 
-    private Object getLoadedApk()
+    private static Object getLoadedApk()
             throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
         Map<String, WeakReference<Object>> mPackages = (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
         for (String s : mPackages.keySet()) {
@@ -332,14 +337,8 @@ public class Amigo extends Application {
         work(context, demoAPk);
     }
 
+    // auto restart the whole app
     public static void work(Context context, File apkFile) {
-        // auto restart the whole app
-        if (pid == android.os.Process.myPid()) {
-            Log.e(TAG, "work in same process, stop");
-            return;
-        }
-        pid = android.os.Process.myPid();
-
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
@@ -397,10 +396,38 @@ public class Amigo extends Application {
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS).edit().clear().commit();
     }
 
+    private static void clearWithoutApk(Context context) {
+        if (context == null) {
+            throw new NullPointerException("param context cannot be null");
+        }
+        File directory = new File(context.getFilesDir(), "amigo");
+        if (!directory.exists()) {
+            return;
+        }
+
+        File[] files = directory.listFiles();
+        String demoApkPath = getHotfixApk(context).getAbsolutePath();
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (!file.getAbsolutePath().equals(demoApkPath)) {
+                    removeFile(file, false);
+                }
+            }
+        }
+    }
+
     public static File getHotfixApk(Context context) {
         File directory = new File(context.getFilesDir(), "amigo");
         return new File(directory, "demo.apk");
     }
 
-
+    public static boolean hasWorked() {
+        ClassLoader classLoader = null;
+        try {
+            classLoader = (ClassLoader) readField(getLoadedApk(), "mClassLoader");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return classLoader instanceof AmigoClassLoader;
+    }
 }

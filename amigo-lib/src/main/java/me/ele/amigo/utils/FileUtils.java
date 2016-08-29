@@ -48,6 +48,10 @@ public class FileUtils {
     }
 
     public static void removeFile(File file) {
+        removeFile(file, true);
+    }
+
+    public static void removeFile(File file, boolean isDirRemovable) {
         if (file == null || !file.exists()) {
             return;
         }
@@ -67,7 +71,11 @@ public class FileUtils {
                     removeFile(f);
                 }
             }
-            file.delete();
+
+            if (isDirRemovable) {
+                file.delete();
+            }
         }
     }
+
 }
