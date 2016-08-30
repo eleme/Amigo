@@ -26,15 +26,14 @@ class AmigoPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
 
-        project.afterEvaluate {
-            Configuration configuration = project.rootProject.buildscript.configurations.getByName('classpath')
-            configuration.allDependencies.all { Dependency dependency ->
-                if (dependency.group == GROUP && dependency.name == NAME) {
-                    version = dependency.version
-                }
+        Configuration configuration = project.rootProject.buildscript.configurations.getByName(
+            'classpath')
+        configuration.allDependencies.all { Dependency dependency ->
+            if (dependency.group == GROUP && dependency.name == NAME) {
+                version = dependency.version
             }
-            println 'amigo plugin version: ' + version
         }
+        println 'amigo plugin version: ' + version
 
         project.dependencies {
             if (Util.containsProject(project, 'amigo-lib')) {
@@ -55,12 +54,16 @@ class AmigoPlugin implements Plugin<Project> {
                 variant.outputs.each { BaseVariantOutput output ->
 
                     def applicationName = null
+                    File manifestFile = output.processManifest.manifestOutputFile
+                    if (manifestFile.exists()) {
+                        manifestFile.delete()
+                    }
 
                     output.processManifest.doLast {
-                        File manifestFile = output.processManifest.manifestOutputFile
-                        def manifest = new XmlParser().parse(manifestFile)
-                        def androidTag = new Namespace("http://schemas.android.com/apk/res/android", 'android')
-                        applicationName = manifest.application[0].attribute(androidTag.name)
+                        manifestFile = output.processManifest.manifestOutputFile
+                        applicationName = getAppName(manifestFile)
+                        println 'app name: ' + applicationName
+
                         manifestFile.text = manifestFile.text.replace(applicationName, "me.ele.amigo.Amigo")
 
                         //fake original application as an activity, so it will be in main dex
@@ -162,6 +165,15 @@ class AmigoPlugin implements Plugin<Project> {
         if (jarPath.exists()) {
             jarPath.delete()
         }
+    }
+
+    String getAppName(File manifestFile) {
+        def manifest = new XmlParser().parse(manifestFile)
+        def androidTag = new Namespace("http://schemas.android.com/apk/res/android", 'android')
+        if (manifestFile.exists()) {
+            return manifest.application[0].attribute(androidTag.name)
+        }
+        return null
     }
 
     void collectMultiDexInfo(Project project, ApkVariant variant) {

@@ -13,6 +13,9 @@ public class FileUtils {
         FileOutputStream outputStream = null;
         FileInputStream inputStream = null;
         try {
+            if (!dstFile.exists()) {
+                dstFile.getParentFile().mkdirs();
+            }
             outputStream = new FileOutputStream(dstFile);
             inputStream = new FileInputStream(sourceFile);
             copyFile(inputStream, outputStream);
