@@ -37,7 +37,7 @@ Amigo
 
    	获取到新的Apk。
    	同时，你也可以使用Amigo 提供的工具类将你的补丁包拷贝到指定的目录当中。
-   		
+
   	```
   	FileUtils.copyFile(yourApkFile, amigoApkFile);
   	```
@@ -81,7 +81,7 @@ Amigo.clear(context);
 
 ### 组件修复
 
-Amigo 目前能够支持修复Activity 和BroadCast。只需要将新的Activity 和BroadCast 加到新的Apk 包中就可以了。Service 和ContentProvider 将会在未来的版本中支持更新。
+Amigo 目前能够支持修复Activity 和BroadcastReceiver。只需要将新的Activity 和BroadcastReceiver 加到新的Apk 包中就可以了。Service 和ContentProvider 将会在未来的版本中支持更新。
 
 代码样例
 ----
