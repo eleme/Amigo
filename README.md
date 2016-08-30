@@ -1,5 +1,7 @@
 #Amigo Usage
 
+[中文版](https://github.com/eleme/Amigo/blob/master/README_zh.md#amigo)
+
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
 Amigo is a hotfix library which can hotfix almost everything for your app.
