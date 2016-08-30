@@ -85,3 +85,10 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 artifacts {
     archives sourcesJar
 }
+
+// configure local maven, release key, and the like
+try {
+    apply from: "${project.projectDir}/mybuild.gradle"
+} catch (Exception e) {
+    e.printStackTrace()
+}
