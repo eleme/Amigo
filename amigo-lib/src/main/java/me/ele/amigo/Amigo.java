@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import me.ele.amigo.release.ApkReleaser;
+import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.ProcessUtils;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
@@ -40,6 +41,7 @@ import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
+import static me.ele.amigo.utils.CommonUtils.getVersionCode;
 import static me.ele.amigo.utils.DexUtils.getElementWithDex;
 import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
@@ -54,6 +56,7 @@ public class Amigo extends Application {
 
     public static final String SP_NAME = "Amigo";
     private static final String NEW_APK_SIG = "new_apk_sig";
+    private static final String VERSION_CODE = "version_code";
 
     private File directory;
     private File demoAPk;
@@ -94,8 +97,11 @@ public class Amigo extends Application {
 
             ClassLoader classLoader = getClassLoader();
 
+            SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
+
+            checkUpgrade(sp);
+
             if (demoAPk.exists() && isSignatureRight(this, demoAPk)) {
-                SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
                 String demoApkChecksum = checksum(demoAPk);
                 boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
                 if (isFirstRun) {
@@ -158,6 +164,15 @@ public class Amigo extends Application {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    private void checkUpgrade(SharedPreferences sp) {
+        int recordVersion = sp.getInt(VERSION_CODE, 0);
+        int currentVersion = getVersionCode(this);
+        if (currentVersion > recordVersion) {
+            clear(this);
+        }
+        sp.edit().putInt(VERSION_CODE, currentVersion).commit();
     }
 
     private void saveDexOptChecksum() throws IOException, NoSuchAlgorithmException {
@@ -334,7 +349,9 @@ public class Amigo extends Application {
     public static void work(Context context) {
         File directory = new File(context.getFilesDir(), "amigo");
         File demoAPk = new File(directory, "demo.apk");
-        work(context, demoAPk);
+        if (demoAPk.exists()) {
+            work(context, demoAPk);
+        }
     }
 
     // auto restart the whole app
@@ -360,6 +377,11 @@ public class Amigo extends Application {
             return;
         }
 
+        if (!checkApkVersion(context, apkFile)) {
+            Log.e(TAG, "patch apk version cannot be less than host apk");
+            return;
+        }
+
         File directory = new File(context.getFilesDir(), "amigo");
         File demoAPk = new File(directory, "demo.apk");
         if (!apkFile.getAbsolutePath().equals(demoAPk.getAbsolutePath())) {
@@ -381,6 +403,10 @@ public class Amigo extends Application {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private static boolean checkApkVersion(Context hostCtx, File apkFile) {
+        return CommonUtils.getVersionCode(hostCtx, apkFile) >= getVersionCode(hostCtx);
     }
 
     public static void clear(Context context) {

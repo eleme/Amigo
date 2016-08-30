@@ -23,7 +23,7 @@ def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo-lib'
 
 group = GROUP
-version = '0.0.4'
+version = '0.0.5'
 
 install {
     repositories.mavenInstaller {
@@ -90,4 +90,11 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives javadocJar
     archives sourcesJar
+}
+
+// configure local maven, release key, and the like
+try {
+    apply from: "${project.projectDir}/mybuild.gradle"
+} catch (Exception e) {
+    e.printStackTrace()
 }
