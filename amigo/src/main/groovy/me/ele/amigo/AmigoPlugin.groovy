@@ -2,11 +2,14 @@ package me.ele.amigo
 
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.BaseVariantOutput
+import groovy.io.FileType
 import groovy.xml.Namespace
 import groovy.xml.XmlUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.tasks.compile.JavaCompile
 
 import java.util.jar.JarEntry
@@ -14,18 +17,41 @@ import java.util.jar.JarFile
 
 class AmigoPlugin implements Plugin<Project> {
 
+    static final String GROUP = 'me.ele'
+    static final String NAME = 'amigo'
+
     String content = ""
-    static final VERSION = "0.0.5"
+    String version = ""
 
     @Override
     void apply(Project project) {
 
+        project.afterEvaluate {
+            Configuration configuration = project.rootProject.buildscript.configurations.getByName('classpath')
+            configuration.allDependencies.all { Dependency dependency ->
+                if (dependency.group == GROUP && dependency.name == NAME) {
+                    version = dependency.version
+                }
+            }
+            println 'amigo plugin version: ' + version
+        }
+
         project.dependencies {
-            compile "me.ele:amigo-lib:${VERSION}"
+            if (Util.containsProject(project, 'amigo-lib')) {
+                compile project.project(':amigo-lib')
+            } else {
+                compile "me.ele:amigo-lib:${version}"
+            }
         }
 
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->
+
+                Task prepareDependencyTask = project.tasks.findByName("prepare${variant.name.capitalize()}Dependencies")
+                prepareDependencyTask.doFirst {
+                    clearAmigoDependency(project)
+                }
+
                 variant.outputs.each { BaseVariantOutput output ->
 
                     def applicationName = null
@@ -131,10 +157,25 @@ class AmigoPlugin implements Plugin<Project> {
         }
     }
 
+    void clearAmigoDependency(Project project) {
+        File jarPath = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
+        if (jarPath.exists()) {
+            jarPath.delete()
+        }
+    }
+
     void collectMultiDexInfo(Project project, ApkVariant variant) {
         if (!hasProguard(project, variant)) {
-            String jarPath = "${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib/${VERSION}/jars/classes.jar"
-            JarFile jarFile = new JarFile(jarPath)
+            File dir = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
+            JarFile jarFile
+            if (dir.exists()) {
+                dir.eachFileRecurse(FileType.FILES) { File file ->
+                    if (file.name == 'classes.jar') {
+                        jarFile = new JarFile(file)
+                        return
+                    }
+                }
+            }
             Enumeration<JarEntry> enumeration = jarFile.entries()
             while (enumeration.hasMoreElements()) {
                 JarEntry entry = enumeration.nextElement()
