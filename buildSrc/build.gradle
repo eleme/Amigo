@@ -29,7 +29,9 @@ def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
 
 group = GROUP
-version = VERSION
+Properties gradleProperties = new Properties()
+gradleProperties.load(new File(project.projectDir, '../gradle.properties').newDataInputStream())
+version = gradleProperties.getProperty('VERSION')
 
 install {
     repositories.mavenInstaller {
