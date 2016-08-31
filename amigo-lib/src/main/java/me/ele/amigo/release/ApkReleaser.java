@@ -2,11 +2,8 @@ package me.ele.amigo.release;
 
 import android.content.Context;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-
 import me.ele.amigo.Amigo;
-import me.ele.amigo.utils.MD5;
+import me.ele.amigo.utils.CrcUtils;
 import me.ele.amigo.utils.ProcessUtils;
 
 public class ApkReleaser {
@@ -31,16 +28,7 @@ public class ApkReleaser {
     }
 
     private static String getUniqueKey(Context context) {
-
-        try {
-            return MD5.checksum(Amigo.getHotfixApk(context));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        return "";
+        return CrcUtils.getCrc(Amigo.getHotfixApk(context));
     }
 
     public static void work(Context context, int layoutId, int themeId) {

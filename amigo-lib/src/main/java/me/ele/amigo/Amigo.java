@@ -46,7 +46,7 @@ import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
 import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 import static me.ele.amigo.utils.FileUtils.removeFile;
-import static me.ele.amigo.utils.MD5.checksum;
+import static me.ele.amigo.utils.CrcUtils.getCrc;
 
 public class Amigo extends Application {
 
@@ -135,7 +135,7 @@ public class Amigo extends Application {
     }
 
     private void runPatchApk(SharedPreferences sp) throws Throwable {
-        String demoApkChecksum = checksum(demoAPk);
+        String demoApkChecksum = getCrc(demoAPk);
         boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
         if (isFirstRun) {
             //clear previous working dir
@@ -218,7 +218,7 @@ public class Amigo extends Application {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
-            String checksum = checksum(dexFile);
+            String checksum = getCrc(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
     }
@@ -228,7 +228,7 @@ public class Amigo extends Application {
         File[] dexFiles = optimizedDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = checksum(dexFile);
+            String checksum = getCrc(dexFile);
             if (!savedChecksum.equals(checksum)) {
                 crash();
             }
@@ -239,14 +239,14 @@ public class Amigo extends Application {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
-            String checksum = checksum(dexFile);
+            String checksum = getCrc(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
 
         File[] nativeFiles = nativeLibraryDir.listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
-                String checksum = checksum(nativeFile);
+                String checksum = getCrc(nativeFile);
                 sp.edit().putString(nativeFile.getAbsolutePath(), checksum).commit();
             }
         }
@@ -257,7 +257,7 @@ public class Amigo extends Application {
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = checksum(dexFile);
+            String checksum = getCrc(dexFile);
             if (!savedChecksum.equals(checksum)) {
                 crash();
             }
@@ -267,7 +267,7 @@ public class Amigo extends Application {
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
-                String checksum = checksum(nativeFile);
+                String checksum = getCrc(nativeFile);
                 if (!savedChecksum.equals(checksum)) {
                     crash();
                 }
