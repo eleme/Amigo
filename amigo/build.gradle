@@ -29,7 +29,7 @@ def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
 
 group = GROUP
-version = '0.0.4'
+version = VERSION
 
 install {
     repositories.mavenInstaller {
@@ -84,4 +84,11 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 
 artifacts {
     archives sourcesJar
+}
+
+// configure local maven, release key, and the like
+try {
+    apply from: "${project.projectDir}/mybuild.gradle"
+} catch (Exception e) {
+    e.printStackTrace()
 }

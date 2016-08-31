@@ -1,5 +1,7 @@
 package me.ele.amigo
 
+import org.gradle.api.Project
+
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -128,5 +130,16 @@ class Util {
         zin.close();
         zout.close();
         tempFile.delete();
+    }
+
+    public static boolean containsProject(Project project, String projectName) {
+        Set<Project> projects = project.rootProject.subprojects;
+        boolean ret = false
+        projects.each { Project p ->
+            if (p.name == projectName) {
+                ret = true
+            }
+        }
+        return ret
     }
 }
