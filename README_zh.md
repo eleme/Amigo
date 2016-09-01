@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-     classpath 'me.ele:amigo:0.0.3'
+     classpath 'me.ele:amigo:0.0.5'
    }
    ```
 
@@ -30,18 +30,16 @@ Amigo
 
    * 稍后生效补丁包
 
-   	如果不想立即生效而是用户第二次打开App 时才打入补丁包，则可以将新的Apk 放到 `/data/data/{your pkg}/files/amigo/demo.apk`，第二次打开时就会自动生效。可以通过这个方法
+   	如果不想立即生效而是用户第二次打开App 时才打入补丁包，第二次打开时就会自动生效。可以通过这个方法
+   	
+	```java
+	File hotfixApk = Amigo.getHotfixApk(context);
+	FileUtils.copyFile(yourApkFile, hotfixApk);
+	
+    Amigo.workLater(context);
 
-   	```Java
-   	File hotfixApk = Amigo.getHotfixApk(context);
-   	```
-
-   	获取到新的Apk。
-   	同时，你也可以使用Amigo 提供的工具类将你的补丁包拷贝到指定的目录当中。
-
-  	```
-  	FileUtils.copyFile(yourApkFile, amigoApkFile);
-  	```
+    Amigo.workLater(context, apkFile);
+    ```
 
    * 立即生效补丁包
 
