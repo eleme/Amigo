@@ -1,6 +1,7 @@
 #Amigo Usage
 
 [中文版](https://github.com/eleme/Amigo/blob/master/README_zh.md#amigo)
+[wiki](https://github.com/eleme/Amigo/wiki)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
