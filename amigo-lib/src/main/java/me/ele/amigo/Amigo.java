@@ -69,11 +69,6 @@ public class Amigo extends Application {
         Log.e(TAG, "onCreate");
 
         try {
-            if (!ProcessUtils.isMainProcess(this)) {
-                runOriginalApplication(getClassLoader());
-                return;
-            }
-
             directory = new File(getFilesDir(), "amigo");
             if (!directory.exists()) {
                 directory.mkdirs();
@@ -127,6 +122,13 @@ public class Amigo extends Application {
                 return;
             }
 
+            if (!ProcessUtils.isMainProcess(this) && isPatchApkFirstRun(sp)) {
+                Log.e(TAG, "none main process and patch apk is not released yet");
+                runOriginalApplication(classLoader);
+                return;
+            }
+
+            // only release loaded apk in the main process
             runPatchApk(sp);
 
         } catch (Throwable e) {
@@ -137,7 +139,7 @@ public class Amigo extends Application {
 
     private void runPatchApk(SharedPreferences sp) throws Throwable {
         String demoApkChecksum = getCrc(demoAPk);
-        boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
+        boolean isFirstRun = isPatchApkFirstRun(sp);
         Log.e(TAG, "demoApkChecksum-->" + demoApkChecksum + ", sig--->" + sp.getString(NEW_APK_SIG, ""));
         if (isFirstRun) {
             //clear previous working dir
@@ -177,6 +179,11 @@ public class Amigo extends Application {
         setAPKResources(assetManager);
 
         runOriginalApplication(amigoClassLoader);
+    }
+
+    private boolean isPatchApkFirstRun(SharedPreferences sp) {
+        String demoApkChecksum = getCrc(demoAPk);
+        return !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
     }
 
     private boolean checkUpgrade(SharedPreferences sp) {
