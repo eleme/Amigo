@@ -95,6 +95,14 @@ also you can play with this app demo following the procedures below.
    2. change code wherever you like & ./gradlew clean assembleRelease
    3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
    4. kill Amigo demo by yourself & restart to check if your change works
+   
+### retrieve hotfix file
+
+- make it simple, you just need a fully new apk
+
+- for user's network traffic's sake, you may just want to download a diff file
+  [bspatch](https://github.com/eleme/bspatch) is an option for you
+
 
 license
 ====
