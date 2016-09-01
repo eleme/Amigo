@@ -9,7 +9,6 @@ import android.util.Log;
 import java.io.File;
 
 import me.ele.amigo.Amigo;
-import me.ele.amigo.utils.FileUtils;
 
 public class ApplicationContext extends Application {
 
@@ -30,8 +29,8 @@ public class ApplicationContext extends Application {
         File fixedApkFile = new File(Environment.getExternalStorageDirectory(), "demo.apk");
         File amigoApkFile = Amigo.getHotfixApk(this);
         if (fixedApkFile.exists() && !amigoApkFile.exists()) {
-            FileUtils.copyFile(fixedApkFile, amigoApkFile);
-            Amigo.work(this);
+            Amigo.work(this, fixedApkFile);
+//            Amigo.workLater(this, fixedApkFile);
         }
     }
 

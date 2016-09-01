@@ -9,6 +9,8 @@ import android.os.Message;
 import android.os.Process;
 import android.util.Log;
 
+import me.ele.amigo.release.ApkReleaser;
+
 import static me.ele.amigo.utils.ProcessUtils.isMainProcessRunning;
 
 
@@ -17,6 +19,8 @@ public class AmigoService extends Service {
     private static final String TAG = AmigoService.class.getSimpleName();
     public static final int WHAT = 0;
     public static final int DELAY = 200;
+
+    private static final String WORK_LATER = "work_later";
 
     private Handler handler = new Handler() {
         @Override
@@ -50,7 +54,20 @@ public class AmigoService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        handler.sendEmptyMessage(WHAT);
+        if (intent != null) {
+            boolean workLater = intent.getBooleanExtra(WORK_LATER, false);
+            if (workLater) {
+                ApkReleaser.getInstance(this).release();
+            } else {
+                handler.sendEmptyMessage(WHAT);
+            }
+        }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    public static void start(Context context, boolean workLater) {
+        Intent intent = new Intent(context, AmigoService.class);
+        intent.putExtra(WORK_LATER, workLater);
+        context.startService(intent);
     }
 }

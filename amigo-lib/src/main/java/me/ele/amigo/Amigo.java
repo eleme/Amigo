@@ -2,7 +2,6 @@ package me.ele.amigo;
 
 import android.app.Application;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -14,6 +13,7 @@ import android.os.Process;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.ProcessUtils;
@@ -40,20 +41,20 @@ import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
 import static me.ele.amigo.utils.CommonUtils.getVersionCode;
+import static me.ele.amigo.utils.CrcUtils.getCrc;
 import static me.ele.amigo.utils.DexUtils.getElementWithDex;
 import static me.ele.amigo.utils.DexUtils.getPathList;
 import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
 import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 import static me.ele.amigo.utils.FileUtils.removeFile;
-import static me.ele.amigo.utils.CrcUtils.getCrc;
 
 public class Amigo extends Application {
 
     private static final String TAG = Amigo.class.getSimpleName();
 
     public static final String SP_NAME = "Amigo";
-    private static final String NEW_APK_SIG = "new_apk_sig";
+    public static final String NEW_APK_SIG = "new_apk_sig";
     private static final String VERSION_CODE = "version_code";
 
     private File directory;
@@ -137,53 +138,40 @@ public class Amigo extends Application {
     private void runPatchApk(SharedPreferences sp) throws Throwable {
         String demoApkChecksum = getCrc(demoAPk);
         boolean isFirstRun = !sp.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
+        Log.e(TAG, "demoApkChecksum-->" + demoApkChecksum + ", sig--->" + sp.getString(NEW_APK_SIG, ""));
         if (isFirstRun) {
             //clear previous working dir
             Amigo.clearWithoutApk(this);
 
             //start a new process to handle time-tense operation
-            ApplicationInfo appInfo =
-                getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
             String layoutName = appInfo.metaData.getString("amigo_layout");
             String themeName = appInfo.metaData.getString("amigo_theme");
             int layoutId = 0;
             int themeId = 0;
             if (!TextUtils.isEmpty(layoutName)) {
-                layoutId = (int) readStaticField(Class.forName(getPackageName() + ".R$layout"),
-                    layoutName);
+                layoutId = (int) readStaticField(Class.forName(getPackageName() + ".R$layout"), layoutName);
             }
             if (!TextUtils.isEmpty(themeName)) {
-                themeId =
-                    (int) readStaticField(Class.forName(getPackageName() + ".R$style"), themeName);
+                themeId = (int) readStaticField(Class.forName(getPackageName() + ".R$style"), themeName);
             }
             Log.e(TAG, String.format("layoutName-->%s, themeName-->%s", layoutName, themeName));
             Log.e(TAG, String.format("layoutId-->%d, themeId-->%d", layoutId, themeId));
 
             ApkReleaser.work(this, layoutId, themeId);
-
-            sp.edit().putString(NEW_APK_SIG, demoApkChecksum).commit();
-            saveDexAndSoChecksum();
             Log.e(TAG, "release apk once");
         } else {
             checkDexAndSoChecksum();
         }
 
-        AmigoClassLoader amigoClassLoader =
-            new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
+        AmigoClassLoader amigoClassLoader = new AmigoClassLoader(demoAPk.getAbsolutePath(), getRootClassLoader());
         setAPKClassLoader(amigoClassLoader);
 
         setDexElements(amigoClassLoader);
-
-        if (isFirstRun) {
-            saveDexOptChecksum();
-        } else {
-            checkDexOptChecksum();
-        }
         setNativeLibraryDirectories(amigoClassLoader);
 
         AssetManager assetManager = AssetManager.class.newInstance();
-        Method addAssetPath =
-            getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
+        Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
         addAssetPath.setAccessible(true);
         addAssetPath.invoke(assetManager, demoAPk.getAbsolutePath());
         setAPKResources(assetManager);
@@ -205,8 +193,7 @@ public class Amigo extends Application {
     private void runOriginalApplication(ClassLoader classLoader) throws Throwable {
         Class acd = classLoader.loadClass("me.ele.amigo.acd");
         String applicationName = (String) readStaticField(acd, "n");
-        Application application =
-            (Application) classLoader.loadClass(applicationName).newInstance();
+        Application application = (Application) classLoader.loadClass(applicationName).newInstance();
         Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
         attach.setAccessible(true);
         attach.invoke(application, getBaseContext());
@@ -214,43 +201,6 @@ public class Amigo extends Application {
         application.onCreate();
     }
 
-    private void saveDexOptChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-        File[] dexFiles = optimizedDir.listFiles();
-        for (File dexFile : dexFiles) {
-            String checksum = getCrc(dexFile);
-            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
-        }
-    }
-
-    private void checkDexOptChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-        File[] dexFiles = optimizedDir.listFiles();
-        for (File dexFile : dexFiles) {
-            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = getCrc(dexFile);
-            if (!savedChecksum.equals(checksum)) {
-                crash();
-            }
-        }
-    }
-
-    private void saveDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
-        SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-        File[] dexFiles = dexDir.listFiles();
-        for (File dexFile : dexFiles) {
-            String checksum = getCrc(dexFile);
-            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
-        }
-
-        File[] nativeFiles = nativeLibraryDir.listFiles();
-        if (nativeFiles != null && nativeFiles.length > 0) {
-            for (File nativeFile : nativeFiles) {
-                String checksum = getCrc(nativeFile);
-                sp.edit().putString(nativeFile.getAbsolutePath(), checksum).commit();
-            }
-        }
-    }
 
     private void checkDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
@@ -258,6 +208,17 @@ public class Amigo extends Application {
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
             String checksum = getCrc(dexFile);
+            if (!savedChecksum.equals(checksum)) {
+                crash();
+            }
+        }
+
+        File[] dexOptFiles = optimizedDir.listFiles();
+        for (File dexFile : dexFiles) {
+            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
+            String checksum = getCrc(dexFile);
+            Log.e(TAG, "opt dexFile-->" + dexFile);
+            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
             if (!savedChecksum.equals(checksum)) {
                 crash();
             }
@@ -385,6 +346,48 @@ public class Amigo extends Application {
         int a = str.length();
     }
 
+    public static void workLater(Context context) {
+        File directory = new File(context.getFilesDir(), "amigo");
+        File demoAPk = new File(directory, "demo.apk");
+        workLater(context, demoAPk);
+    }
+
+    public static void workLater(Context context, File apkFile) {
+        if (context == null) {
+            throw new NullPointerException("param context cannot be null");
+        }
+
+        if (apkFile == null) {
+            throw new NullPointerException("param apkFile cannot be null");
+        }
+
+        if (!apkFile.exists()) {
+            throw new IllegalArgumentException("param apkFile doesn't exist");
+        }
+
+        if (!apkFile.canRead()) {
+            throw new IllegalArgumentException("param apkFile cannot be read");
+        }
+
+        if (!isSignatureRight(context, apkFile)) {
+            Log.e(TAG, "no valid apk");
+            return;
+        }
+
+        if (!checkPatchApkVersion(context, apkFile)) {
+            Log.e(TAG, "patch apk version cannot be less than host apk");
+            return;
+        }
+
+        File directory = new File(context.getFilesDir(), "amigo");
+        File demoAPk = new File(directory, "demo.apk");
+        if (!apkFile.getAbsolutePath().equals(demoAPk.getAbsolutePath())) {
+            copyFile(apkFile, demoAPk);
+        }
+
+        AmigoService.start(context, true);
+    }
+
     public static void work(Context context) {
         File directory = new File(context.getFilesDir(), "amigo");
         File demoAPk = new File(directory, "demo.apk");
@@ -425,7 +428,7 @@ public class Amigo extends Application {
             copyFile(apkFile, demoAPk);
         }
 
-        context.startService(new Intent(context, AmigoService.class));
+        AmigoService.start(context, false);
 
         System.exit(0);
         Process.killProcess(Process.myPid());
@@ -457,10 +460,10 @@ public class Amigo extends Application {
 
         removeFile(directory);
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
-            .edit()
-            .clear()
-            .putInt(VERSION_CODE, getVersionCode(context))
-            .commit();
+                .edit()
+                .clear()
+                .putInt(VERSION_CODE, getVersionCode(context))
+                .commit();
     }
 
     private static void clearWithoutApk(Context context) {
