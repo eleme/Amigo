@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.0.3'
+  classpath 'me.ele:amigo:0.0.5'
 }
 ```
 In your module's `build.gradle`
@@ -33,13 +33,12 @@ There are two ways to make hotfix work.
 
 	```java
 	File hotfixApk = Amigo.getHotfixApk(context);
-	```
+	FileUtils.copyFile(yourApkFile, hotfixApk);
+	
+    Amigo.workLater(context);
 
-	And you can use Amigo's tools to copy your apk to the specified folder.
-
-	```
-	FileUtils.copyFile(yourApkFile, amigoApkFile);
-	```
+    Amigo.workLater(context, apkFile);
+    ```
 
 * work immediately, app will restart immediately
 
