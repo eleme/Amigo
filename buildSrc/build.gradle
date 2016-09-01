@@ -24,6 +24,10 @@ dependencies {
     compile 'com.android.tools.build:gradle:1.5.0'
 }
 
+// remove self clean task
+project.afterEvaluate {
+    project.tasks.remove(project.clean)
+}
 
 def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
