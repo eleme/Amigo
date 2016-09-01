@@ -80,7 +80,7 @@ if you would like to RTFC, please checkout **support_new_added_components** bran
 this's in **beta** version for now, so you may use this
 
 ```groovy
- classpath 'me.ele:amigo:0.0.1-beta1'
+ classpath 'me.ele:amigo:0.0.6-beta1'
  ...
 
 ```
