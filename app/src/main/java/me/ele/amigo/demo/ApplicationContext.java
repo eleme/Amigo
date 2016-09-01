@@ -9,6 +9,7 @@ import android.util.Log;
 import java.io.File;
 
 import me.ele.amigo.Amigo;
+import me.ele.amigo.utils.ProcessUtils;
 
 public class ApplicationContext extends Application {
 
@@ -26,11 +27,13 @@ public class ApplicationContext extends Application {
         super.onCreate();
         Log.e(TAG, "onCreate: " + this);
 
-        File fixedApkFile = new File(Environment.getExternalStorageDirectory(), "demo.apk");
-        File amigoApkFile = Amigo.getHotfixApk(this);
-        if (fixedApkFile.exists() && !amigoApkFile.exists()) {
-            Amigo.work(this, fixedApkFile);
-//            Amigo.workLater(this, fixedApkFile);
+        if (ProcessUtils.isMainProcess(this)) {
+            File fixedApkFile = new File(Environment.getExternalStorageDirectory(), "demo.apk");
+            File amigoApkFile = Amigo.getHotfixApk(this);
+            if (fixedApkFile.exists() && !amigoApkFile.exists()) {
+                Amigo.work(this, fixedApkFile);
+//                Amigo.workLater(this, fixedApkFile);
+            }
         }
     }
 
