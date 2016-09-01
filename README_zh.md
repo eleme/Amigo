@@ -90,6 +90,15 @@ Amigo 目前能够支持修复Activity 和BroadcastReceiver。只需要将新的
    2. 改动代码 & ./gradlew clean assembleRelease
    3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
    4. 手动杀掉Amigo demo，重启检查是否代码已经生效
+   
+### 下载hotfix文件
+
+- 简单来说,你只需要下载一个全新的apk
+
+- 为用户的流量照想, 你可能只想下载一个差分文件
+ [bspatch](https://github.com/eleme/bspatch)可能是你的一个选择
+
+
 
 License
 ====
