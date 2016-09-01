@@ -14,7 +14,7 @@
             android:alwaysRetainTaskState="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
-            android:process=":eleme_apk_releaser"
+            android:process=":amigo"
             android:screenOrientation="portrait" />
 
     </application>
