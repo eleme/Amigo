@@ -24,11 +24,6 @@ dependencies {
     compile 'com.android.tools.build:gradle:1.5.0'
 }
 
-// remove self clean task
-project.afterEvaluate {
-    project.tasks.remove(project.clean)
-}
-
 def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
 
@@ -68,28 +63,32 @@ install {
     }
 }
 
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
+try {
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
-bintray {
-    user = properties.getProperty("bintrayUser")
-    key = properties.getProperty("bintrayApiKey")
-    configurations = ['archives']
-    pkg {
-        repo = 'maven'
-        name = ARTIFACTID
-        userOrg = user
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/eleme/Amigo'
+    bintray {
+        user = properties.getProperty("bintrayUser")
+        key = properties.getProperty("bintrayApiKey")
+        configurations = ['archives']
+        pkg {
+            repo = 'maven'
+            name = ARTIFACTID
+            userOrg = user
+            licenses = ['Apache-2.0']
+            vcsUrl = 'https://github.com/eleme/Amigo'
+        }
     }
-}
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
 
-artifacts {
-    archives sourcesJar
+    artifacts {
+        archives sourcesJar
+    }
+} catch (Exception e) {
+    println e
 }
 
 // configure local maven, release key, and the like
