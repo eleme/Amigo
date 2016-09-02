@@ -1,2 +1,1 @@
 include ':app', ':amigo-lib'
-include ':buildSrc'
