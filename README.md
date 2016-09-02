@@ -54,7 +54,7 @@ There are two ways to make hotfix work.
 ```java
 Amigo.clear(context);
 ```
-**note**：if apk has changed we will automatic clear the old apk.
+**note**：The old apk would be cleared automatically when the latest version updated.
 
 ### customize the fix layout
 some time-tense operation is handled in a new process with an activity, you may customize it
