@@ -24,6 +24,14 @@ dependencies {
     compile 'com.android.tools.build:gradle:1.5.0'
 }
 
+// replace self clean task with empty one
+project.afterEvaluate {
+    project.tasks.remove(project.clean)
+    project.tasks.create('clean') {
+
+    }
+}
+
 def GROUP = 'me.ele'
 def ARTIFACTID = 'amigo'
 
@@ -88,12 +96,12 @@ try {
         archives sourcesJar
     }
 } catch (Exception e) {
-    println e
+    println e.toString()
 }
 
 // configure local maven, release key, and the like
 try {
     apply from: "${project.projectDir}/mybuild.gradle"
 } catch (Exception e) {
-    e.printStackTrace()
+    println e.toString()
 }

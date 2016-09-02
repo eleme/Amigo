@@ -92,12 +92,12 @@ try {
         archives sourcesJar
     }
 } catch (Exception e) {
-    println e
+    println e.toString()
 }
 
 // configure local maven, release key, and the like
 try {
     apply from: "${project.projectDir}/mybuild.gradle"
 } catch (Exception e) {
-    e.printStackTrace()
+    println e.toString()
 }
