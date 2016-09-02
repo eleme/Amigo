@@ -221,10 +221,10 @@ public class Amigo extends Application {
         }
 
         File[] dexOptFiles = optimizedDir.listFiles();
-        for (File dexFile : dexFiles) {
-            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = getCrc(dexFile);
-            Log.e(TAG, "opt dexFile-->" + dexFile);
+        for (File dexOptFile : dexOptFiles) {
+            String savedChecksum = sp.getString(dexOptFile.getAbsolutePath(), "");
+            String checksum = getCrc(dexOptFile);
+            Log.e(TAG, "opt dexFile-->" + dexOptFile);
             Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
             if (!savedChecksum.equals(checksum)) {
                 crash();
