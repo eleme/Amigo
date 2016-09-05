@@ -505,6 +505,6 @@ public class Amigo extends Application {
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        return classLoader instanceof AmigoClassLoader;
+        return classLoader != null && classLoader.getClass().getName().equals(AmigoClassLoader.class.getName());
     }
 }
