@@ -204,7 +204,7 @@ class AmigoPlugin implements Plugin<Project> {
                 String[] keyValue = line.split("->");
                 String key = keyValue[0].trim()
                 String value = keyValue[1].subSequence(0, keyValue[1].length() - 1).trim()
-                if (key.startsWith("me.ele.amigo")) {
+                if (key.startsWith("me.ele.amigo") || key.endsWith('R$layout') || key.endsWith('R$style')) {
                     content += "\n"
                     content += "${value.replace(".", "/")}.class"
                 }
