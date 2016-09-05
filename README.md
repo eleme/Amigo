@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.0.5'
+  classpath 'me.ele:amigo:0.0.6'
 }
 ```
 In your module's `build.gradle`
@@ -22,6 +22,22 @@ In your module's `build.gradle`
 ```
 
 you are good to go now, as simple as this.
+
+### notice 
+
+sync with jcenter may take some time, if amigo cannot be found, please add my private maven url into your buildscript
+
+```groovy
+buildscript {
+    repositories {
+        maven {
+            url "https://dl.bintray.com/jackcho/maven"
+        }
+        jcenter()
+        ...
+    }
+}
+```
 
 ### to make hotfix work
 There are two ways to make hotfix work.
