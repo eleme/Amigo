@@ -9,7 +9,6 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -177,16 +176,10 @@ public class ApkReleaser {
                 case WHAT_DEX_OPT_DONE:
                     isReleasing = false;
                     ApkReleaser.doneDexOpt(context);
+                    saveDexAndSoChecksum();
                     SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
                     String demoApkChecksum = getCrc(demoAPk);
                     sp.edit().putString(Amigo.NEW_APK_SIG, demoApkChecksum).commit();
-                    try {
-                        saveDexAndSoChecksum();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (NoSuchAlgorithmException e) {
-                        e.printStackTrace();
-                    }
                     handler.sendEmptyMessageDelayed(WHAT_FINISH, DELAY_FINISH_TIME);
                     break;
                 case WHAT_FINISH:
@@ -199,7 +192,7 @@ public class ApkReleaser {
         }
     };
 
-    private void saveDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
+    private void saveDexAndSoChecksum() {
         SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
         File[] dexFiles = dexDir.listFiles();
         for (File dexFile : dexFiles) {
