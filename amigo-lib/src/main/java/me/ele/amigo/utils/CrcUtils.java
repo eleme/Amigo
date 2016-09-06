@@ -35,7 +35,9 @@ public final class CrcUtils {
             throw new RuntimeException(e);
         } finally {
             try {
-                raf.close();
+                if (raf != null) {
+                    raf.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
