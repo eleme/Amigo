@@ -99,5 +99,5 @@ try {
 try {
     apply from: "${project.projectDir}/mybuild.gradle"
 } catch (Exception e) {
-    e.printStackTrace()
+    println e.toString()
 }
