@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.0.7'
+  classpath 'me.ele:amigo:0.0.8'
 }
 ```
 In your module's `build.gradle`
