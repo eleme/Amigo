@@ -20,6 +20,7 @@ public class MethodUtils {
         parameterTypes = Utils.nullToEmpty(parameterTypes);
         args = Utils.nullToEmpty(args);
         Method method = getDeclaredMethod(clazz, methodName, parameterTypes);
+        method.setAccessible(true);
         return method.invoke(null, args);
     }
 
