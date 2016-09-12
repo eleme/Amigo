@@ -33,9 +33,6 @@ Amigo
    	如果不想立即生效而是用户第二次打开App 时才打入补丁包，第二次打开时就会自动生效。可以通过这个方法
    	
 	```java
-	File hotfixApk = Amigo.getHotfixApk(context);
-	FileUtils.copyFile(yourApkFile, hotfixApk);
-	
     Amigo.workLater(context);
 
     Amigo.workLater(context, apkFile);
@@ -89,7 +86,7 @@ Amigo 目前能够支持修复Activity 和BroadcastReceiver。只需要将新的
    1. ./gradlew clean assembleRelease & adb install .../build/outputs/apk/app-release.apk
    2. 改动代码 & ./gradlew clean assembleRelease
    3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
-   4. 手动杀掉Amigo demo，重启检查是否代码已经生效
+   4. 点击"apply patch apk"按钮, 加载新的apk
    
 ### 下载hotfix文件
 
