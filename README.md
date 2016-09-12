@@ -48,11 +48,8 @@ There are two ways to make hotfix work.
 	when app restarts next time, hotfix apk will be loaded as fresh as new.
 
 	```java
-	File hotfixApk = Amigo.getHotfixApk(context);
-	FileUtils.copyFile(yourApkFile, hotfixApk);
-	
     Amigo.workLater(context);
-
+    // or
     Amigo.workLater(context, apkFile);
     ```
 
@@ -60,12 +57,12 @@ There are two ways to make hotfix work.
 
 	```java
 	Amigo.work(context);
-
+    // or
 	Amigo.work(context, apkFile);
 	```
 
 
-### maybe hotfix needs to be cleared
+### clear the previously installed patch-apk manually
 
 ```java
 Amigo.clear(context);
@@ -110,7 +107,7 @@ also you can play with this app demo following the procedures below.
    1. ./gradlew clean assembleRelease & adb install .../build/outputs/apk/app-release.apk
    2. change code wherever you like & ./gradlew clean assembleRelease
    3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
-   4. kill Amigo demo by yourself & restart to check if your change works
+   4. click the "apply patch apk" button, and see the changes you made then.
    
 ### retrieve hotfix file
 
