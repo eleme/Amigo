@@ -4,6 +4,7 @@ import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import groovy.io.FileType
 import groovy.xml.Namespace
+import groovy.xml.QName
 import groovy.xml.XmlUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -61,10 +62,6 @@ class AmigoPlugin implements Plugin<Project> {
 
                     output.processManifest.doLast {
                         manifestFile = output.processManifest.manifestOutputFile
-                        applicationName = getAppName(manifestFile)
-                        println 'app name: ' + applicationName
-
-                        manifestFile.text = manifestFile.text.replace(applicationName, "me.ele.amigo.Amigo")
 
                         //fake original application as an activity, so it will be in main dex
                         Node node = (new XmlParser()).parse(manifestFile)
@@ -75,6 +72,14 @@ class AmigoPlugin implements Plugin<Project> {
                                 break
                             }
                         }
+
+                        QName nameAttr = new QName("http://schemas.android.com/apk/res/android", 'name', 'android');
+                        applicationName = appNode.attribute(nameAttr)
+                        if(applicationName == null || applicationName.isEmpty()) {
+                            applicationName = "android.app.Application"
+                        }
+                        appNode.attributes().put(nameAttr, "me.ele.amigo.Amigo")
+
                         Node hackAppNode = new Node(appNode, "activity")
                         hackAppNode.attributes().put("android:name", applicationName)
                         manifestFile.text = XmlUtil.serialize(node)
@@ -165,15 +170,6 @@ class AmigoPlugin implements Plugin<Project> {
         if (jarPath.exists()) {
             jarPath.delete()
         }
-    }
-
-    String getAppName(File manifestFile) {
-        def manifest = new XmlParser().parse(manifestFile)
-        def androidTag = new Namespace("http://schemas.android.com/apk/res/android", 'android')
-        if (manifestFile.exists()) {
-            return manifest.application[0].attribute(androidTag.name)
-        }
-        return null
     }
 
     void collectMultiDexInfo(Project project, ApkVariant variant) {

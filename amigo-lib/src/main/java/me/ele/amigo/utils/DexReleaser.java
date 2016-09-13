@@ -11,7 +11,7 @@ public class DexReleaser {
 
     public static void releaseDexes(String zipFile, String outputFolder) {
 
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[8 * 1024];
 
         try {
             File folder = new File(outputFolder);
