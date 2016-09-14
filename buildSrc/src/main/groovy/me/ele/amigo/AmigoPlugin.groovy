@@ -47,6 +47,13 @@ class AmigoPlugin implements Plugin<Project> {
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->
 
+                // check instant run which conflicts with us
+                println 'check instant run'
+                Task instantRunTask = project.tasks.findByName("transformClassesWithInstantRunVerifierFor${variant.name.capitalize()}")
+                if (instantRunTask) {
+                    throw RuntimeException("Sorry, instant run conflicts with Amigo, so please disable Instant Run")
+                }
+
                 Task prepareDependencyTask = project.tasks.findByName("prepare${variant.name.capitalize()}Dependencies")
                 prepareDependencyTask.doFirst {
                     clearAmigoDependency(project)
