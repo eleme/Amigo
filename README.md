@@ -25,7 +25,7 @@ you are good to go now, as simple as this.
 
 ### notice 
 
-sync with jcenter may take some time, if amigo cannot be found, please add my private maven url into your buildscript
+* sync with jcenter may take some time, if amigo cannot be found, please add my private maven url into your buildscript
 
 ```groovy
 buildscript {
@@ -38,6 +38,8 @@ buildscript {
     }
 }
 ```
+
+* Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
 
 ### to make hotfix work
 There are two ways to make hotfix work.
