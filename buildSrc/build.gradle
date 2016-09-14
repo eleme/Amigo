@@ -20,7 +20,7 @@ dependencies {
     compile localGroovy()
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.tools.build:gradle:1.5.0'
+    compile 'com.android.tools.build:gradle:2.1.0'
 }
 
 def GROUP = 'me.ele'
