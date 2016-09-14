@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.0.9'
+  classpath 'me.ele:amigo:0.1.0'
 }
 ```
 In your module's `build.gradle`
@@ -85,20 +85,20 @@ some time-tense operation is handled in a new process with an activity, you may 
 
 ```
 
-### load new Activity and BroadcastReceiver
-
-you can add activities & receivers whatever you like to add in your hotfix apk,
-waiting for **Service** & **ContentProvider**
-
-if you would like to RTFC, please checkout **support_new_added_components** branch
-
-this's in **beta** version for now, so you may use this
-
-```groovy
- classpath 'me.ele:amigo:0.0.6-beta1'
- ...
-
-```
+### limitations
+ - support new `activity` & `receiver` in beta, `service` & `provider` is not supported for now
+ 
+     ```groovy
+      classpath 'me.ele:amigo:0.0.6-beta1'
+      ...
+     ```
+ - app launcher activity's name cannot be changed
+ 
+ - `RemoteViews`'s layout change in `notification` & `widget`is not support 
+ 
+ - may conflict with google play terms
+ 
+ - **the only limit is your imagination**
 
 play with demo
 ----
