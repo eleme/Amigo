@@ -10,7 +10,7 @@ class JavaFileTemplate {
 package me.ele.amigo;
 
 public class acd {
-    public static final String n = "$appName";
+    public static final String n = ${appName}.class.getName();
 }
 """
     }

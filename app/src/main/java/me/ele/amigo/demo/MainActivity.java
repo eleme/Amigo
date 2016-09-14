@@ -51,6 +51,27 @@ public class MainActivity extends AppCompatActivity {
                 applyPatchApk();
             }
         });
+
+//        findViewById(R.id.show_notification).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                showNotification();
+//            }
+//        });
+    }
+
+    private void showNotification() {
+////        NotificationManagerCompat.from(this).cancel(100);
+////        Log.d(TAG, "showNotification: cancel notification 100");
+//        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+//                .setSmallIcon(R.drawable.bk_icon_arrow)
+//                .setContentTitle("My notification")
+//                .setContent(new MyRemoteViews(getApplication().getPackageName(), R.layout.notification_layout))
+//                .setAutoCancel(true);
+//        NotificationManagerCompat.from(this).notify(100, mBuilder.build());
+//
+//        View v = getLayoutInflater().inflate(R.layout.notification_layout, null);
+//        Log.d(TAG, "showNotification: " + v.getTag());
     }
 
     private void crash() {

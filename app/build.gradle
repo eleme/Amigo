@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'me.ele.mess'
 apply plugin: 'me.ele.amigo'
 
 android {
@@ -24,9 +25,11 @@ android {
     buildTypes {
         release {
             debuggable true
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            zipAlignEnabled true
+            shrinkResources true
         }
 
         debug {
