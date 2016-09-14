@@ -17,3 +17,5 @@
 #}
 -dontoptimize
 -dontshrink
+-dontwarn #不警告
+-keep class !me.ele.amigo.**
