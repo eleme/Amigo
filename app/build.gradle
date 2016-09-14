@@ -6,7 +6,7 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "me.ele.amigo.demo"
+        applicationId "me.ele.demo"
         minSdkVersion 14
         targetSdkVersion 22
         versionCode 1
