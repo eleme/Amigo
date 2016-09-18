@@ -6,12 +6,16 @@ import android.content.Intent;
 final class Launcher {
 
     private int layoutId;
-    private int themeId = -1;
+    private int themeId;
     private Context context;
 
-    public Launcher(Context context, int layoutId) {
-        this.layoutId = layoutId;
+    public Launcher(Context context) {
         this.context = context;
+    }
+
+    public Launcher layoutId(int layoutId) {
+        this.layoutId = layoutId;
+        return this;
     }
 
     public Launcher themeId(int themeId) {
