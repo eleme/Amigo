@@ -350,21 +350,21 @@ Amigo 几乎实现了全方位的修复，通过替换 ClassLoader，直接全�
 
 最后我们比较下目前几个 hotfix 方案：
 
-| Amigo | Tinker | nuwa/QZone | AndFix | Dexposed
- ---|------|---|---|----|---|
-类替换 | yes | yes| yes |no| no
-lib替换|yes | yes| no | no | no
-资源替换|yes|yes|yes|no|no
-全平台支持|yes|yes|yes|yes|no
-即时生效|optional|no|no|yes|yes
-性能损耗|无|较小|较大|较小|较小
-补丁包大小|较大|较小|较大|一般|一般
-开发透明|yes|yes|yes|no|no
-复杂度|无|较低|较低|复杂|复杂
-gradle支持|yes|yes|yes|no|no
-接口文档|丰富|丰富|一般|一般|较少
-占Rom体积|较大|较大|较小|较小|较小
-成功率|100%|较好|很高|一般|一般
+|对比项| Amigo | Tinker | nuwa/QZone | AndFix | Dexposed|
+| ---|------|---|---|----|---|
+|类替换 | yes | yes| yes |no| no|
+|lib替换|yes | yes| no | no | no|
+|资源替换|yes|yes|yes|no|no|
+|全平台支持|yes|yes|yes|yes|no|
+|即时生效|optional|no|no|yes|yes|
+|性能损耗|无|较小|较大|较小|较小|
+|补丁包大小|较大|较小|较大|一般|一般|
+|开发透明|yes|yes|yes|no|no|
+|复杂度|无|较低|较低|复杂|复杂|
+|gradle支持|yes|yes|yes|no|no|
+|接口文档|丰富|丰富|一般|一般|较少|
+|占Rom体积|较大|较大|较小|较小|较小|
+|成功率|100%|较好|很高|一般|一般|
 
 
 
