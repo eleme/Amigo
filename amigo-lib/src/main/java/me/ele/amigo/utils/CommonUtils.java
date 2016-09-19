@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.Signature;
 
 import java.io.File;
 
@@ -22,6 +23,16 @@ public class CommonUtils {
     public static int getVersionCode(Context context, File patchApk) {
         PackageManager pm = context.getPackageManager();
         return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), 0).versionCode;
+    }
+
+    public static Signature getSignature(Context context) throws NameNotFoundException {
+        return context.getPackageManager().getPackageInfo(
+                context.getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
+    }
+
+    public static Signature getSignature(Context context, File patchApk) {
+        return context.getPackageManager().getPackageArchiveInfo(
+                patchApk.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
     }
 
     public static ApplicationInfo getApplicationInfo(Context context) throws NameNotFoundException {

@@ -17,9 +17,9 @@ import java.util.concurrent.Executors;
 
 import dalvik.system.DexFile;
 import me.ele.amigo.Amigo;
-import me.ele.amigo.AmigoFiles;
+import me.ele.amigo.AmigoDirs;
+import me.ele.amigo.PatchApk;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
-import me.ele.amigo.utils.CrcUtils;
 import me.ele.amigo.utils.DexReleaser;
 import me.ele.amigo.utils.ProcessUtils;
 
@@ -42,7 +42,8 @@ public class ApkReleaser {
     private static boolean isReleasing = false;
     private static ApkReleaser releaser;
 
-    private AmigoFiles amigoDirs;
+    private AmigoDirs amigoDirs;
+    private PatchApk patchApk;
 
     public static ApkReleaser getInstance(Context context) {
         if (releaser == null) {
@@ -58,34 +59,30 @@ public class ApkReleaser {
     private ApkReleaser(Context context) {
         this.context = context;
         this.service = Executors.newFixedThreadPool(3);
-        this.amigoDirs = AmigoFiles.getInstance(context);
+        this.amigoDirs = AmigoDirs.getInstance();
+        this.patchApk = PatchApk.getInstance();
     }
 
     public void release() {
-        try {
-            if (isReleasing) {
-                return;
-            }
-            Log.e(TAG, "release doing--->" + isReleasing);
-            service.submit(new Runnable() {
-                @Override
-                public void run() {
-                    isReleasing = true;
-                    File patchApk = amigoDirs.getPatchApk();
-                    DexReleaser.releaseDexes(patchApk, amigoDirs.getDexDir());
-                    NativeLibraryHelperCompat.copyNativeBinaries(patchApk, amigoDirs.getLibDir());
-                    dexOptimization();
-                }
-            });
-        } catch (Exception e) {
-            throw new RuntimeException("Release apk failed (" + e.getMessage() + ").");
+        if (isReleasing) {
+            return;
         }
+        Log.e(TAG, "release doing--->" + isReleasing);
+        service.submit(new Runnable() {
+            @Override
+            public void run() {
+                isReleasing = true;
+                DexReleaser.releaseDexes(patchApk.patchFile(), amigoDirs.dexDir());
+                NativeLibraryHelperCompat.copyNativeBinaries(patchApk.patchFile(), amigoDirs.libDir());
+                dexOptimization();
+            }
+        });
     }
 
 
     private void dexOptimization() {
         Log.e(TAG, "dexOptimization");
-        File[] listFiles = amigoDirs.getDexDir().listFiles();
+        File[] listFiles = amigoDirs.dexDir().listFiles();
 
         final List<File> validDexes = new ArrayList<>();
         for (File listFile : listFiles) {
@@ -101,7 +98,7 @@ public class ApkReleaser {
                 @Override
                 public void run() {
                     long startTime = System.currentTimeMillis();
-                    String optimizedPath = optimizedPathFor(dex, amigoDirs.getDexOptDir());
+                    String optimizedPath = optimizedPathFor(dex, amigoDirs.dexOptDir());
                     DexFile dexFile = null;
                     try {
                         dexFile = DexFile.loadDex(dex.getPath(), optimizedPath, 0);
@@ -157,11 +154,10 @@ public class ApkReleaser {
             switch (msg.what) {
                 case WHAT_DEX_OPT_DONE:
                     isReleasing = false;
-                    doneDexOpt(context);
+                    doneDexOpt();
                     saveDexAndSoChecksum();
                     SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
-                    String patchApkChecksum = getCrc(amigoDirs.getPatchApk());
-                    sp.edit().putString(Amigo.NEW_APK_SIG, patchApkChecksum).commit();
+                    sp.edit().putString(Amigo.NEW_APK_SIG, patchApk.checksum()).commit();
                     handler.sendEmptyMessageDelayed(WHAT_FINISH, DELAY_FINISH_TIME);
                     break;
                 case WHAT_FINISH:
@@ -176,19 +172,19 @@ public class ApkReleaser {
 
     private void saveDexAndSoChecksum() {
         SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
-        File[] dexFiles = amigoDirs.getDexDir().listFiles();
+        File[] dexFiles = amigoDirs.dexDir().listFiles();
         for (File dexFile : dexFiles) {
             String checksum = getCrc(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
 
-        File[] dexOptFiles = amigoDirs.getDexDir().listFiles();
-        for (File dexFile : dexOptFiles) {
-            String checksum = getCrc(dexFile);
-            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
+        File[] dexOptFiles = amigoDirs.dexOptDir().listFiles();
+        for (File dexOptFile : dexOptFiles) {
+            String checksum = getCrc(dexOptFile);
+            sp.edit().putString(dexOptFile.getAbsolutePath(), checksum).commit();
         }
 
-        File[] nativeFiles = amigoDirs.getLibDir().listFiles();
+        File[] nativeFiles = amigoDirs.libDir().listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String checksum = getCrc(nativeFile);
@@ -197,26 +193,21 @@ public class ApkReleaser {
         }
     }
 
-    private void doneDexOpt(Context context) {
+    private void doneDexOpt() {
         context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
                 .edit()
-                .putBoolean(getUniqueKey(context), true)
-                .apply();
+                .putBoolean(patchApk.checksum(), true)
+                .commit();
     }
 
-    private boolean isDexOptDone(Context context) {
+    private boolean isDexOptDone() {
         return context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
-                .getBoolean(getUniqueKey(context),
-                        false);
-    }
-
-    private String getUniqueKey(Context context) {
-        return CrcUtils.getCrc(amigoDirs.getPatchApk());
+                .getBoolean(patchApk.checksum(), false);
     }
 
     public void work(int layoutId, int themeId) {
         if (!ProcessUtils.isLoadDexProcess(context)) {
-            if (!isDexOptDone(context)) {
+            if (!isDexOptDone()) {
                 waitDexOptDone(layoutId, themeId);
             }
         }
@@ -225,7 +216,7 @@ public class ApkReleaser {
     private void waitDexOptDone(int layoutId, int themeId) {
         new Launcher(context).layoutId(layoutId).themeId(themeId).launch();
 
-        while (!isDexOptDone(context)) {
+        while (!isDexOptDone()) {
             try {
                 Thread.sleep(SLEEP_DURATION);
             } catch (InterruptedException e) {

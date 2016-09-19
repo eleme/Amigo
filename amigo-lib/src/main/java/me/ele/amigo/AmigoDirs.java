@@ -8,28 +8,29 @@ import java.io.File;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.FileUtils;
 
-public class AmigoFiles {
+public final class AmigoDirs {
     private static final String CODE_CACHE_NAME = "code_cache";
 
     private static final String CODE_CACHE_AMIGO_DEX_FOLDER_NAME = "amigo-dexes";
 
     private static final String AMIGO_FOLDER_NAME = "amigo";
 
-    private static final String AMIGO_APK_FILE_NAME = "patch.apk";
-
     private static final String AMIGO_DEX_FOLDER_NAME = "dexes";
 
     private static final String AMIGO_LIB_FOLDER_NAME = "libs";
 
-    private static AmigoFiles sInstance;
+    private static AmigoDirs sInstance;
 
-    public static AmigoFiles getInstance(Context context) throws RuntimeException {
-        if (sInstance != null) {
-            synchronized (AmigoFiles.class) {
-                if (sInstance == null) {
-                    sInstance = new AmigoFiles(context);
-                }
-            }
+    private static boolean sInitialized;
+
+    public static void init(Context context) throws Exception {
+        sInstance = new AmigoDirs(context);
+        sInitialized = true;
+    }
+
+    public static AmigoDirs getInstance() {
+        if (!sInitialized) {
+            throw new RuntimeException("Can't get instance before initialized");
         }
         return sInstance;
     }
@@ -38,11 +39,6 @@ public class AmigoFiles {
      * /data/data/{package_name}/files/amigo
      */
     private File amigoDir;
-
-    /**
-     * /data/data/{package_name}/files/amigo/patch.apk
-     */
-    private File apkFile;
 
     /**
      * /data/data/{package_name}/code_cache/amigo-dexes
@@ -59,7 +55,7 @@ public class AmigoFiles {
      */
     private File libDir;
 
-    private AmigoFiles(Context context) throws RuntimeException {
+    private AmigoDirs(Context context) throws RuntimeException {
         try {
             ApplicationInfo applicationInfo = CommonUtils.getApplicationInfo(context);
             if (applicationInfo == null) {
@@ -68,8 +64,6 @@ public class AmigoFiles {
             }
             amigoDir = new File(context.getFilesDir(), AMIGO_FOLDER_NAME);
             FileUtils.mkdirChecked(amigoDir);
-
-            apkFile = new File(amigoDir, AMIGO_APK_FILE_NAME);
 
             dexDir = new File(amigoDir, AMIGO_DEX_FOLDER_NAME);
             libDir = new File(amigoDir, AMIGO_LIB_FOLDER_NAME);
@@ -85,23 +79,19 @@ public class AmigoFiles {
         }
     }
 
-    public File getAmigoDir() {
+    public File amigoDir() {
         return amigoDir;
     }
 
-    public File getPatchApk() {
-        return apkFile;
-    }
-
-    public File getDexOptDir() {
+    public File dexOptDir() {
         return optDir;
     }
 
-    public File getDexDir() {
+    public File dexDir() {
         return dexDir;
     }
 
-    public File getLibDir() {
+    public File libDir() {
         return libDir;
     }
 }

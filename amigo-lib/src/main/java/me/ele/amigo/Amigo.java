@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
@@ -40,7 +39,6 @@ import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
-import static me.ele.amigo.utils.CommonUtils.getVersionCode;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 import static me.ele.amigo.utils.DexUtils.getElementWithDex;
 import static me.ele.amigo.utils.DexUtils.getPathList;
@@ -60,7 +58,8 @@ public class Amigo extends Application {
     private ClassLoader patchedClassLoader;
     private SharedPreferences sharedPref;
 
-    private AmigoFiles amigoDirs;
+    private AmigoDirs amigoDirs;
+    private PatchApk patchApk;
 
     @Override
     public void onCreate() {
@@ -73,14 +72,13 @@ public class Amigo extends Application {
                 if (checkUpgrade()) {
                     throw new RuntimeException("Host app has upgrade");
                 }
-                File patchApk = AmigoFiles.getInstance(this).getPatchApk();
                 if (!patchApk.exists()) {
                     throw new RuntimeException("Patch apk doesn't exists");
                 }
-                if (!isSignatureRight(this, patchApk)) {
+                if (!checkSignature()) {
                     throw new RuntimeException("Patch apk has illegal signature");
                 }
-                if (!checkPatchApkVersion(this, patchApk)) {
+                if (!checkVersion()) {
                     throw new RuntimeException("Patch apk version can't downgrade");
                 }
 
@@ -104,29 +102,25 @@ public class Amigo extends Application {
             try {
                 runOriginalApplication();
             } catch (Throwable e2) {
-                throw new RuntimeException(e);
+                throw new RuntimeException(e2);
             }
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void ensureAmigoDirs() throws RuntimeException {
-        amigoDirs = AmigoFiles.getInstance(this);
-    }
-
     private void runPatchApk() throws LoadPatchApkException {
         try {
-            String patchApkChecksum = getCrc(amigoDirs.getPatchApk());
-            boolean isFirstRun = isPatchApkFirstRun();
-            Log.e(TAG, "patchApkChecksum-->" + patchApkChecksum + ", sig--->" + sharedPref.getString(NEW_APK_SIG, ""));
-            if (isFirstRun || isDexOptExists()) {
+            Log.e(TAG, "patchApkChecksum-->" + patchApk.checksum() + ", sig--->" + sharedPref.getString(NEW_APK_SIG, ""));
+            if (isPatchApkFirstRun() || !isOptedDexExists()) {
+                // TODO This is workaround for now, refactor in future.
+                sharedPref.edit().remove(patchApk.checksum()).commit();
                 releasePatchApk();
             } else {
                 checkDexAndSoChecksum();
             }
 
-            AmigoClassLoader amigoClassLoader = new AmigoClassLoader(amigoDirs.getPatchApk().getAbsolutePath(), getRootClassLoader());
+            AmigoClassLoader amigoClassLoader = new AmigoClassLoader(patchApk.patchPath(), getRootClassLoader());
             setAPKClassLoader(amigoClassLoader);
             setDexElements(amigoClassLoader);
             setNativeLibraryDirectories(amigoClassLoader);
@@ -134,7 +128,7 @@ public class Amigo extends Application {
             AssetManager assetManager = AssetManager.class.newInstance();
             Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
             addAssetPath.setAccessible(true);
-            addAssetPath.invoke(assetManager, amigoDirs.getPatchApk().getAbsolutePath());
+            addAssetPath.invoke(assetManager, patchApk.patchPath());
             setAPKResources(assetManager);
 
             patchedClassLoader = amigoClassLoader;
@@ -146,7 +140,7 @@ public class Amigo extends Application {
 
     private void releasePatchApk() throws Exception {
         //clear previous working dir
-        clearWithoutApk(this);
+        clearWithoutPatch(this);
 
         //start a new process to handle time-tense operation
         ApplicationInfo appInfo = getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
@@ -168,19 +162,26 @@ public class Amigo extends Application {
     }
 
     private boolean isPatchApkFirstRun() {
-        File patchApk = AmigoFiles.getInstance(this).getPatchApk();
-        String demoApkChecksum = getCrc(patchApk);
-        return !sharedPref.getString(NEW_APK_SIG, "").equals(demoApkChecksum);
+        return !sharedPref.getString(NEW_APK_SIG, "").equals(patchApk.checksum());
     }
 
-    private boolean isDexOptExists() {
-       return amigoDirs.getDexOptDir().exists();
+    private boolean isOptedDexExists() {
+        if (amigoDirs.dexOptDir().listFiles() != null) {
+            return amigoDirs.dexOptDir().listFiles().length > 0;
+        }
+        return false;
+    }
+
+    private void ensureAmigoDirs() throws Exception {
+        AmigoDirs.init(this);
+        amigoDirs = AmigoDirs.getInstance();
+        patchApk = PatchApk.getInstance();
     }
 
     private boolean checkUpgrade() {
         boolean result = false;
         int recordVersion = sharedPref.getInt(VERSION_CODE, 0);
-        int currentVersion = getVersionCode(this);
+        int currentVersion = CommonUtils.getVersionCode(this);
         if (currentVersion > recordVersion) {
             result = true;
         }
@@ -216,7 +217,7 @@ public class Amigo extends Application {
 
     private void checkDexAndSoChecksum() throws IOException, NoSuchAlgorithmException {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-        File[] dexFiles = amigoDirs.getDexDir().listFiles();
+        File[] dexFiles = amigoDirs.dexDir().listFiles();
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
             String checksum = getCrc(dexFile);
@@ -225,7 +226,7 @@ public class Amigo extends Application {
             }
         }
 
-        File[] dexOptFiles = amigoDirs.getDexOptDir().listFiles();
+        File[] dexOptFiles = amigoDirs.dexOptDir().listFiles();
         for (File dexOptFile : dexOptFiles) {
             String savedChecksum = sp.getString(dexOptFile.getAbsolutePath(), "");
             String checksum = getCrc(dexOptFile);
@@ -236,7 +237,7 @@ public class Amigo extends Application {
             }
         }
 
-        File[] nativeFiles = amigoDirs.getLibDir().listFiles();
+        File[] nativeFiles = amigoDirs.libDir().listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
@@ -250,7 +251,7 @@ public class Amigo extends Application {
 
     private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader)
             throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, NoSuchFieldException {
-        File libDir = amigoDirs.getLibDir();
+        File libDir = amigoDirs.libDir();
         injectSoAtFirst(hackClassLoader, libDir.getAbsolutePath());
         libDir.setReadOnly();
         File[] libs = libDir.listFiles();
@@ -317,7 +318,7 @@ public class Amigo extends Application {
 
     private void setDexElements(ClassLoader classLoader) throws NoSuchFieldException, IllegalAccessException {
         Object dexPathList = getPathList(classLoader);
-        File[] listFiles = amigoDirs.getDexDir().listFiles();
+        File[] listFiles = amigoDirs.dexDir().listFiles();
 
         List<File> validDexes = new ArrayList<>();
         for (File listFile : listFiles) {
@@ -331,7 +332,7 @@ public class Amigo extends Application {
         int length = dexes.length;
         Object dexElements = Array.newInstance(localClass, length);
         for (int k = 0; k < length; k++) {
-            Array.set(dexElements, k, getElementWithDex(dexes[k], amigoDirs.getDexOptDir()));
+            Array.set(dexElements, k, getElementWithDex(dexes[k], amigoDirs.dexOptDir()));
         }
         writeField(dexPathList, "dexElements", dexElements);
     }
@@ -355,94 +356,66 @@ public class Amigo extends Application {
     }
 
     public static void workLater(Context context) {
-        File patchApk = AmigoFiles.getInstance(context).getPatchApk();
-        workLater(context, patchApk);
+        workLater(context, PatchApk.getInstance().patchFile());
     }
 
-    public static void workLater(Context context, File apkFile) {
+    public static void workLater(Context context, File patchFile) {
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
 
-        if (apkFile == null) {
-            throw new NullPointerException("param apkFile cannot be null");
+        if (patchFile == null) {
+            throw new NullPointerException("param patchFile cannot be null");
         }
 
-        if (!apkFile.exists()) {
-            throw new IllegalArgumentException("param apkFile doesn't exist");
+        if (!patchFile.exists()) {
+            throw new IllegalArgumentException("param patchFile doesn't exist");
         }
 
-        if (!apkFile.canRead()) {
-            throw new IllegalArgumentException("param apkFile cannot be read");
+        if (!patchFile.canRead()) {
+            throw new IllegalArgumentException("param patchFile cannot be read");
         }
-
-        if (!isSignatureRight(context, apkFile)) {
-            Log.e(TAG, "no valid apk");
-            return;
-        }
-
-        if (!checkPatchApkVersion(context, apkFile)) {
-            Log.e(TAG, "patch apk version cannot be less than host apk");
-            return;
-        }
-
-        File directory = new File(context.getFilesDir(), "amigo");
-        File demoAPk = new File(directory, "demo.apk");
-        if (!apkFile.getAbsolutePath().equals(demoAPk.getAbsolutePath())) {
-            copyFile(apkFile, demoAPk);
+        if (!patchFile.getAbsolutePath().equals(PatchApk.getInstance().patchPath())) {
+            copyFile(patchFile, PatchApk.getInstance().patchFile());
         }
 
         AmigoService.start(context, true);
     }
 
     public static void work(Context context) {
-        File patchApk = AmigoFiles.getInstance(context).getPatchApk();
-        work(context, patchApk);
+        work(context, PatchApk.getInstance().patchFile());
     }
 
-    // auto restart the whole app
-    public static void work(Context context, File apkFile) {
+    public static void work(Context context, File patchFile) {
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
 
-        if (apkFile == null) {
+        if (patchFile == null) {
             throw new NullPointerException("param apkFile cannot be null");
         }
 
-        if (!apkFile.exists()) {
+        if (!patchFile.exists()) {
             throw new IllegalArgumentException("param apkFile doesn't exist");
         }
 
-        if (!apkFile.canRead()) {
+        if (!patchFile.canRead()) {
             throw new IllegalArgumentException("param apkFile cannot be read");
         }
 
-        if (!isSignatureRight(context, apkFile)) {
-            Log.e(TAG, "no valid apk");
-            return;
-        }
-
-        if (!checkPatchApkVersion(context, apkFile)) {
-            Log.e(TAG, "patch apk version cannot be less than host apk");
-            return;
-        }
-
-        File patchApk = AmigoFiles.getInstance(context).getPatchApk();
-        if (!apkFile.getAbsolutePath().equals(patchApk.getAbsolutePath())) {
-            copyFile(apkFile, patchApk);
+        if (!patchFile.getAbsolutePath().equals(PatchApk.getInstance().patchPath())) {
+            copyFile(patchFile, PatchApk.getInstance().patchFile());
         }
 
         AmigoService.start(context, false);
-
         System.exit(0);
         Process.killProcess(Process.myPid());
     }
 
-    private static boolean isSignatureRight(Context context, File patchApk) {
+    private boolean checkSignature() {
         try {
-            Signature appSig = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
-            Signature patchSig = context.getPackageManager().getPackageArchiveInfo(patchApk.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
+            Signature appSig = CommonUtils.getSignature(this);
+            Signature patchSig = patchApk.signature(this);
             return appSig.hashCode() == patchSig.hashCode();
         } catch (Exception e) {
             e.printStackTrace();
@@ -450,33 +423,32 @@ public class Amigo extends Application {
         return false;
     }
 
-    private static boolean checkPatchApkVersion(Context context, File patchApk) {
-        return CommonUtils.getVersionCode(context, patchApk) >= getVersionCode(context);
+    private boolean checkVersion() {
+        return patchApk.versionCode(this) >= CommonUtils.getVersionCode(this);
     }
 
-    public void clear(Context context) {
-        if (context == null) {
-            throw new IllegalArgumentException("context == null");
-        }
-
-        removeFile(amigoDirs.getAmigoDir());
-        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
-                .edit()
-                .clear()
-                .putInt(VERSION_CODE, getVersionCode(context))
-                .commit();
-    }
-
-    private void clearWithoutApk(Context context) {
+    public static void clear(Context context) {
         if (context == null) {
             throw new NullPointerException("param context cannot be null");
         }
 
-        File[] files = amigoDirs.getAmigoDir().listFiles();
-        String patchApkPath = amigoDirs.getPatchApk().getAbsolutePath();
+        removeFile(AmigoDirs.getInstance().amigoDir());
+        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
+                .edit()
+                .clear()
+                .putInt(VERSION_CODE, CommonUtils.getVersionCode(context))
+                .commit();
+    }
+
+    private void clearWithoutPatch(Context context) {
+        if (context == null) {
+            throw new NullPointerException("param context cannot be null");
+        }
+
+        File[] files = amigoDirs.amigoDir().listFiles();
         if (files != null && files.length > 0) {
             for (File file : files) {
-                if (!file.getAbsolutePath().equals(patchApkPath)) {
+                if (!file.getAbsolutePath().equals(patchApk.patchPath())) {
                     removeFile(file, false);
                 }
             }

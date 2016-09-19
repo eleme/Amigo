@@ -14,10 +14,7 @@ public class DexReleaser {
         byte[] buffer = new byte[8 * 1024];
 
         try {
-            if (!outputDir.exists()) {
-                outputDir.mkdir();
-                FileUtils.mkdirChecked(outputDir);
-            }
+            FileUtils.mkdirChecked(outputDir);
 
             ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
             ZipEntry ze = zis.getNextEntry();
