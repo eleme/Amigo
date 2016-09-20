@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="me.ele.demo">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="me.ele.app.amigo">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
 
     <application
-        android:name="me.ele.demo.ApplicationContext"
+        android:name=".ApplicationContext"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -15,32 +15,32 @@
         android:theme="@style/AppTheme"
         tools:replace="android:icon">
         <activity
-            android:name="me.ele.demo.MainActivity"
+            android:name="me.ele.app.amigo.HomeActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:label="@string/app_name">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
+        <activity android:name=".demo.DemoActivity"/>
+
+        <activity android:name=".dev.DevActivity"/>
+
         <activity
-            android:name="me.ele.demo.Main2Activity"
+            android:name=".dev.SubprocessActivity"
             android:exported="true"
-            android:process=".main2"
-            android:label="@string/app_name2"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+            android:process=".demo.subprocess"/>
 
         <meta-data
             android:name="amigo_layout"
-            android:value="amigo_layout_demo" />
+            android:value="amigo_layout_demo"/>
 
         <meta-data
             android:name="amigo_theme"
-            android:value="amigoThemeDemo" />
+            android:value="amigoThemeDemo"/>
 
 
     </application>

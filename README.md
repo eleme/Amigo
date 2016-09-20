@@ -23,7 +23,24 @@ In your module's `build.gradle`
 
 you are good to go now, as simple as this.
 
-### notice 
+## Demo
+There is a app module sub project. And there is an Demo page in the app demonstrating how to apply patch apk. Please ref the usage.
+
+## Development
+#### Process
+There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:app:preparePatch`, which can accelerate development.
+
+* `./gradlew runHost`, launch the host app
+* `./gradlew preparePatch`, build and push the patch apk to the device
+* apply the patch apk in the Demo page
+
+#### Gradle plugin
+The plugin was put into buildSrc directory, which means the plugin code change will work immediately each time you build.
+
+#### amigo lib
+The gradle plugin would select right amigo lib automatically. In the development mode, the amigo-lib module will be used.
+
+## notice
 
 * sync with jcenter may take some time, if amigo cannot be found, please add my private maven url into your buildscript
 
@@ -41,7 +58,7 @@ buildscript {
 
 * Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
 
-### to make hotfix work
+#### to make hotfix work
 There are two ways to make hotfix work.
 
 * if you don't need hotfix work immediately
@@ -63,7 +80,6 @@ There are two ways to make hotfix work.
 	Amigo.work(context, apkFile);
 	```
 
-
 ### clear the previously installed patch-apk manually
 
 ```java
@@ -71,7 +87,8 @@ Amigo.clear(context);
 ```
 **note**：The old apk would be cleared automatically when the latest version updated.
 
-### customize the fix layout
+
+## customize the fix layout
 some time-tense operation is handled in a new process with an activity, you may customize it
 
 ```xml
@@ -85,7 +102,7 @@ some time-tense operation is handled in a new process with an activity, you may 
 
 ```
 
-### limitations
+## limitations
  - support new `activity` & `receiver` in beta, `service` & `provider` is not supported for now
  
      ```groovy
@@ -111,7 +128,7 @@ also you can play with this app demo following the procedures below.
    3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
    4. click the "apply patch apk" button, and see the changes you made then.
    
-### retrieve hotfix file
+## retrieve hotfix file
 
 - make it simple, you just need a fully new apk
 

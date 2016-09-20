@@ -125,6 +125,12 @@ public class Amigo extends Application {
             setDexElements(amigoClassLoader);
             setNativeLibraryDirectories(amigoClassLoader);
 
+            // issue: different class loader has different static object
+            // https://coderanch.com/t/385932/java/java/ClassLoader-Static-variables
+            amigoClassLoader.loadClass("me.ele.amigo.AmigoDirs")
+                    .getDeclaredMethod("init", Context.class)
+                    .invoke(null, this);
+
             AssetManager assetManager = AssetManager.class.newInstance();
             Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
             addAssetPath.setAccessible(true);
@@ -463,6 +469,13 @@ public class Amigo extends Application {
             e.printStackTrace();
         }
         return classLoader != null && classLoader.getClass().getName().equals(AmigoClassLoader.class.getName());
+    }
+
+    public static int patchVersion(Context ctx) {
+        if (!hasWorked()) {
+            return -1;
+        }
+        return CommonUtils.getVersionCode(ctx, PatchApk.getInstance().patchFile());
     }
 
     private static class LoadPatchApkException extends Exception {
