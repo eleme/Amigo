@@ -1,6 +1,7 @@
 package me.ele.amigo;
 
 import android.app.Application;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -8,6 +9,7 @@ import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
+import android.os.Handler;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.ArrayMap;
@@ -29,6 +31,7 @@ import java.util.Map;
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.CrcUtils;
+import me.ele.amigo.utils.ComponentUtils;
 import me.ele.amigo.utils.ProcessUtils;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
@@ -143,6 +146,10 @@ public class Amigo extends Application {
             addAssetPath.invoke(assetManager, patchApks.patchPath(checksum));
             setAPKResources(assetManager);
 
+            dynamicRegisterReceivers();
+            setApkInstrumentation();
+            setApkHandler();
+
             patchedClassLoader = amigoClassLoader;
 
             sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
@@ -152,6 +159,26 @@ public class Amigo extends Application {
         } catch (Exception e) {
             throw new LoadPatchApkException(e);
         }
+    }
+
+    private void dynamicRegisterReceivers() {
+        ComponentUtils.registerNewReceivers(this);
+    }
+
+    private void setApkInstrumentation() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
+        Instrumentation oldInstrumentation = (Instrumentation) readField(instance(), "mInstrumentation", true);
+        Log.e(TAG, "oldInstrumentation--->" + oldInstrumentation);
+        AmigoInstrumentation instrumentation = new AmigoInstrumentation(oldInstrumentation);
+        writeField(instance(), "mInstrumentation", instrumentation, true);
+        Log.e(TAG, "setApkInstrumentation success classloader-->" + instrumentation.getClass().getClassLoader());
+    }
+
+    private void setApkHandler() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Handler handler = (Handler) readField(instance(), "mH", true);
+        Object callback = readField(handler, "mCallback", true);
+        AmigoCallback value = new AmigoCallback(this, (Handler.Callback) callback);
+        writeField(handler, "mCallback", value);
+        Log.e(TAG, "hook handler success");
     }
 
     private void releasePatchApk(String checksum) throws Exception {

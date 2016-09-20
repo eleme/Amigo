@@ -9,13 +9,26 @@
             android:name=".AmigoService"
             android:process=":amigo" />
 
-        <activity
+         <activity
             android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:process=":amigo"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ActivityStub$StandardStub"
+            android:launchMode="standard" />
+        <activity
+            android:name=".ActivityStub$SingleInstanceStub"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name=".ActivityStub$SingleTaskStub"
+            android:launchMode="singleTask" />
+        <activity
+            android:name=".ActivityStub$SingleTopStub"
+            android:launchMode="singleTop" />
 
     </application>
 

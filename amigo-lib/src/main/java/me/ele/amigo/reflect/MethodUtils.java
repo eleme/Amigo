@@ -56,7 +56,7 @@ public class MethodUtils {
 
         NoSuchMethodException exception = null;
 
-        while (method == null || clazz != null) {
+        while (clazz != null) {
             try {
                 method = clazz.getDeclaredMethod(methodName, parameterTypes);
                 exception = null;
