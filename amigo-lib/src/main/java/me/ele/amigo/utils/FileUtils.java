@@ -81,4 +81,10 @@ public class FileUtils {
         }
     }
 
+    public static void mkdirChecked(File dir) throws IOException {
+        dir.mkdir();
+        if (!dir.isDirectory()) {
+            throw new IOException("Failed to create directory " + dir.getPath());
+        }
+    }
 }

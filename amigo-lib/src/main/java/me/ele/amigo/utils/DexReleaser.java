@@ -9,15 +9,12 @@ import java.util.zip.ZipInputStream;
 
 public class DexReleaser {
 
-    public static void releaseDexes(String zipFile, String outputFolder) {
+    public static void releaseDexes(File zipFile, File outputDir) {
 
         byte[] buffer = new byte[8 * 1024];
 
         try {
-            File folder = new File(outputFolder);
-            if (!folder.exists()) {
-                folder.mkdir();
-            }
+            FileUtils.mkdirChecked(outputDir);
 
             ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
             ZipEntry ze = zis.getNextEntry();
@@ -28,7 +25,7 @@ public class DexReleaser {
                     ze = zis.getNextEntry();
                     continue;
                 }
-                File newFile = new File(outputFolder + File.separator + fileName);
+                File newFile = new File(outputDir + File.separator + fileName);
                 new File(newFile.getParent()).mkdirs();
                 FileOutputStream fos = new FileOutputStream(newFile);
 

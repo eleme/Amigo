@@ -44,7 +44,7 @@ public class ProcessUtils {
 
     public static boolean isLoadDexProcess(Context context) {
         String currentProcessName = getCurrentProcessName(context);
-        String loadDexProcessName = context.getPackageName() + ":eleme_apk_releaser";
+        String loadDexProcessName = context.getPackageName() + ":amigo";
         return currentProcessName != null && currentProcessName.equals(loadDexProcessName);
     }
 
