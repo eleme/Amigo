@@ -19,9 +19,12 @@ public class AmigoService extends Service {
     private static final String TAG = AmigoService.class.getSimpleName();
     public static final int WHAT = 0;
     public static final int DELAY = 200;
+    public static final int RETRY_TIMES = 10;
 
     private static final String WORK_LATER = "work_later";
+    private static final String APK_CHECKSUM = "apk_checksum";
 
+    private int count = 0;
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -39,7 +42,9 @@ public class AmigoService extends Service {
                         Process.killProcess(Process.myPid());
                         return;
                     }
-                    sendEmptyMessageDelayed(WHAT, DELAY);
+                    if (count++ < RETRY_TIMES) {
+                        sendMessageDelayed(Message.obtain(msg), DELAY);
+                    }
                     break;
                 default:
                     break;
@@ -55,19 +60,21 @@ public class AmigoService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
+            String checksum = intent.getStringExtra(APK_CHECKSUM);
             boolean workLater = intent.getBooleanExtra(WORK_LATER, false);
             if (workLater) {
-                ApkReleaser.getInstance(this).release();
+                ApkReleaser.getInstance(this).release(checksum);
             } else {
-                handler.sendEmptyMessage(WHAT);
+                handler.sendMessage(handler.obtainMessage(WHAT, checksum));
             }
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public static void start(Context context, boolean workLater) {
+    public static void start(Context context, String checksum, boolean workLater) {
         Intent intent = new Intent(context, AmigoService.class);
-        intent.putExtra(WORK_LATER, workLater);
+        intent.putExtra(WORK_LATER, workLater)
+                .putExtra(APK_CHECKSUM, checksum);
         context.startService(intent);
     }
 }

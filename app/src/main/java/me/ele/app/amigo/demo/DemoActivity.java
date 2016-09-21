@@ -20,7 +20,6 @@ import java.io.File;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.ele.amigo.Amigo;
-import me.ele.app.amigo.BuildConfig;
 import me.ele.app.amigo.HomeActivity;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
@@ -54,7 +53,7 @@ public class DemoActivity extends AppCompatActivity {
             Amigo.work(this, patchApkFile);
             return;
         }
-        int workingPatchVersion = Amigo.patchVersion(getApplication());
+        int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
         if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
             Toast.makeText(this, patchApkFile.getAbsolutePath() + " version must be newer than current working patch", Toast.LENGTH_LONG).show();
             return;
@@ -77,7 +76,7 @@ public class DemoActivity extends AppCompatActivity {
             Toast.makeText(this, "waiting for seconds, and kill this app and relaunch the app to check result", Toast.LENGTH_LONG).show();
             return;
         }
-        int workingPatchVersion = Amigo.patchVersion(getApplication());
+        int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
         if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
             Toast.makeText(this, patchApkFile.getAbsolutePath() + " version must be newer than current working patch", Toast.LENGTH_LONG).show();
             return;
