@@ -89,6 +89,12 @@ public class Amigo extends Application {
                 return;
             }
 
+            if (ProcessUtils.isLoadDexProcess(this)) {
+                Log.e(TAG, "load dex process");
+                runOriginalApplication();
+                return;
+            }
+
             if (!ProcessUtils.isMainProcess(this) && isPatchApkFirstRun()) {
                 Log.e(TAG, "None main process and patch apk is not released yet");
                 runOriginalApplication();
