@@ -8,8 +8,10 @@ import android.util.Pair;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
@@ -22,7 +24,7 @@ public class RCompat {
             "R$dimen", "R$drawable", "R$id", "R$integer",
             "R$layout", "R$menu", "R$mipmap", "R$string",
             "R$style", "R$styleable"};
-    private static final Class<?>[] classes = new Class<?>[classNames.length];
+    private static final List<Class> classes = new ArrayList<>(classNames.length);
     private static final Map<Class, Map<Field, Integer>> allFields = new HashMap<>();
 
     public static int getIdentifier(Context context, int id) {
@@ -64,10 +66,10 @@ public class RCompat {
     }
 
     private static void initClasses(Context context) {
-        if (classes[0] == null) {
+        if (classes.size() == 0) {
             for (int i = 0; i < classNames.length; i++) {
                 try {
-                    classes[i] = Class.forName(context.getPackageName() + "." + classNames[i]);
+                    classes.add(Class.forName(context.getPackageName() + "." + classNames[i]));
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }

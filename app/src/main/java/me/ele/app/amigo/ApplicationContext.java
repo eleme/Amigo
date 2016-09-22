@@ -1,4 +1,4 @@
-package me.ele.demo;
+package me.ele.app.amigo;
 
 import android.app.Application;
 import android.content.Context;
