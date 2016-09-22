@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'me.ele.amigo'
+apply plugin: 'com.neenbedankt.android-apt'
 
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "me.ele.demo"
+        applicationId "me.ele.app.amigo"
         minSdkVersion 14
         targetSdkVersion 22
         versionCode 1
@@ -29,9 +30,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
-        debug {
+        host {
             debuggable true
+            signingConfig signingConfigs.debug
             minifyEnabled false
+            zipAlignEnabled true
+        }
+
+        patch {
+            debuggable true
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            zipAlignEnabled true
         }
     }
 }
@@ -41,6 +51,10 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
     compile 'com.android.support:multidex:1.0.1'
+
+    compile "com.jakewharton:butterknife:8.3.0"
+
+    apt "com.jakewharton:butterknife-compiler:8.3.0"
 }
 
 
@@ -48,8 +62,16 @@ def getPkg() {
     return android.defaultConfig.applicationId
 }
 
-def getApk() {
-    return "app/build/outputs/apk/app-debug.apk"
+def getHostApk() {
+    return "app/build/outputs/apk/app-host.apk"
+}
+
+def getPatchApk() {
+    return "app/build/outputs/apk/app-patch.apk"
+}
+
+def getPatchApkName() {
+    return 'amigo_patch.apk'
 }
 
 def inheritIO(final InputStream src, final PrintStream dest) {
@@ -76,19 +98,18 @@ def launch() {
     runCmd("adb shell monkey -p ${getPkg()} -c android.intent.category.LAUNCHER 1")
 }
 
-def deleteDemoApk() {
-    runCmd("adb shell rm -rf /sdcard/demo.apk")
+def deletePatchApk() {
+    runCmd("adb shell rm -rf /sdcard/${getPatchApkName()}")
 }
 
-task runHost(dependsOn: assembleDebug) << {
-    deleteDemoApk()
+task runHost(dependsOn: assembleHost) << {
+    deletePatchApk()
     runCmd("adb uninstall ${getPkg()}")
-    runCmd("adb install -r -d ${getApk()}")
+    runCmd("adb install -r -d ${getHostApk()}")
     launch()
 }
 
-task runPatch(dependsOn: assembleDebug) << {
-    deleteDemoApk()
-    runCmd("adb push ${getApk()} /sdcard/demo.apk")
-    launch()
+task preparePatch(dependsOn: assemblePatch) << {
+    deletePatchApk()
+    runCmd("adb push ${getPatchApk()} /sdcard/${getPatchApkName()}")
 }
