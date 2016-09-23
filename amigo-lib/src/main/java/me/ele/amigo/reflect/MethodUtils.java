@@ -11,11 +11,6 @@ public class MethodUtils {
         args = Utils.nullToEmpty(args);
         Method method = getDeclaredMethod(object.getClass(), methodName, parameterTypes);
         method.setAccessible(true);
-        if (method == null) {
-            throw new NoSuchMethodException("No such accessible method: "
-                    + methodName + "() on object: "
-                    + object.getClass().getName());
-        }
         return method.invoke(object, args);
     }
 
@@ -26,11 +21,6 @@ public class MethodUtils {
         args = Utils.nullToEmpty(args);
         Method method = getDeclaredMethod(clazz, methodName, parameterTypes);
         method.setAccessible(true);
-        if (method == null) {
-            throw new NoSuchMethodException("No such accessible method: "
-                    + methodName + "() on object: "
-                    + clazz.getName());
-        }
         return method.invoke(null, args);
     }
 
@@ -54,21 +44,21 @@ public class MethodUtils {
 
         Method method = null;
 
-        NoSuchMethodException exception = null;
+        Class<?> targetClazz = clazz;
 
-        while (method == null || clazz != null) {
+        while (targetClazz != null) {
             try {
-                method = clazz.getDeclaredMethod(methodName, parameterTypes);
-                exception = null;
+                method = targetClazz.getDeclaredMethod(methodName, parameterTypes);
                 break;
             } catch (NoSuchMethodException e) {
-                exception = e;
-                clazz = clazz.getSuperclass();
+                targetClazz = targetClazz.getSuperclass();
             }
         }
 
-        if (exception != null) {
-            throw exception;
+        if (method == null) {
+            throw new NoSuchMethodException("No such accessible method: "
+                + methodName + "() on object: "
+                + clazz.getName());
         }
 
         return method;
