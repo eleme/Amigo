@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import dalvik.system.DexFile;
 import me.ele.amigo.Amigo;
 import me.ele.amigo.AmigoDirs;
-import me.ele.amigo.PatchApk;
+import me.ele.amigo.PatchApks;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
 import me.ele.amigo.utils.DexReleaser;
 import me.ele.amigo.utils.ProcessUtils;
@@ -43,7 +43,7 @@ public class ApkReleaser {
     private static ApkReleaser releaser;
 
     private AmigoDirs amigoDirs;
-    private PatchApk patchApk;
+    private PatchApks patchApks;
 
     public static ApkReleaser getInstance(Context context) {
         if (releaser == null) {
@@ -59,30 +59,30 @@ public class ApkReleaser {
     private ApkReleaser(Context context) {
         this.context = context;
         this.service = Executors.newFixedThreadPool(3);
-        this.amigoDirs = AmigoDirs.getInstance();
-        this.patchApk = PatchApk.getInstance();
+        this.amigoDirs = AmigoDirs.getInstance(context);
+        this.patchApks = PatchApks.getInstance(context);
     }
 
-    public void release() {
+    public void release(final String checksum) {
         if (isReleasing) {
             return;
         }
-        Log.e(TAG, "release doing--->" + isReleasing);
+        Log.e(TAG, "release doing--->" + isReleasing + ", checksum: " + checksum);
         service.submit(new Runnable() {
             @Override
             public void run() {
                 isReleasing = true;
-                DexReleaser.releaseDexes(patchApk.patchFile(), amigoDirs.dexDir());
-                NativeLibraryHelperCompat.copyNativeBinaries(patchApk.patchFile(), amigoDirs.libDir());
-                dexOptimization();
+                DexReleaser.releaseDexes(patchApks.patchFile(checksum), amigoDirs.dexDir(checksum));
+                NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum), amigoDirs.libDir(checksum));
+                dexOptimization(checksum);
             }
         });
     }
 
 
-    private void dexOptimization() {
+    private void dexOptimization(final String checksum) {
         Log.e(TAG, "dexOptimization");
-        File[] listFiles = amigoDirs.dexDir().listFiles();
+        File[] listFiles = amigoDirs.dexDir(checksum).listFiles();
 
         final List<File> validDexes = new ArrayList<>();
         for (File listFile : listFiles) {
@@ -98,7 +98,7 @@ public class ApkReleaser {
                 @Override
                 public void run() {
                     long startTime = System.currentTimeMillis();
-                    String optimizedPath = optimizedPathFor(dex, amigoDirs.dexOptDir());
+                    String optimizedPath = optimizedPathFor(dex, amigoDirs.dexOptDir(checksum));
                     DexFile dexFile = null;
                     try {
                         dexFile = DexFile.loadDex(dex.getPath(), optimizedPath, 0);
@@ -125,7 +125,7 @@ public class ApkReleaser {
             e.printStackTrace();
         }
         Log.e(TAG, "dex opt done");
-        handler.sendEmptyMessage(WHAT_DEX_OPT_DONE);
+        handler.sendMessage(handler.obtainMessage(WHAT_DEX_OPT_DONE, checksum));
     }
 
     private static final String DEX_SUFFIX = ".dex";
@@ -154,10 +154,13 @@ public class ApkReleaser {
             switch (msg.what) {
                 case WHAT_DEX_OPT_DONE:
                     isReleasing = false;
-                    doneDexOpt();
-                    saveDexAndSoChecksum();
-                    SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
-                    sp.edit().putString(Amigo.NEW_APK_SIG, patchApk.checksum()).commit();
+                    String checksum = (String) msg.obj;
+                    doneDexOpt(checksum);
+                    saveDexAndSoChecksum(checksum);
+                    context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
+                            .edit()
+                            .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, checksum)
+                            .commit();
                     handler.sendEmptyMessageDelayed(WHAT_FINISH, DELAY_FINISH_TIME);
                     break;
                 case WHAT_FINISH:
@@ -170,21 +173,21 @@ public class ApkReleaser {
         }
     };
 
-    private void saveDexAndSoChecksum() {
+    private void saveDexAndSoChecksum(String apkChecksum) {
         SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
-        File[] dexFiles = amigoDirs.dexDir().listFiles();
+        File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
         for (File dexFile : dexFiles) {
             String checksum = getCrc(dexFile);
             sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
         }
 
-        File[] dexOptFiles = amigoDirs.dexOptDir().listFiles();
+        File[] dexOptFiles = amigoDirs.dexOptDir(apkChecksum).listFiles();
         for (File dexOptFile : dexOptFiles) {
             String checksum = getCrc(dexOptFile);
             sp.edit().putString(dexOptFile.getAbsolutePath(), checksum).commit();
         }
 
-        File[] nativeFiles = amigoDirs.libDir().listFiles();
+        File[] nativeFiles = amigoDirs.libDir(apkChecksum).listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String checksum = getCrc(nativeFile);
@@ -193,30 +196,30 @@ public class ApkReleaser {
         }
     }
 
-    private void doneDexOpt() {
+    private void doneDexOpt(String checksum) {
         context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
                 .edit()
-                .putBoolean(patchApk.checksum(), true)
+                .putBoolean(checksum, true)
                 .commit();
     }
 
-    private boolean isDexOptDone() {
+    private boolean isDexOptDone(String checksum) {
         return context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
-                .getBoolean(patchApk.checksum(), false);
+                .getBoolean(checksum, false);
     }
 
-    public void work(int layoutId, int themeId) {
+    public void work(String checksum, int layoutId, int themeId) {
         if (!ProcessUtils.isLoadDexProcess(context)) {
-            if (!isDexOptDone()) {
-                waitDexOptDone(layoutId, themeId);
+            if (!isDexOptDone(checksum)) {
+                waitDexOptDone(checksum, layoutId, themeId);
             }
         }
     }
 
-    private void waitDexOptDone(int layoutId, int themeId) {
-        new Launcher(context).layoutId(layoutId).themeId(themeId).launch();
+    private void waitDexOptDone(String checksum, int layoutId, int themeId) {
+        new Launcher(context).checksum(checksum).layoutId(layoutId).themeId(themeId).launch();
 
-        while (!isDexOptDone()) {
+        while (!isDexOptDone(checksum)) {
             try {
                 Thread.sleep(SLEEP_DURATION);
             } catch (InterruptedException e) {
