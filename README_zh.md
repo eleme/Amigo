@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-     classpath 'me.ele:amigo:0.1.0'
+      classpath 'me.ele:amigo:0.2.0'
    }
    ```
 
@@ -25,6 +25,22 @@ Amigo
 
    就这样轻松的集成了Amigo。
 
+
+开发样例
+----
+#### 流程
+1. 我们在`app/build.gradle`提供了两个gradle task: `:app:runHost`, `:app:preparePatch`, 可以有效的帮助加快开发.
+
+    * `./gradlew runHost`, 编译并启动宿主app
+    * `./gradlew preparePatch`, 编译patch apk并推到设备sdcard中
+    * 在app中应用patch apk
+
+#### Gradle 插件
+Gradle插件的代码在buildSrc目录下,这样每次编译项目时都会使用最新的插件代码。
+
+#### amigo lib
+Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用amigo-lib这个模块,从而无需每次推送到maven仓库。
+
 ### 生效补丁包
    补丁包生效有两种方式可以选择：
 
@@ -33,18 +49,12 @@ Amigo
    	如果不想立即生效而是用户第二次打开App 时才打入补丁包，第二次打开时就会自动生效。可以通过这个方法
    	
 	```java
-    Amigo.workLater(context);
-
     Amigo.workLater(context, apkFile);
     ```
 
    * 立即生效补丁包
 
    	如果想要补丁包立即生效，调用以下两个方法之一，App 会立即重启，并且打入补丁包。
-
-   	```Java
-   	Amigo.work(context);
-   	```
 
    	```Java
    	Amigo.work(context, apkFile);
@@ -88,16 +98,7 @@ Amigo.clear(context);
  - 可能会和google play上架协议有冲突
  
  - **唯一的限制就是你的想象力**
- 
-代码样例
-----
 
-   我们在代码中提供了demo 以便大家更快的上手Amigo 的使用，通过以下步骤尽情的去玩弄demo 吧：
-   1. ./gradlew clean assembleRelease & adb install .../build/outputs/apk/app-release.apk
-   2. 改动代码 & ./gradlew clean assembleRelease
-   3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
-   4. 点击"apply patch apk"按钮, 加载新的apk
-   
 ### 下载hotfix文件
 
 - 简单来说,你只需要下载一个全新的apk

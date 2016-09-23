@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.1.0'
+  classpath 'me.ele:amigo:0.2.0'
 }
 ```
 In your module's `build.gradle`
@@ -67,17 +67,13 @@ There are two ways to make hotfix work.
 	when app restarts next time, hotfix apk will be loaded as fresh as new.
 
 	```java
-    Amigo.workLater(context);
-    // or
-    Amigo.workLater(context, apkFile);
+    Amigo.workLater(context, patchApkFile);
     ```
 
 * work immediately, app will restart immediately
 
 	```java
-	Amigo.work(context);
-    // or
-	Amigo.work(context, apkFile);
+	Amigo.work(context, patchApkFile);
 	```
 
 ### clear the previously installed patch-apk manually
