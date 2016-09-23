@@ -18,14 +18,11 @@ import java.lang.reflect.Method;
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.utils.ComponentUtils;
 
-import static android.content.pm.ActivityInfo.LAUNCH_SINGLE_INSTANCE;
-import static android.content.pm.ActivityInfo.LAUNCH_SINGLE_TASK;
-import static android.content.pm.ActivityInfo.LAUNCH_SINGLE_TOP;
-
 public class AmigoInstrumentation extends Instrumentation implements IInstrumentation {
 
     public static final String EXTRA_TARGET_INTENT = "me.ele.amigo.OldIntent";
     public static final String EXTRA_TARGET_INFO = "me.ele.amigo.OldInfo";
+    public static final String EXTRA_STUB_NAME = "me.ele.amigo.stub";
 
     private static final String TAG = AmigoInstrumentation.class.getSimpleName();
 
@@ -37,12 +34,20 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
 
     private void startStubActivity(Context who, Intent intent) {
         ComponentName componentName = intent.getComponent();
-        String targetClassName = getDelegateActivityName(who, componentName.getClassName());
-        Intent newIntent = new Intent();
-        newIntent.setComponent(new ComponentName(componentName.getPackageName(), targetClassName));
-        newIntent.putExtra(EXTRA_TARGET_INTENT, intent);
-        newIntent.setFlags(intent.getFlags());
-        who.startActivity(newIntent);
+        ActivityStub.beforeStartActivity(getActivityInfo(who, componentName.getClassName()));
+        Class stubClazz = getDelegateActivityName(who, componentName.getClassName());
+        if (stubClazz == null) {
+            Log.e(TAG, "startStubActivity: weird, no stubs available for now.");
+            return;
+        }
+
+        Intent stubIntent = new Intent();
+        stubIntent.setComponent(new ComponentName(componentName.getPackageName(), stubClazz.getName()));
+        stubIntent.putExtra(EXTRA_TARGET_INTENT, intent);
+        stubIntent.setFlags(intent.getFlags());
+        intent.putExtra(EXTRA_STUB_NAME, stubClazz);
+        who.startActivity(stubIntent);  //TODO WE CAN AVOID THIS
+        ActivityStub.onActivityCreated(stubClazz, null, componentName.getClassName());
     }
 
     @Override
@@ -149,7 +154,11 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         return null;
     }
 
-    private String getDelegateActivityName(Context context, String targetClassName) {
+    private Class getDelegateActivityName(Context context, String targetClassName) {
+        return ActivityStub.selectStubActivityClazz(getActivityInfo(context, targetClassName));
+    }
+
+    private ActivityInfo getActivityInfo(Context context, String targetClassName) {
         if (targetClassName.startsWith(".")) {
             targetClassName = context.getPackageName() + targetClassName;
         }
@@ -158,24 +167,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         if (info == null) {
             throw new RuntimeException(String.format("cannot find %s in apk", targetClassName));
         }
-
-        String clazz;
-        switch (info.launchMode) {
-            case LAUNCH_SINGLE_TOP:
-                clazz = ActivityStub.SingleTopStub.class.getName();
-                break;
-            case LAUNCH_SINGLE_TASK:
-                clazz = ActivityStub.SingleTaskStub.class.getName();
-                break;
-            case LAUNCH_SINGLE_INSTANCE:
-                clazz = ActivityStub.SingleInstanceStub.class.getName();
-                break;
-            default:
-                clazz = ActivityStub.StandardStub.class.getName();
-                break;
-        }
-
-        return clazz;
+        return info;
     }
 
     @Override
@@ -186,15 +178,15 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                 ActivityInfo targetInfo = targetIntent.getParcelableExtra(EXTRA_TARGET_INFO);
                 if (targetInfo != null) {
                     activity.setRequestedOrientation(targetInfo.screenOrientation);
+
+                    ComponentName componentName = new ComponentName(activity, getDelegateActivityName(activity, activity.getClass().getName()));
+                    FieldUtils.writeField(activity, "mComponent", componentName);
+
+                    Class stubClazz = (Class) targetIntent.getSerializableExtra(EXTRA_STUB_NAME);
+                    if (stubClazz != null)
+                        ActivityStub.onActivityCreated(stubClazz, activity, "");
                 }
             }
-        } catch (Exception e) {
-            Log.i(TAG, "onActivityCreated fail", e);
-        }
-
-        try {
-            ComponentName componentName = new ComponentName(activity, getDelegateActivityName(activity, activity.getClass().getName()));
-            FieldUtils.writeField(activity, "mComponent", componentName);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
@@ -204,6 +196,22 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         } else {
             super.callActivityOnCreate(activity, icicle);
         }
+
     }
+
+    @Override
+    public void callActivityOnDestroy(Activity activity) {
+        if (oldInstrumentation != null) {
+            oldInstrumentation.callActivityOnDestroy(activity);
+        } else {
+            super.callActivityOnDestroy(activity);
+        }
+
+        Intent intent = activity.getIntent();
+        Class stubClazz;
+        if (intent != null && (stubClazz = (Class) intent.getSerializableExtra(EXTRA_STUB_NAME)) != null)
+            ActivityStub.onActivityDestroyed(stubClazz, activity);
+    }
+
 
 }

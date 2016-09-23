@@ -4,13 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 
 import me.ele.app.amigo.R;
 
-public class SingleTopActivity extends AppCompatActivity {
+public class PatchedSingleTopActivity extends AppCompatActivity {
 
-    public static final String TAG = SingleTopActivity.class.getSimpleName();
+    public static final String TAG = PatchedSingleTopActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -20,9 +21,15 @@ public class SingleTopActivity extends AppCompatActivity {
         findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(SingleTopActivity.this, SingleTaskActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(PatchedSingleTopActivity.this, PatchedSingleTopActivity.class));
             }
         });
+        Log.d(TAG, "onCreate: " + hashCode());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        Log.d(TAG, "onNewIntent: " + intent);
     }
 }

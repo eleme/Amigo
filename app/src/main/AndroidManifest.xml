@@ -37,27 +37,38 @@
 
         <!--test: add new activity in patch apk-->
         <activity
-            android:name=".demo.StandardActivity"
-            android:label="standard activity"
+            android:name=".demo.PatchedStandardActivity"
+            android:label="Patched : standard activity"/>
+
+        <activity
+            android:name=".demo.PatchedSingleTopActivity"
+            android:label="Patched : single top activity"
             android:launchMode="singleTop" />
 
         <activity
-            android:name=".demo.SingleTopActivity"
-            android:label="single top activity"
+            android:name=".demo.PatchedSingleTopActivity2"
+            android:label="Patched : single top activity 2"
             android:launchMode="singleTop" />
+
         <activity
-            android:name=".demo.SingleTaskActivity"
-            android:label="single task activity"
+            android:name=".demo.PatchedSingleTaskActivity"
+            android:label="Patched : single task activity"
             android:launchMode="singleTask" />
 
         <activity
-            android:name=".demo.SingleInstanceActivity"
-            android:label="single instance activity"
+            android:name=".demo.PatchedSingleTaskActivity2"
+            android:label="Patched : single task activity 2"
+            android:launchMode="singleTask" />
+
+        <activity
+            android:name=".demo.PatchedSingleInstanceActivity"
+            android:label="Patched : single instance activity"
+            android:screenOrientation="landscape"
             android:launchMode="singleInstance" />
 
         <activity
-            android:name=".demo.SingleInstanceActivity2"
-            android:label="single instance activity 2"
+            android:name=".demo.PatchedSingleInstanceActivity2"
+            android:label="Patched : single instance activity 2"
             android:launchMode="singleInstance" />
 
         <receiver android:name=".demo.DemoReceiver">

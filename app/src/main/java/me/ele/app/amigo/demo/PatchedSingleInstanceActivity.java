@@ -8,14 +8,18 @@ import android.util.Log;
 /**
  * Created by wwm on 9/20/16.
  */
-public class SingleInstanceActivity extends AppCompatActivity {
+public class PatchedSingleInstanceActivity extends AppCompatActivity {
 
-    private static final String TAG = SingleInstanceActivity.class.getName();
+    private static final String TAG = PatchedSingleInstanceActivity.class.getName();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: ");
+
+        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
+        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
+
     }
 
     @Override
