@@ -1,0 +1,104 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile project(':amigo-lib')
+}
+
+def GROUP = 'me.ele'
+def ARTIFACTID = 'amigo-sdk'
+
+group = GROUP
+version = VERSION
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            name ARTIFACTID
+            description 'SDK for Amigo'
+            url 'https://github.com/eleme/Amigo'
+            inceptionYear '2016'
+
+            packaging 'aar'
+            groupId GROUP
+            artifactId ARTIFACTID
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+
+            }
+            developers {
+                developer {
+                    id "jack_1900"
+                    name "Jack Cho"
+                    email "jack_1900@163.com"
+                }
+            }
+        }
+    }
+}
+
+try {
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+    bintray {
+        user = properties.getProperty("bintrayUser")
+        key = properties.getProperty("bintrayApiKey")
+        configurations = ['archives']
+        pkg {
+            repo = 'maven'
+            name = ARTIFACTID
+            userOrg = user
+            licenses = ['Apache-2.0']
+            vcsUrl = 'https://github.com/eleme/Amigo'
+        }
+    }
+
+    task sourcesJar(type: Jar) {
+        from android.sourceSets.main.java.srcDirs
+        classifier = 'sources'
+    }
+
+    task javadoc(type: Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath = files(project.android.getBootClasspath())
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+    artifacts {
+        archives javadocJar
+        archives sourcesJar
+    }
+} catch (Exception e) {
+    println e
+}
+
+// configure local maven, release key, and the like
+try {
+    apply from: "${project.projectDir}/mybuild.gradle"
+} catch (Exception e) {
+    println e.toString()
+}

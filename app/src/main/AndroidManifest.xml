@@ -85,6 +85,9 @@
             android:name="amigo_theme"
             android:value="amigoThemeDemo"/>
 
+        <meta-data
+            android:name="amigo_app_id"
+            android:value="${amigo_app_id}"/>
 
     </application>
 
