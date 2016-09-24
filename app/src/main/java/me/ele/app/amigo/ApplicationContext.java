@@ -5,6 +5,8 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 import android.util.Log;
 
+import me.ele.amigo.sdk.AmigoSdk;
+
 public class ApplicationContext extends Application {
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
