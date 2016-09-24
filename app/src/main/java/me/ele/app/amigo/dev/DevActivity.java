@@ -11,6 +11,7 @@ import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.ele.amigo.Amigo;
+import me.ele.amigo.sdk.AmigoSdk;
 import me.ele.app.amigo.R;
 
 public class DevActivity extends AppCompatActivity {
@@ -28,5 +29,10 @@ public class DevActivity extends AppCompatActivity {
     @OnClick(R.id.launch_sub_process)
     public void launchSubProcess(View v) {
         startActivity(new Intent(this, SubprocessActivity.class));
+    }
+
+    @OnClick(R.id.sdk)
+    public void testSdk(View v) {
+        AmigoSdk.init(getApplication());
     }
 }

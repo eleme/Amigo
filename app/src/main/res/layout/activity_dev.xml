@@ -11,4 +11,11 @@
         android:text="Launch SubProcess Activity"
         android:textAllCaps="false"/>
 
+    <Button
+        android:id="@+id/sdk"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Test SDK"
+        android:textAllCaps="false"/>
+
 </LinearLayout>
