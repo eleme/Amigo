@@ -11,6 +11,7 @@ import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.ele.amigo.Amigo;
+import me.ele.amigo.sdk.AmigoSdk;
 import me.ele.app.amigo.R;
 
 public class DevActivity extends AppCompatActivity {
@@ -34,5 +35,10 @@ public class DevActivity extends AppCompatActivity {
     public void clear(View v) {
         Amigo.clear(getApplication());
         Toast.makeText(this, "Kill this app and relaunch the app and check result", Toast.LENGTH_LONG).show();
+    }
+
+    @OnClick(R.id.sdk)
+    public void testSdk(View v) {
+        AmigoSdk.init(getApplication());
     }
 }
