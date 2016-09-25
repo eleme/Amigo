@@ -32,13 +32,37 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         this.oldInstrumentation = oldInstrumentation;
     }
 
-    private void startStubActivity(Context who, Intent intent) {
+    private boolean isPatchedActivity(Context who, Intent intent) {
+        ComponentName componentName = intent.getComponent();
+        if(componentName == null) {
+            return false;
+        }
+
+        ActivityInfo[] activityInfos = ComponentUtils.getAppActivities(who);
+        if(activityInfos == null || activityInfos.length == 0) {
+            return false;
+        }
+
+        for (ActivityInfo activityInfo : activityInfos) {
+            if(activityInfo.name.equals(componentName.getClassName())) {
+                return false;
+            }
+        }
+
+        return ComponentUtils.getActivityInfoInNewApp(who, componentName.getClassName() )!= null;
+    }
+
+    private Intent wrapIntent(Context who, Intent intent) {
+        if(!isPatchedActivity(who, intent)) {
+            return intent;
+        }
+
         ComponentName componentName = intent.getComponent();
         ActivityStub.recycleActivityStub(getActivityInfo(who, componentName.getClassName()));
         Class stubClazz = getDelegateActivityName(who, componentName.getClassName());
         if (stubClazz == null) {
-            Log.e(TAG, "startStubActivity: weird, no stubs available for now.");
-            return;
+            Log.e(TAG, "wrapIntent: weird, no stubs available for now.");
+            return intent;
         }
 
         Intent stubIntent = new Intent();
@@ -46,14 +70,15 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         stubIntent.putExtra(EXTRA_TARGET_INTENT, intent);
         stubIntent.setFlags(intent.getFlags());
         intent.putExtra(EXTRA_STUB_NAME, stubClazz);
-        who.startActivity(stubIntent);  //TODO WE CAN AVOID THIS CALL
         ActivityStub.onActivityCreated(stubClazz, null, componentName.getClassName());
+        return stubIntent;
     }
 
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target,
                                             Intent intent, int requestCode, Bundle options) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class, Bundle.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
@@ -64,7 +89,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 
@@ -72,6 +96,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target,
                                             Intent intent, int requestCode) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode);
         } catch (NoSuchMethodException e) {
@@ -82,13 +107,13 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Fragment target, Intent intent, int requestCode) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class, int.class, Bundle.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode);
         } catch (NoSuchMethodException e) {
@@ -99,13 +124,13 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Fragment target, Intent intent, int requestCode, Bundle options) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class, int.class, Bundle.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
@@ -116,13 +141,13 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target, Intent intent, int requestCode, Bundle options, UserHandle user) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class, Bundle.class, UserHandle.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options, user);
         } catch (NoSuchMethodException e) {
@@ -133,13 +158,13 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, String target, Intent intent, int requestCode, Bundle options) {
         try {
+            intent = wrapIntent(who, intent);
             Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int.class, Bundle.class);
             return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
@@ -150,7 +175,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             e.printStackTrace();
         }
 
-        startStubActivity(who, intent);
         return null;
     }
 

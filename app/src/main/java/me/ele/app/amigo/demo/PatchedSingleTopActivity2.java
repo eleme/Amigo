@@ -22,6 +22,6 @@ public class PatchedSingleTopActivity2 extends AppCompatActivity {
 
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Log.d(TAG, "onNewIntent: " + intent);
+        Log.d(TAG, "onNewIntent: " + intent.getStringExtra("extra"));
     }
 }

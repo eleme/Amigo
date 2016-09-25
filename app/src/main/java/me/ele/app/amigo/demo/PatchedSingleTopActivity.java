@@ -18,18 +18,12 @@ public class PatchedSingleTopActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_second);
-        findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(PatchedSingleTopActivity.this, PatchedSingleTopActivity.class));
-            }
-        });
         Log.d(TAG, "onCreate: " + hashCode());
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Log.d(TAG, "onNewIntent: " + intent);
+        Log.d(TAG, "onNewIntent: " + intent.getStringExtra("extra"));
     }
 }

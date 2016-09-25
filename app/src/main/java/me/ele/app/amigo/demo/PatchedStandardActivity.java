@@ -10,7 +10,7 @@ import android.util.Log;
  */
 
 public class PatchedStandardActivity extends AppCompatActivity {
-  private static final String TAG = "PatchedStandardActivity";
+  private static final String TAG = PatchedStandardActivity.class.getSimpleName();
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
