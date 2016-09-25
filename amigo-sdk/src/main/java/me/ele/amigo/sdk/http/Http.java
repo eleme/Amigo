@@ -18,6 +18,9 @@ import java.util.concurrent.Executors;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import me.ele.amigo.Amigo;
+import me.ele.amigo.sdk.AmigoSdk;
+
 public class Http {
     private static final boolean DEBUG = true;
 
@@ -169,6 +172,10 @@ public class Http {
     }
 
     private static void setConnectionParameters(HttpURLConnection connection, Request request) throws IOException {
+        // add general headers
+        connection.addRequestProperty("app_id", AmigoSdk.appId());
+        connection.addRequestProperty("device_id", AmigoSdk.deviceId());
+
         Method method = request.method();
         if (method == null || method == Method.GET) {
             connection.setRequestMethod("GET");
