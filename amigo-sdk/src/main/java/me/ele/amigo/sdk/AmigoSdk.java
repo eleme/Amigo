@@ -2,10 +2,13 @@ package me.ele.amigo.sdk;
 
 import android.content.Context;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+
+import javax.net.ssl.TrustManagerFactory;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.sdk.http.Error;
@@ -34,10 +37,19 @@ public class AmigoSdk {
     private static String appId = "";
     private static String deviceId = "";
 
-    public static final void init(Context ctx) {
+    public static final void init(Context ctx, String appId) {
         context = ctx;
+        AmigoSdk.appId = appId;
+        if (TextUtils.isEmpty(appId)) {
+            Log.e(TAG, "appId cannot be empty");
+            return;
+        }
         deviceId = DeviceId.getDeviceId(context);
 
+        requestPatchInfo();
+    }
+
+    private static final void requestPatchInfo() {
         Http.performRequest(Request.newRequest(TEST_PATCH_INFO_URL).method(Method.GET), new Http.SimpleCallback() {
             @Override
             public void onSucc(Response response) {
