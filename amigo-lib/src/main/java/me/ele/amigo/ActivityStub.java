@@ -52,8 +52,8 @@ public abstract class ActivityStub extends Activity {
     private static final Map<String, ActivityRecord> usedSingleTaskStubs = new LinkedHashMap<>(SINGLE_TASK_STUBS.size(), 0.75f, true);
     private static final Map<String, ActivityRecord> usedSingleInstanceStubs = new LinkedHashMap<>(SINGLE_INSTANCE_STUBS.size(), 0.75f, true);
 
-    private static Class findUnusedActivityStub(String componentName, Map<String, ActivityRecord> recordMap, List<Class<? extends ActivityStub>> stubs) {
-        Log.d("stub", "findUnusedActivityStub: component = " + componentName);
+    private static Class findActivityStub(String componentName, Map<String, ActivityRecord> recordMap, List<Class<? extends ActivityStub>> stubs) {
+        Log.d("stub", "findActivityStub for component[" + componentName + "]");
         for (Class stub : stubs) {
             ActivityRecord record = recordMap.get(stub.getName());
             if (record != null && record.activityClazzName.equals(componentName)) {
@@ -71,15 +71,16 @@ public abstract class ActivityStub extends Activity {
         return null;
     }
 
-    private static void recycleEarliestSingleTaskStub(Map<String, ActivityRecord> recordMap, int limit) {
+    private static void recycleEarliestUsedActivityStub(Map<String, ActivityRecord> recordMap, int limit) {
         if (recordMap.size() < limit) {
             return;
         }
 
         Iterator<Map.Entry<String, ActivityRecord>> it = recordMap.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry<String, ActivityRecord> entry = it.next();
-            if (entry.getValue().activity != null && !entry.getValue().activity.isFinishing()) {
+            ActivityRecord activityRecord = it.next().getValue();
+            if (activityRecord.activity != null && !activityRecord.activity.isFinishing()) {
+                activityRecord.activity.finish();
                 it.remove();
                 break;
             }
@@ -100,17 +101,17 @@ public abstract class ActivityStub extends Activity {
         return recordMap;
     }
 
-    public static Class selectStubActivityClazz(ActivityInfo activityInfo) {
+    public static Class selectActivityStubClazz(ActivityInfo activityInfo) {
         Class clazz;
         switch (activityInfo.launchMode) {
             case LAUNCH_SINGLE_TOP:
-                clazz = findUnusedActivityStub(activityInfo.name, usedSingleTopStubs, SINGLE_TOP_STUBS);
+                clazz = findActivityStub(activityInfo.name, usedSingleTopStubs, SINGLE_TOP_STUBS);
                 break;
             case LAUNCH_SINGLE_TASK:
-                clazz = findUnusedActivityStub(activityInfo.name, usedSingleTaskStubs, SINGLE_TASK_STUBS);
+                clazz = findActivityStub(activityInfo.name, usedSingleTaskStubs, SINGLE_TASK_STUBS);
                 break;
             case LAUNCH_SINGLE_INSTANCE:
-                clazz = findUnusedActivityStub(activityInfo.name, usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS);
+                clazz = findActivityStub(activityInfo.name, usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS);
                 break;
             default:
                 clazz = ActivityStub.StandardStub.class;
@@ -119,16 +120,16 @@ public abstract class ActivityStub extends Activity {
         return clazz;
     }
 
-    public static void beforeStartActivity(ActivityInfo activityInfo) {
+    public static void recycleActivityStub(ActivityInfo activityInfo) {
         switch (activityInfo.launchMode) {
             case LAUNCH_SINGLE_TOP:
-                recycleEarliestSingleTaskStub(usedSingleTopStubs, SINGLE_TOP_STUBS.size());
+                recycleEarliestUsedActivityStub(usedSingleTopStubs, SINGLE_TOP_STUBS.size());
                 break;
             case LAUNCH_SINGLE_TASK:
-                recycleEarliestSingleTaskStub(usedSingleTaskStubs, SINGLE_TASK_STUBS.size());
+                recycleEarliestUsedActivityStub(usedSingleTaskStubs, SINGLE_TASK_STUBS.size());
                 break;
             case LAUNCH_SINGLE_INSTANCE:
-                recycleEarliestSingleTaskStub(usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS.size());
+                recycleEarliestUsedActivityStub(usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS.size());
                 break;
             default:
                 break;
@@ -155,7 +156,7 @@ public abstract class ActivityStub extends Activity {
         }
     }
 
-    // single instance SINGLE_TOP_STUBS
+    // single instance activity stubs
     public static class SingleInstanceStub1 extends ActivityStub {
     }
 
@@ -180,7 +181,7 @@ public abstract class ActivityStub extends Activity {
     public static class SingleInstanceStub8 extends ActivityStub {
     }
 
-    // single task SINGLE_TOP_STUBS
+    // single task activity stubs
     public static class SingleTaskStub1 extends ActivityStub {
     }
 
@@ -205,7 +206,7 @@ public abstract class ActivityStub extends Activity {
     public static class SingleTaskStub8 extends ActivityStub {
     }
 
-    // single top SINGLE_TOP_STUBS
+    // single top activity stubs
     public static class SingleTopStub1 extends ActivityStub {
     }
 

@@ -34,7 +34,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
 
     private void startStubActivity(Context who, Intent intent) {
         ComponentName componentName = intent.getComponent();
-        ActivityStub.beforeStartActivity(getActivityInfo(who, componentName.getClassName()));
+        ActivityStub.recycleActivityStub(getActivityInfo(who, componentName.getClassName()));
         Class stubClazz = getDelegateActivityName(who, componentName.getClassName());
         if (stubClazz == null) {
             Log.e(TAG, "startStubActivity: weird, no stubs available for now.");
@@ -46,7 +46,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         stubIntent.putExtra(EXTRA_TARGET_INTENT, intent);
         stubIntent.setFlags(intent.getFlags());
         intent.putExtra(EXTRA_STUB_NAME, stubClazz);
-        who.startActivity(stubIntent);  //TODO WE CAN AVOID THIS
+        who.startActivity(stubIntent);  //TODO WE CAN AVOID THIS CALL
         ActivityStub.onActivityCreated(stubClazz, null, componentName.getClassName());
     }
 
@@ -155,7 +155,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     private Class getDelegateActivityName(Context context, String targetClassName) {
-        return ActivityStub.selectStubActivityClazz(getActivityInfo(context, targetClassName));
+        return ActivityStub.selectActivityStubClazz(getActivityInfo(context, targetClassName));
     }
 
     private ActivityInfo getActivityInfo(Context context, String targetClassName) {
