@@ -9,13 +9,95 @@
             android:name=".AmigoService"
             android:process=":amigo" />
 
-        <activity
+         <activity
             android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:process=":amigo"
             android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".ActivityStub$StandardStub"
+            android:launchMode="standard" />
+
+        <!-- single instance stubs-->
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub1"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub2"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub3"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub4"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub5"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub6"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub7"
+            android:launchMode="singleInstance" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleInstanceStub8"
+            android:launchMode="singleInstance" />
+
+        <!-- single task stubs-->
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub1"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub2"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub3"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub4"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub5"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub6"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub7"
+            android:launchMode="singleTask" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTaskStub8"
+            android:launchMode="singleTask" />
+
+        <!-- single top stubs-->
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub1"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub2"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub3"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub4"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub5"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub6"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub7"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="me.ele.amigo.ActivityStub$SingleTopStub8"
+            android:launchMode="singleTop" />
 
     </application>
 

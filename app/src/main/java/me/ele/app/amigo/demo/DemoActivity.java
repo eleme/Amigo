@@ -110,4 +110,25 @@ public class DemoActivity extends AppCompatActivity {
         notification.contentIntent = pi;
         notificationManager.notify(0, notification);
     }
+
+    @OnClick(R.id.start_patched_activity)
+    public void testStartPatchedActivity() {
+        startActivity(new Intent(this, PatchedSingleTopActivity.class));
+        startActivity(new Intent(this, PatchedSingleTopActivity.class).putExtra("extra", "extra1"));
+
+        startActivity(new Intent(this, PatchedSingleTopActivity2.class));
+        startActivity(new Intent(this, PatchedSingleTopActivity2.class).putExtra("extra", "extra1"));
+
+        startActivity(new Intent(this, PatchedSingleTaskActivity.class));
+        startActivity(new Intent(this, PatchedSingleTaskActivity.class).putExtra("extra", "extra1"));
+
+        startActivity(new Intent(this, PatchedSingleTaskActivity2.class));
+        startActivity(new Intent(this, PatchedSingleTaskActivity2.class).putExtra("extra", "extra1"));
+
+        startActivity(new Intent(this, PatchedSingleInstanceActivity.class));
+        startActivity(new Intent(this, PatchedSingleInstanceActivity.class).putExtra("extra", "extra1"));
+
+        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
+        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class).putExtra("extra", "extra1"));
+    }
 }
