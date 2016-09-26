@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.2.0'
+  classpath 'me.ele:amigo:0.3.0'
 }
 ```
 In your module's `build.gradle`
@@ -41,20 +41,6 @@ The plugin was put into buildSrc directory, which means the plugin code change w
 The gradle plugin would select right amigo lib automatically. In the development mode, the amigo-lib module will be used.
 
 ## notice
-
-* sync with jcenter may take some time, if amigo cannot be found, please add my private maven url into your buildscript
-
-```groovy
-buildscript {
-    repositories {
-        maven {
-            url "https://dl.bintray.com/jackcho/maven"
-        }
-        jcenter()
-        ...
-    }
-}
-```
 
 * Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
 
@@ -99,12 +85,8 @@ some time-tense operation is handled in a new process with an activity, you may 
 ```
 
 ## limitations
- - support new `activity` & `receiver` in beta, `service` & `provider` is not supported for now
- 
-     ```groovy
-      classpath 'me.ele:amigo:0.0.6-beta1'
-      ...
-     ```
+ - new added `service` & `provider` is not supported for now
+
  - app launcher activity's name cannot be changed
  
  - `RemoteViews`'s layout change in `notification` & `widget`is not support 

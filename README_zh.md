@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-      classpath 'me.ele:amigo:0.2.0'
+      classpath 'me.ele:amigo:0.3.0'
    }
    ```
 
@@ -86,11 +86,8 @@ Amigo.clear(context);
 ```
 
 ### 局限
- - 新的apk中仅支持新增 `activity` & `receiver`, `service` & `provider`暂时不支持
-       ```groovy
-       classpath 'me.ele:amigo:0.0.6-beta1'
-       ...
-      ```
+ - 新的apk中, 新增`service` & `provider`暂时不支持
+      
  - launcher activity的全类名暂时不支持修改
  
  - `notification` & `widget`中`RemoteViews`的自定义布局不支持修改,只支持内容修复
