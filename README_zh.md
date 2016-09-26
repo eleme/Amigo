@@ -60,16 +60,14 @@ Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用
    	Amigo.work(context, apkFile);
    	```
 
-
-### 删除补丁包
-
-如果需要删除掉已经下好的补丁包，可以通过这个方法
+### 停用patch apk
 
 ```Java
 Amigo.clear(context);
 ```
 
-**提示**：如果apk 发生了变化，Amigo 会自动清除之前的apk。
+**提示**：当主进程重启之后, 将会使用宿主apk, 同时删除所有的patch files.
+
 
 ### 自定义界面
 

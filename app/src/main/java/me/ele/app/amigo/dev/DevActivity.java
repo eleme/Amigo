@@ -29,10 +29,4 @@ public class DevActivity extends AppCompatActivity {
     public void launchSubProcess(View v) {
         startActivity(new Intent(this, SubprocessActivity.class));
     }
-
-    @OnClick(R.id.clear)
-    public void clear(View v) {
-        Amigo.clear(getApplication());
-        Toast.makeText(this, "Kill this app and relaunch the app and check result", Toast.LENGTH_LONG).show();
-    }
 }
