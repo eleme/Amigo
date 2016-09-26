@@ -91,7 +91,7 @@ public class Amigo extends Application {
                 e.printStackTrace();
                 if (ProcessUtils.isMainProcess(this)) {
                     // clear is a dangerous operation, only need to be operated by main process
-                    clear(this);
+                    doClear(this);
                 }
                 runOriginalApplication();
                 return;
@@ -450,7 +450,7 @@ public class Amigo extends Application {
         return false;
     }
 
-    public static void clear(Context context) {
+    private static void doClear(Context context) {
         Log.e(TAG, "clear");
         removeFile(AmigoDirs.getInstance(context).amigoDir());
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
@@ -509,6 +509,13 @@ public class Amigo extends Application {
     private static String getWorkingPatchApkChecksum(Context ctx) {
         if (!hasWorked()) return "";
         return ctx.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
+    }
+
+    public static void clear(Context context) {
+        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
+            .edit()
+            .putString(WORKING_PATCH_APK_CHECKSUM, "")
+            .commit();
     }
 
     private static class LoadPatchApkException extends Exception {

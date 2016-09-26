@@ -131,4 +131,10 @@ public class DemoActivity extends AppCompatActivity {
         startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
         startActivity(new Intent(this, PatchedSingleInstanceActivity2.class).putExtra("extra", "extra1"));
     }
+
+    @OnClick(R.id.clear_patch)
+    public void clearPatchApk() {
+        Amigo.clear(getApplication());
+        Toast.makeText(this, "Kill this app, restart the app and check the running apk", Toast.LENGTH_LONG).show();
+    }
 }

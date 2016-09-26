@@ -62,12 +62,12 @@ There are two ways to make hotfix work.
 	Amigo.work(context, patchApkFile);
 	```
 
-### clear the previously installed patch-apk manually
+### disable working patch apk
 
 ```java
 Amigo.clear(context);
 ```
-**note**：The old apk would be cleared automatically when the latest version updated.
+**note**：When the main process is restarted the host apk will be used and all patch files will be deleted.
 
 
 ## customize the fix layout
