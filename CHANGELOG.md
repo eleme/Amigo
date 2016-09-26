@@ -1,3 +1,10 @@
+
+## Version [0.3.0](https://github.com/eleme/Amigo/releases/tag/v0.3.0)
+
+_2016-09-26_
+
+* support new added `activity` & `receiver`
+
 ## Version [0.2.0](https://github.com/eleme/Amigo/releases/tag/v0.2.0)
 
 _2016-9-23_
