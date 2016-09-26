@@ -8,8 +8,6 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 
-import javax.net.ssl.TrustManagerFactory;
-
 import me.ele.amigo.Amigo;
 import me.ele.amigo.sdk.http.Error;
 import me.ele.amigo.sdk.http.Http;
@@ -55,6 +53,7 @@ public class AmigoSdk {
             public void onSucc(Response response) {
                 PatchInfo patchInfo = PatchInfo.fromJson(byteArray2String(response.body()));
                 if (!patchInfo.hasPatch()) {
+                    Amigo.clear(context);
                     return;
                 }
                 String url = patchInfo.apkUrl();

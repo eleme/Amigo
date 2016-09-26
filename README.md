@@ -65,7 +65,7 @@ There are two ways to make hotfix work.
 ### disable working patch apk
 
 ```java
-Amigo.clear(context);
+Amigo.tagClearPatch(context);
 ```
 **note**：When the main process is restarted the host apk will be used and all patch files will be deleted.
 

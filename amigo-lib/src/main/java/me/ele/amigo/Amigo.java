@@ -450,7 +450,7 @@ public class Amigo extends Application {
         return false;
     }
 
-    private static void doClear(Context context) {
+    public static void doClear(Context context) {
         Log.e(TAG, "clear");
         removeFile(AmigoDirs.getInstance(context).amigoDir());
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
