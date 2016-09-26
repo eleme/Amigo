@@ -1,1 +1,3 @@
-include ':app', ':amigo-lib'
+include ':app'
+include ':amigo-lib'
+include ':amigo-sdk'
