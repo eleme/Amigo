@@ -1,14 +1,12 @@
 package me.ele.amigo.sdk;
 
 import android.content.Context;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
-
 import java.io.File;
 import java.io.FileOutputStream;
-
 import me.ele.amigo.Amigo;
+import me.ele.amigo.AmigoDirs;
 import me.ele.amigo.sdk.http.Error;
 import me.ele.amigo.sdk.http.Http;
 import me.ele.amigo.sdk.http.Method;
@@ -25,8 +23,6 @@ public class AmigoSdk {
     // todo need to change to real url
     public static final String TEST_PATCH_INFO_URL = "http://localhost:3000/patch_info";
 
-    public static final String SP_NAME = "amigo-sdk";
-
     private static final String TAG = AmigoSdk.class.getSimpleName();
     private static final String APK_NAME_ROOT = "amigo_patch";
 
@@ -35,7 +31,7 @@ public class AmigoSdk {
     private static String appId = "";
     private static String deviceId = "";
 
-    public static final void init(Context ctx, String appId) {
+    private static final void init(Context ctx, String appId) {
         context = ctx;
         AmigoSdk.appId = appId;
         if (TextUtils.isEmpty(appId)) {
@@ -74,7 +70,7 @@ public class AmigoSdk {
     }
 
     private static final File getPatchApkFile(String md5) {
-        return new File(Environment.getExternalStorageDirectory(), buildPatchApkName(md5));
+        return new File(AmigoDirs.getInstance(context).amigoDir(), buildPatchApkName(md5));
     }
 
     private static String buildPatchApkName(String md5) {
