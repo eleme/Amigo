@@ -20,6 +20,10 @@ import javax.net.ssl.SSLSocketFactory;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.sdk.AmigoSdk;
+import me.ele.amigo.sdk.utils.CommonUtil;
+import me.ele.amigo.utils.CommonUtils;
+
+import static me.ele.amigo.sdk.utils.CommonUtil.byteArray2String;
 
 public class Http {
     private static final boolean DEBUG = true;
@@ -78,12 +82,7 @@ public class Http {
                         return;
                     }
 
-                    long contentLength = connection.getContentLength();
                     InputStream is = connection.getInputStream();
-
-                    final ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-                    byte[] buffer = new byte[4 * 1024];
                     if (is == null) {
                         if (callback != null) {
                             handler.post(new Runnable() {
@@ -97,6 +96,9 @@ public class Http {
                         return;
                     }
 
+                    final ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[4 * 1024];
+                    long contentLength = connection.getContentLength();
                     long length = 0;
                     int count;
                     while ((count = is.read(buffer)) != -1) {
@@ -128,11 +130,7 @@ public class Http {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    try {
-                                        callback.onFail(new Error(responseCode, null, new String(os.toByteArray(), "UTF-8")));
-                                    } catch (UnsupportedEncodingException e) {
-                                        if (DEBUG) e.printStackTrace();
-                                    }
+                                    callback.onFail(new Error(responseCode, null, byteArray2String(os.toByteArray())));
                                     callback.onComplete();
                                 }
                             });

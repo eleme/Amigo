@@ -87,14 +87,14 @@ public class AmigoSdk {
             @Override
             public void onSucc(Response response) {
                 try {
+                    if (!verifyPatchApk(response.body(), md5)) {
+                        Log.e(TAG, "downloaded patch apk is wrong");
+                        return;
+                    }
                     File apkFile = getPatchApkFile(md5);
                     FileOutputStream fos = new FileOutputStream(apkFile);
                     fos.write(response.body());
                     fos.close();
-                    if (!verifyPatchApk(apkFile, md5)) {
-                        Log.e(TAG, "downloaded patch apk is wrong");
-                        return;
-                    }
                     applyPatchApk(apkFile, workPattern);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -108,8 +108,8 @@ public class AmigoSdk {
         });
     }
 
-    private static boolean verifyPatchApk(File apk, String md5) {
-        return MD5.checkMD5(md5, apk);
+    private static boolean verifyPatchApk(byte[] bytes, String md5) {
+        return MD5.checkMD5(md5, bytes);
     }
 
     private static final void applyPatchApk(File apk, PatchInfo.WorkPattern workPattern) {
