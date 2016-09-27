@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="me.ele.app.amigo">
+
+
+    <application
+        >
+        <service android:name="me.ele.app.amigo.service.StartService"/>
+        <service android:name="me.ele.app.amigo.service.BindService"/>
+
+
+        <!--test: add new activity in patch apk-->
+        <activity
+            android:name=".activity.PatchedStandardActivity"
+            android:label="Patched : standard activity"/>
+
+        <activity
+            android:name=".activity.PatchedSingleTopActivity"
+            android:label="Patched : single top activity"
+            android:launchMode="singleTop"/>
+
+        <activity
+            android:name=".activity.PatchedSingleTopActivity2"
+            android:label="Patched : single top activity 2"
+            android:launchMode="singleTop"/>
+
+        <activity
+            android:name=".activity.PatchedSingleTaskActivity"
+            android:label="Patched : single task activity"
+            android:launchMode="singleTask"/>
+
+        <activity
+            android:name=".activity.PatchedSingleTaskActivity2"
+            android:label="Patched : single task activity 2"
+            android:launchMode="singleTask"/>
+
+        <activity
+            android:name=".activity.PatchedSingleInstanceActivity"
+            android:label="Patched : single instance activity"
+            android:launchMode="singleInstance"
+            android:screenOrientation="landscape"/>
+
+        <activity
+            android:name=".activity.PatchedSingleInstanceActivity2"
+            android:label="Patched : single instance activity 2"
+            android:launchMode="singleInstance"/>
+
+        <receiver android:name=".receiver.DemoReceiver">
+            <intent-filter>
+                <action android:name="me.ele.test"/>
+            </intent-filter>
+        </receiver>
+
+
+    </application>
+
+</manifest>

@@ -10,7 +10,7 @@ import android.os.Message;
 import android.util.Log;
 
 import me.ele.amigo.reflect.FieldUtils;
-import me.ele.amigo.utils.ComponentUtils;
+import me.ele.amigo.utils.component.ActivityFinder;
 
 import static me.ele.amigo.AmigoInstrumentation.EXTRA_TARGET_INFO;
 import static me.ele.amigo.AmigoInstrumentation.EXTRA_TARGET_INTENT;
@@ -50,7 +50,7 @@ public class AmigoCallback implements Handler.Callback {
             if (targetIntent != null) {
                 ComponentName targetComponentName = targetIntent.resolveActivity(context.getPackageManager());
                 Log.e(TAG, "targetComponentName--->" + targetComponentName);
-                ActivityInfo targetActivityInfo = ComponentUtils.getActivityInfoInNewApp(context, targetComponentName.getClassName());
+                ActivityInfo targetActivityInfo = ActivityFinder.getActivityInfoInNewApp(context, targetComponentName.getClassName());
                 if (targetActivityInfo != null) {
 
                     targetIntent.putExtra(EXTRA_TARGET_INFO, targetActivityInfo);

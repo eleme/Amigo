@@ -101,6 +101,11 @@ Amigo.clear(context);
 - 为用户的流量照想, 你可能只想下载一个差分文件
  [bspatch](https://github.com/eleme/bspatch)可能是你的一个选择
 
+## Inspired by
+
+[Android Patch 方案与持续交付](http://dev.qq.com/topic/57a31921ac3a1fb613dd40f3)
+
+[DroidPlugin](https://github.com/DroidPluginTeam/DroidPlugin)
 
 
 License

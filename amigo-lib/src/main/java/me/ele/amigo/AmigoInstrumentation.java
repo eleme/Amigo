@@ -16,7 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import me.ele.amigo.reflect.FieldUtils;
-import me.ele.amigo.utils.ComponentUtils;
+import me.ele.amigo.stub.ActivityStub;
+import me.ele.amigo.utils.component.ActivityFinder;
 
 public class AmigoInstrumentation extends Instrumentation implements IInstrumentation {
 
@@ -38,7 +39,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             return false;
         }
 
-        ActivityInfo[] activityInfos = ComponentUtils.getAppActivities(who);
+        ActivityInfo[] activityInfos = ActivityFinder.getAppActivities(who);
         if(activityInfos == null || activityInfos.length == 0) {
             return false;
         }
@@ -49,7 +50,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             }
         }
 
-        return ComponentUtils.getActivityInfoInNewApp(who, componentName.getClassName() )!= null;
+        return ActivityFinder.getActivityInfoInNewApp(who, componentName.getClassName() )!= null;
     }
 
     private Intent wrapIntent(Context who, Intent intent) {
@@ -187,7 +188,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             targetClassName = context.getPackageName() + targetClassName;
         }
 
-        ActivityInfo info = ComponentUtils.getActivityInfoInNewApp(context, targetClassName);
+        ActivityInfo info = ActivityFinder.getActivityInfoInNewApp(context, targetClassName);
         if (info == null) {
             throw new RuntimeException(String.format("cannot find %s in apk", targetClassName));
         }

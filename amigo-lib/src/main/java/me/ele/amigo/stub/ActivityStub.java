@@ -1,4 +1,4 @@
-package me.ele.amigo;
+package me.ele.amigo.stub;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;

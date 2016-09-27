@@ -1,12 +1,15 @@
-package me.ele.app.amigo.demo;
+package me.ele.app.amigo;
 
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,10 +23,17 @@ import java.io.File;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.ele.amigo.Amigo;
-import me.ele.app.amigo.HomeActivity;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
-import me.ele.app.amigo.R;
+import me.ele.app.amigo.activity.PatchedSingleInstanceActivity;
+import me.ele.app.amigo.activity.PatchedSingleInstanceActivity2;
+import me.ele.app.amigo.activity.PatchedSingleTaskActivity;
+import me.ele.app.amigo.activity.PatchedSingleTaskActivity2;
+import me.ele.app.amigo.activity.PatchedSingleTopActivity;
+import me.ele.app.amigo.activity.PatchedSingleTopActivity2;
+import me.ele.app.amigo.receiver.DemoReceiver;
+import me.ele.app.amigo.service.BindService;
+import me.ele.app.amigo.service.StartService;
 
 public class DemoActivity extends AppCompatActivity {
 
@@ -136,5 +146,49 @@ public class DemoActivity extends AppCompatActivity {
     public void clearPatchApk() {
         Amigo.clear(getApplication());
         Toast.makeText(this, "Kill this app, restart the app and check the running apk", Toast.LENGTH_LONG).show();
+    }
+
+    @OnClick(R.id.start_new_service)
+    public void startNewService() {
+        startService(new Intent(this, StartService.class).putExtra(StartService.TAG, "1"));
+    }
+
+    @OnClick(R.id.stop_new_service)
+    public void stopNewService() {
+        stopService(new Intent(this, StartService.class));
+    }
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.e(TAG, "onServiceConnected");
+            BindService.LocalBinder binder = (BindService.LocalBinder) service;
+            BindService s = binder.getService();
+            Log.e(TAG, "random number from service" + s.getRandomNumber());
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.e(TAG, "onServiceConnected");
+        }
+    };
+
+    @OnClick(R.id.bind_new_service)
+    public void bindNewService() {
+        bindService(new Intent(this, BindService.class).putExtra(BindService.TAG, "1"), connection, 0);
+    }
+
+    @OnClick(R.id.unbind_new_service)
+    public void unbindNewService() {
+        try {
+            unbindService(connection);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(DemoActivity.this, "Service not registered", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @OnClick(R.id.trigger_receiver_action)
+    public void triggerReceiverAction() {
+        sendBroadcast(new Intent("me.ele.test").putExtra(DemoReceiver.TAG, "1"));
     }
 }

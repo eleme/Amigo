@@ -10,7 +10,6 @@ import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import me.ele.app.amigo.demo.DemoActivity;
 import me.ele.app.amigo.dev.DevActivity;
 import me.ele.demo.A;
 

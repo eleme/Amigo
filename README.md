@@ -112,6 +112,13 @@ also you can play with this app demo following the procedures below.
 
 - for user's network traffic's sake, you may just want to download a diff file
   [bspatch](https://github.com/eleme/bspatch) is an option for you
+  
+
+## Inspired by
+
+[Android Patch 方案与持续交付](http://dev.qq.com/topic/57a31921ac3a1fb613dd40f3)
+
+[DroidPlugin](https://github.com/DroidPluginTeam/DroidPlugin)
 
 
 license
