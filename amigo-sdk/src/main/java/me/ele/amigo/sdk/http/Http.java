@@ -1,5 +1,6 @@
 package me.ele.amigo.sdk.http;
 
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
@@ -8,8 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -18,10 +19,7 @@ import java.util.concurrent.Executors;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-import me.ele.amigo.Amigo;
 import me.ele.amigo.sdk.AmigoSdk;
-import me.ele.amigo.sdk.utils.CommonUtil;
-import me.ele.amigo.utils.CommonUtils;
 
 import static me.ele.amigo.sdk.utils.CommonUtil.byteArray2String;
 
@@ -34,6 +32,7 @@ public class Http {
     // todo
     private static SSLSocketFactory mSslSocketFactory;
     private static ExecutorService executorService = Executors.newCachedThreadPool();
+    private static String userAgent;
 
     private static Handler handler = new Handler() {
         @Override
@@ -55,8 +54,20 @@ public class Http {
                             }
                         });
                     }
-                    URL url1 = new URL(request.url());
-                    HttpURLConnection connection = openConnection(url1);
+
+                    Uri.Builder uriBuilder = Uri.parse(request.url()).buildUpon();
+                    if (request.method() == null || request.method() == Method.GET) {
+                        Map<String, String> params = request.params();
+                        if (params != null) {
+                            for (Map.Entry<String, String> entry : params.entrySet()) {
+                                uriBuilder.appendQueryParameter(entry.getKey(), entry.getValue());
+                            }
+                        }
+                    }
+
+                    URL url = new URL(uriBuilder.build().toString());
+                    HttpURLConnection connection = openConnection(url);
+
                     Map<String, String> headers = request.headers();
                     if (headers != null) {
                         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -171,8 +182,7 @@ public class Http {
 
     private static void setConnectionParameters(HttpURLConnection connection, Request request) throws IOException {
         // add general headers
-        connection.addRequestProperty("app_id", AmigoSdk.appId());
-        connection.addRequestProperty("device_id", AmigoSdk.deviceId());
+        connection.setRequestProperty("User-Agent", getUserAgent());
 
         Method method = request.method();
         if (method == null || method == Method.GET) {
@@ -191,6 +201,18 @@ public class Http {
             }
             return;
         }
+    }
+
+    private static String getUserAgent() {
+        if (TextUtils.isEmpty(userAgent)) {
+            String separator = "/";
+            userAgent = new StringBuilder()
+                    .append("app_id").append(separator).append(AmigoSdk.appId())
+                    .append(" ")
+                    .append("device_id").append(separator).append(AmigoSdk.deviceId())
+                    .toString();
+        }
+        return userAgent;
     }
 
     public interface Callback {

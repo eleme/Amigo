@@ -6,6 +6,8 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.sdk.http.Error;
@@ -16,6 +18,7 @@ import me.ele.amigo.sdk.http.Response;
 import me.ele.amigo.sdk.model.PatchInfo;
 import me.ele.amigo.sdk.utils.DeviceId;
 import me.ele.amigo.sdk.utils.MD5;
+import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.FileUtils;
 
 import static me.ele.amigo.sdk.utils.CommonUtil.byteArray2String;
@@ -52,7 +55,9 @@ public class AmigoSdk {
     }
 
     private static final void requestPatchInfo() {
-        Http.performRequest(Request.newRequest(TEST_PATCH_INFO_URL).method(Method.GET), new Http.SimpleCallback() {
+        Map<String, String> params = new HashMap<>();
+        params.put("version_code", String.valueOf(checkHostVersion()));
+        Http.performRequest(Request.newRequest(TEST_PATCH_INFO_URL).params(params).method(Method.GET), new Http.SimpleCallback() {
             @Override
             public void onSucc(Response response) {
                 PatchInfo patchInfo = PatchInfo.fromJson(byteArray2String(response.body()));
@@ -128,5 +133,9 @@ public class AmigoSdk {
 
     public static String deviceId() {
         return deviceId;
+    }
+
+    private static int checkHostVersion() {
+        return CommonUtils.getVersionCode(context);
     }
 }
