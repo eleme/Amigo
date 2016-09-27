@@ -12,6 +12,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.ele.amigo.Amigo;
 import me.ele.app.amigo.R;
+import me.ele.demo.A;
 
 public class DevActivity extends AppCompatActivity {
 
@@ -28,5 +29,10 @@ public class DevActivity extends AppCompatActivity {
     @OnClick(R.id.launch_sub_process)
     public void launchSubProcess(View v) {
         startActivity(new Intent(this, SubprocessActivity.class));
+    }
+
+    @OnClick(R.id.load_asset)
+    public void loadAsset(View v) {
+        Toast.makeText(this, A.loadAsset(getApplication()), Toast.LENGTH_LONG).show();
     }
 }
