@@ -1,3 +1,8 @@
+## Version [0.3.1](https://github.com/eleme/Amigo/releases/tag/v0.3.1)
+
+_2016-09-29_
+
+* fix Intent unmarshalling Exception [issue99](https://github.com/eleme/Amigo/issues/99)
 
 ## Version [0.3.0](https://github.com/eleme/Amigo/releases/tag/v0.3.0)
 
