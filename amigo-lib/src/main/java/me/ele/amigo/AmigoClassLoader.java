@@ -1,14 +1,13 @@
 package me.ele.amigo;
 
-import dalvik.system.PathClassLoader;
+import java.io.File;
 
-public class AmigoClassLoader extends PathClassLoader {
+import dalvik.system.BaseDexClassLoader;
 
-    public AmigoClassLoader(String dexPath, String libraryPath, ClassLoader parent) {
-        super(dexPath, libraryPath, parent);
+public class AmigoClassLoader extends BaseDexClassLoader {
+
+    public AmigoClassLoader(String dexPath, File optimizedDirectory, String libraryPath, ClassLoader parent) {
+        super(dexPath, optimizedDirectory, libraryPath, parent);
     }
 
-    public AmigoClassLoader(String dexPath, ClassLoader parent) {
-        super(dexPath, parent);
-    }
 }

@@ -16,13 +16,11 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import me.ele.amigo.hook.HookFactory;
@@ -42,11 +40,8 @@ import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.getMatchedMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
+import static me.ele.amigo.utils.ClassLoaderUtils.getRootClassLoader;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
-import static me.ele.amigo.utils.DexUtils.getElementWithDex;
-import static me.ele.amigo.utils.DexUtils.getPathList;
-import static me.ele.amigo.utils.DexUtils.getRootClassLoader;
-import static me.ele.amigo.utils.DexUtils.injectSoAtFirst;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 import static me.ele.amigo.utils.FileUtils.removeFile;
 
@@ -79,7 +74,8 @@ public class Amigo extends Application {
                 if (checkUpgrade()) {
                     throw new RuntimeException("Host app has upgrade");
                 }
-                if (TextUtils.isEmpty(workingPatchApkChecksum) || !patchApks.exists(workingPatchApkChecksum)) {
+                if (TextUtils.isEmpty(workingPatchApkChecksum)
+                        || !patchApks.exists(workingPatchApkChecksum)) {
                     throw new RuntimeException("Patch apk doesn't exists");
                 }
                 if (!checkSignature(workingPatchApkChecksum)) {
@@ -125,7 +121,8 @@ public class Amigo extends Application {
 
     private void runPatchApk(String checksum) throws LoadPatchApkException {
         try {
-            Log.e(TAG, "patchApkChecksum-->" + checksum + ", sp record checksum--->" + sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, ""));
+            Log.e(TAG, "patchApkChecksum-->" + checksum + ", sp record checksum--->"
+                    + sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, ""));
             if (isPatchApkFirstRun(checksum) || !isOptedDexExists(checksum)) {
                 // TODO This is workaround for now, refactor in future.
                 sharedPref.edit().remove(checksum).commit();
@@ -134,10 +131,12 @@ public class Amigo extends Application {
                 checkDexAndSoChecksum(checksum);
             }
 
-            AmigoClassLoader amigoClassLoader = new AmigoClassLoader(patchApks.patchPath(checksum), getRootClassLoader());
+            String dexPathes = getDexPath(checksum);
+            AmigoClassLoader amigoClassLoader = new AmigoClassLoader(dexPathes,
+                    AmigoDirs.getInstance(this).dexOptDir(checksum),
+                    AmigoDirs.getInstance(this).libDir(checksum).getAbsolutePath(),
+                    getRootClassLoader());
             setAPKClassLoader(amigoClassLoader);
-            setDexElements(amigoClassLoader, checksum);
-            setNativeLibraryDirectories(amigoClassLoader, checksum);
             patchedClassLoader = amigoClassLoader;
 
             AssetManager assetManager = AssetManager.class.newInstance();
@@ -146,10 +145,9 @@ public class Amigo extends Application {
             addAssetPath.invoke(assetManager, patchApks.patchPath(checksum));
             setAPKResources(assetManager);
 
-            dynamicRegisterReceivers();
             setApkInstrumentation();
             setApkHandler();
-
+            dynamicRegisterReceivers();
 
             sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
             clearOldPatches(checksum);
@@ -158,6 +156,27 @@ public class Amigo extends Application {
         } catch (Exception e) {
             throw new LoadPatchApkException(e);
         }
+    }
+
+  private String getDexPath(String checksum) throws LoadPatchApkException {
+        File[] patchDexFiles = AmigoDirs.getInstance(this).dexDir(checksum).listFiles(
+                new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        return pathname.getName().endsWith(".dex");
+                    }
+                });
+        String dexPath = "";
+        if (patchDexFiles != null && patchDexFiles.length > 0) {
+            for (File patchDex : patchDexFiles) {
+                dexPath += ":" + patchDex.getAbsolutePath();
+            }
+        } else {
+            LoadPatchApkException e= new LoadPatchApkException("Amigo: no dexes avilable");
+            e.fillInStackTrace();
+            throw  e;
+        }
+        return dexPath;
     }
 
     private void installHook(AmigoClassLoader amigoClassLoader) throws Exception {
@@ -289,18 +308,6 @@ public class Amigo extends Application {
         }
     }
 
-    private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader, String checksum) throws Exception {
-        File libDir = amigoDirs.libDir(checksum);
-        injectSoAtFirst(hackClassLoader, libDir.getAbsolutePath());
-        libDir.setReadOnly();
-        File[] libs = libDir.listFiles();
-        if (libs != null && libs.length > 0) {
-            for (File lib : libs) {
-                lib.setReadOnly();
-            }
-        }
-    }
-
     private void setAPKResources(AssetManager newAssetManager) throws Exception {
         invokeMethod(newAssetManager, "ensureStringBlocks");
 
@@ -351,27 +358,6 @@ public class Amigo extends Application {
 
     private void setAPKClassLoader(ClassLoader classLoader) throws Exception {
         writeField(getLoadedApk(), "mClassLoader", classLoader);
-    }
-
-    private void setDexElements(ClassLoader classLoader, String checksum) throws Exception {
-        Object dexPathList = getPathList(classLoader);
-        File[] listFiles = amigoDirs.dexDir(checksum).listFiles();
-
-        List<File> validDexes = new ArrayList<>();
-        for (File listFile : listFiles) {
-            if (listFile.getName().endsWith(".dex")) {
-                validDexes.add(listFile);
-            }
-        }
-        File[] dexes = validDexes.toArray(new File[validDexes.size()]);
-        Object originDexElements = readField(dexPathList, "dexElements");
-        Class<?> localClass = originDexElements.getClass().getComponentType();
-        int length = dexes.length;
-        Object dexElements = Array.newInstance(localClass, length);
-        for (int k = 0; k < length; k++) {
-            Array.set(dexElements, k, getElementWithDex(dexes[k], amigoDirs.dexOptDir(checksum)));
-        }
-        writeField(dexPathList, "dexElements", dexElements);
     }
 
     private void setAPKApplication(Application application) throws Exception {
@@ -520,6 +506,10 @@ public class Amigo extends Application {
     private static class LoadPatchApkException extends Exception {
         public LoadPatchApkException(Throwable throwable) {
             super(throwable);
+        }
+
+        public LoadPatchApkException(String msg) {
+
         }
     }
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/start_standard_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="start standard ctivity"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/start_single_top_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="start single top activity"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/start_single_task_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="start single task activity"
+        android:textAllCaps="false" />
+
+    <Button
+        android:id="@+id/start_single_instance_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="start single instance activity"
+        android:textAllCaps="false" />
+</LinearLayout>

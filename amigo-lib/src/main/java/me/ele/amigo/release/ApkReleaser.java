@@ -8,9 +8,8 @@ import android.os.Process;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -82,16 +81,14 @@ public class ApkReleaser {
 
     private void dexOptimization(final String checksum) {
         Log.e(TAG, "dexOptimization");
-        File[] listFiles = amigoDirs.dexDir(checksum).listFiles();
-
-        final List<File> validDexes = new ArrayList<>();
-        for (File listFile : listFiles) {
-            if (listFile.getName().endsWith(".dex")) {
-                validDexes.add(listFile);
+        File[] validDexes = amigoDirs.dexDir(checksum).listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().endsWith(".dex");
             }
-        }
+        });
 
-        final CountDownLatch countDownLatch = new CountDownLatch(validDexes.size());
+        final CountDownLatch countDownLatch = new CountDownLatch(validDexes.length);
 
         for (final File dex : validDexes) {
             service.submit(new Runnable() {
