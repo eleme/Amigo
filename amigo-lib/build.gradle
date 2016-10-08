@@ -92,7 +92,7 @@ try {
         archives sourcesJar
     }
 } catch (Exception e) {
-    println e
+    println e.toString()
 }
 
 // configure local maven, release key, and the like
