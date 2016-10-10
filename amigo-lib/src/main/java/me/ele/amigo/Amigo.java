@@ -28,6 +28,7 @@ import me.ele.amigo.reflect.MethodUtils;
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.CrcUtils;
+import me.ele.amigo.utils.PermissionChecker;
 import me.ele.amigo.utils.ProcessUtils;
 import me.ele.amigo.utils.component.ReceiverFinder;
 
@@ -377,18 +378,7 @@ public class Amigo extends Application {
     }
 
     public static void workLater(Context context, File patchFile) {
-        if (patchFile == null) {
-            throw new NullPointerException("param patchFile cannot be null");
-        }
-
-        if (!patchFile.exists()) {
-            throw new IllegalArgumentException("param patchFile doesn't exist");
-        }
-
-        if (!patchFile.canRead()) {
-            throw new IllegalArgumentException("param patchFile cannot be read");
-        }
-
+        checkPatchApk(context, patchFile);
         String patchChecksum = CrcUtils.getCrc(patchFile);
         if (!PatchApks.getInstance(context).exists(patchChecksum)) {
             copyFile(patchFile, PatchApks.getInstance(context).patchFile(patchChecksum));
@@ -398,18 +388,7 @@ public class Amigo extends Application {
     }
 
     public static void work(Context context, File patchFile) {
-        if (patchFile == null) {
-            throw new NullPointerException("param apkFile cannot be null");
-        }
-
-        if (!patchFile.exists()) {
-            throw new IllegalArgumentException("param apkFile doesn't exist");
-        }
-
-        if (!patchFile.canRead()) {
-            throw new IllegalArgumentException("param apkFile cannot be read");
-        }
-
+        checkPatchApk(context, patchFile);
         String patchChecksum = CrcUtils.getCrc(patchFile);
         if (!PatchApks.getInstance(context).exists(patchChecksum)) {
             copyFile(patchFile, PatchApks.getInstance(context).patchFile(patchChecksum));
@@ -422,6 +401,24 @@ public class Amigo extends Application {
         AmigoService.start(context, patchChecksum, false);
         System.exit(0);
         Process.killProcess(Process.myPid());
+    }
+
+    private static void checkPatchApk(Context context, File patchFile) {
+        if (patchFile == null) {
+            throw new NullPointerException("param apkFile cannot be null");
+        }
+
+        if (!patchFile.exists()) {
+            throw new IllegalArgumentException("param apkFile doesn't exist");
+        }
+
+        if (!patchFile.canRead()) {
+            throw new IllegalArgumentException("param apkFile cannot be read");
+        }
+
+        if (!PermissionChecker.checkPatchPermission(context, patchFile)) {
+            throw new IllegalStateException("patch apk cannot request more permissions than host");
+        }
     }
 
     private boolean checkSignature(String checksum) {
