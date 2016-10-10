@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="me.ele.app.amigo">
 
-
     <application
         >
         <service android:name="me.ele.app.amigo.service.StartService"/>
