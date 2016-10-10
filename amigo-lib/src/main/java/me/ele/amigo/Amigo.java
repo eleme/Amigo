@@ -5,6 +5,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
@@ -251,10 +252,10 @@ public class Amigo extends Application {
 
     private void runOriginalApplication() throws Exception {
         setAPKClassLoader(originalClassLoader);
+        initAmigoSdk(originalClassLoader);
         Class acd = originalClassLoader.loadClass("me.ele.amigo.acd");
         String applicationName = (String) readStaticField(acd, "n");
-        Application application =
-                (Application) originalClassLoader.loadClass(applicationName).newInstance();
+        Application application = (Application) originalClassLoader.loadClass(applicationName).newInstance();
         Method attach = getMatchedMethod(Application.class, "attach", Context.class);
         attach.setAccessible(true);
         attach.invoke(application, getBaseContext());
@@ -264,6 +265,7 @@ public class Amigo extends Application {
 
     private void runPatchedApplication() throws Exception {
         setAPKClassLoader(patchedClassLoader);
+        initAmigoSdk(patchedClassLoader);
         Class acd = patchedClassLoader.loadClass("me.ele.amigo.acd");
         String applicationName = (String) readStaticField(acd, "n");
         Application application = (Application) patchedClassLoader.loadClass(applicationName).newInstance();
@@ -272,6 +274,33 @@ public class Amigo extends Application {
         attach.invoke(application, getBaseContext());
         setAPKApplication(application);
         application.onCreate();
+    }
+
+    private void initAmigoSdk(ClassLoader classLoader) {
+        if (ProcessUtils.isMainProcess(this)) {
+            try {
+                String appId = getAppId();
+                if (TextUtils.isEmpty(appId)) {
+                    return;
+                }
+                Class cls = classLoader.loadClass("me.ele.amigo.sdk.AmigoSdk");
+                Method initMtd = cls.getDeclaredMethod("init", Context.class, String.class);
+                initMtd.setAccessible(true);
+                initMtd.invoke(null, this, appId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String getAppId() {
+        try {
+            return getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA)
+                    .metaData.get("amigo_app_id").toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private void checkDexAndSoChecksum(String apkChecksum) throws Exception {
