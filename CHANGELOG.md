@@ -1,3 +1,11 @@
+## Version [0.4.0](https://github.com/eleme/Amigo/releases/tag/v0.4.0)
+
+_2016-10-10_
+
+* support new added `service`
+* refactor ClassLoader replacement
+* support new added permission's check
+
 ## Version [0.3.1](https://github.com/eleme/Amigo/releases/tag/v0.3.1)
 
 _2016-09-29_

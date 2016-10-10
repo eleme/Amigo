@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.3.1'
+  classpath 'me.ele:amigo:0.4.0'
 }
 ```
 In your module's `build.gradle`
@@ -86,7 +86,7 @@ some time-tense operation is handled in a new process with an activity, you may 
 ```
 
 ## limitations
- - new added `service` & `provider` is not supported for now
+ - new added `provider` is not supported for now
 
  - app launcher activity's name cannot be changed
  

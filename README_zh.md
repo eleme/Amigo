@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-      classpath 'me.ele:amigo:0.3.1'
+      classpath 'me.ele:amigo:0.4.0'
    }
    ```
 
@@ -88,7 +88,7 @@ Amigo.clear(context);
 ```
 
 ### 局限
- - 新的apk中, 新增`service` & `provider`暂时不支持
+ - 新的apk中, 新增`provider`暂时不支持
       
  - launcher activity的全类名暂时不支持修改
  
