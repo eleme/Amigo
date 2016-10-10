@@ -1,16 +1,18 @@
-package me.ele.app.amigo.demo;
+package me.ele.app.amigo.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 public class DemoReceiver extends BroadcastReceiver {
 
-    private static final String TAG = DemoReceiver.class.getName();
+    public static final String TAG = DemoReceiver.class.getName();
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.e(TAG, "onReceive");
+        Toast.makeText(context, "action received with data " + intent.getStringExtra(TAG), Toast.LENGTH_SHORT).show();
     }
 }

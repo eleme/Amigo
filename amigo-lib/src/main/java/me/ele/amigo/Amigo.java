@@ -16,23 +16,22 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import me.ele.amigo.hook.HookFactory;
+import me.ele.amigo.reflect.MethodUtils;
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.CrcUtils;
-import me.ele.amigo.utils.ComponentUtils;
 import me.ele.amigo.utils.ProcessUtils;
+import me.ele.amigo.utils.component.ReceiverFinder;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
@@ -40,7 +39,7 @@ import static me.ele.amigo.reflect.FieldUtils.getField;
 import static me.ele.amigo.reflect.FieldUtils.readField;
 import static me.ele.amigo.reflect.FieldUtils.readStaticField;
 import static me.ele.amigo.reflect.FieldUtils.writeField;
-import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
+import static me.ele.amigo.reflect.MethodUtils.getMatchedMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
@@ -142,7 +141,7 @@ public class Amigo extends Application {
             patchedClassLoader = amigoClassLoader;
 
             AssetManager assetManager = AssetManager.class.newInstance();
-            Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
+            Method addAssetPath = getMatchedMethod(AssetManager.class, "addAssetPath", String.class);
             addAssetPath.setAccessible(true);
             addAssetPath.invoke(assetManager, patchApks.patchPath(checksum));
             setAPKResources(assetManager);
@@ -154,18 +153,23 @@ public class Amigo extends Application {
 
             sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
             clearOldPatches(checksum);
-
+            installHook(amigoClassLoader);
             runPatchedApplication();
         } catch (Exception e) {
             throw new LoadPatchApkException(e);
         }
     }
 
-    private void dynamicRegisterReceivers() {
-        ComponentUtils.registerNewReceivers(this);
+    private void installHook(AmigoClassLoader amigoClassLoader) throws Exception {
+        Class hookFactoryClazz = amigoClassLoader.loadClass(HookFactory.class.getName());
+        MethodUtils.invokeStaticMethod(hookFactoryClazz, "install", this, amigoClassLoader);
     }
 
-    private void setApkInstrumentation() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
+    private void dynamicRegisterReceivers() {
+        ReceiverFinder.registerNewReceivers(this);
+    }
+
+    private void setApkInstrumentation() throws Exception {
         Instrumentation oldInstrumentation = (Instrumentation) readField(instance(), "mInstrumentation", true);
         Log.e(TAG, "oldInstrumentation--->" + oldInstrumentation);
         AmigoInstrumentation instrumentation = new AmigoInstrumentation(oldInstrumentation);
@@ -173,7 +177,7 @@ public class Amigo extends Application {
         Log.e(TAG, "setApkInstrumentation success classloader-->" + instrumentation.getClass().getClassLoader());
     }
 
-    private void setApkHandler() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private void setApkHandler() throws Exception {
         Handler handler = (Handler) readField(instance(), "mH", true);
         Object callback = readField(handler, "mCallback", true);
         AmigoCallback value = new AmigoCallback(this, patchedClassLoader, (Handler.Callback) callback);
@@ -232,7 +236,7 @@ public class Amigo extends Application {
         String applicationName = (String) readStaticField(acd, "n");
         Application application =
                 (Application) originalClassLoader.loadClass(applicationName).newInstance();
-        Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
+        Method attach = getMatchedMethod(Application.class, "attach", Context.class);
         attach.setAccessible(true);
         attach.invoke(application, getBaseContext());
         setAPKApplication(application);
@@ -244,14 +248,14 @@ public class Amigo extends Application {
         Class acd = patchedClassLoader.loadClass("me.ele.amigo.acd");
         String applicationName = (String) readStaticField(acd, "n");
         Application application = (Application) patchedClassLoader.loadClass(applicationName).newInstance();
-        Method attach = getDeclaredMethod(Application.class, "attach", Context.class);
+        Method attach = getMatchedMethod(Application.class, "attach", Context.class);
         attach.setAccessible(true);
         attach.invoke(application, getBaseContext());
         setAPKApplication(application);
         application.onCreate();
     }
 
-    private void checkDexAndSoChecksum(String apkChecksum) throws IOException, NoSuchAlgorithmException {
+    private void checkDexAndSoChecksum(String apkChecksum) throws Exception {
         SharedPreferences sp = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
         for (File dexFile : dexFiles) {
@@ -285,8 +289,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader, String checksum)
-            throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, NoSuchFieldException {
+    private void setNativeLibraryDirectories(AmigoClassLoader hackClassLoader, String checksum) throws Exception {
         File libDir = amigoDirs.libDir(checksum);
         injectSoAtFirst(hackClassLoader, libDir.getAbsolutePath());
         libDir.setReadOnly();
@@ -298,8 +301,7 @@ public class Amigo extends Application {
         }
     }
 
-    private void setAPKResources(AssetManager newAssetManager)
-            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, ClassNotFoundException {
+    private void setAPKResources(AssetManager newAssetManager) throws Exception {
         invokeMethod(newAssetManager, "ensureStringBlocks");
 
         Collection<WeakReference<Resources>> references;
@@ -347,12 +349,11 @@ public class Amigo extends Application {
         }
     }
 
-    private void setAPKClassLoader(ClassLoader classLoader)
-            throws IllegalAccessException, NoSuchMethodException, ClassNotFoundException, InvocationTargetException {
+    private void setAPKClassLoader(ClassLoader classLoader) throws Exception {
         writeField(getLoadedApk(), "mClassLoader", classLoader);
     }
 
-    private void setDexElements(ClassLoader classLoader, String checksum) throws NoSuchFieldException, IllegalAccessException {
+    private void setDexElements(ClassLoader classLoader, String checksum) throws Exception {
         Object dexPathList = getPathList(classLoader);
         File[] listFiles = amigoDirs.dexDir(checksum).listFiles();
 
@@ -373,14 +374,12 @@ public class Amigo extends Application {
         writeField(dexPathList, "dexElements", dexElements);
     }
 
-    private void setAPKApplication(Application application)
-            throws InvocationTargetException, NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
+    private void setAPKApplication(Application application) throws Exception {
         Object apk = getLoadedApk();
         writeField(apk, "mApplication", application);
     }
 
-    private static Object getLoadedApk()
-            throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
+    private static Object getLoadedApk() throws Exception {
         Map<String, WeakReference<Object>> mPackages = (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
         for (String s : mPackages.keySet()) {
             WeakReference wr = mPackages.get(s);

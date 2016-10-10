@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static me.ele.amigo.reflect.MethodUtils.getDeclaredMethod;
+import static me.ele.amigo.reflect.MethodUtils.getMatchedMethod;
 
 public class RCompat {
 
@@ -110,7 +110,7 @@ public class RCompat {
 
         try {
             AssetManager assetManager = AssetManager.class.newInstance();
-            Method addAssetPath = getDeclaredMethod(AssetManager.class, "addAssetPath", String.class);
+            Method addAssetPath = getMatchedMethod(AssetManager.class, "addAssetPath", String.class);
             addAssetPath.setAccessible(true);
             addAssetPath.invoke(assetManager, context.getApplicationInfo().sourceDir);
             return resources = new Resources(assetManager, context.getResources().getDisplayMetrics(), context.getResources().getConfiguration());

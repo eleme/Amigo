@@ -10,7 +10,7 @@ android {
         applicationId "me.ele.app.amigo"
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 1
+        versionCode 11
         versionName "1.0"
         multiDexEnabled true
     }
