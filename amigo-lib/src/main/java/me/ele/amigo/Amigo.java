@@ -52,6 +52,8 @@ public class Amigo extends Application {
     public static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
     public static final String VERSION_CODE = "version_code";
 
+    private static LoadPatchError loadPatchError;
+
     private SharedPreferences sharedPref;
 
     private ClassLoader originalClassLoader;
@@ -79,9 +81,9 @@ public class Amigo extends Application {
                     throw new RuntimeException("Patch apk doesn't exists");
                 }
                 if (!checkSignature(workingPatchApkChecksum)) {
+                    loadPatchError = LoadPatchError.record(LoadPatchError.SIG_ERR, null);
                     throw new RuntimeException("Patch apk has illegal signature");
                 }
-
             } catch (RuntimeException e) {
                 e.printStackTrace();
                 if (ProcessUtils.isMainProcess(this)) {
@@ -109,6 +111,7 @@ public class Amigo extends Application {
             runPatchApk(workingPatchApkChecksum);
         } catch (LoadPatchApkException e) {
             e.printStackTrace();
+            loadPatchError = LoadPatchError.record(LoadPatchError.LOAD_ERR, e);
             try {
                 runOriginalApplication();
             } catch (Throwable e2) {
@@ -501,6 +504,10 @@ public class Amigo extends Application {
                 .edit()
                 .putString(WORKING_PATCH_APK_CHECKSUM, "")
                 .commit();
+    }
+
+    public static LoadPatchError getLoadPatchError() {
+        return loadPatchError;
     }
 
     private static class LoadPatchApkException extends Exception {
