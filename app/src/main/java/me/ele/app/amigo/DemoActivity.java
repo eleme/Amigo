@@ -25,12 +25,6 @@ import butterknife.OnClick;
 import me.ele.amigo.Amigo;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
-import me.ele.app.amigo.activity.PatchedSingleInstanceActivity;
-import me.ele.app.amigo.activity.PatchedSingleInstanceActivity2;
-import me.ele.app.amigo.activity.PatchedSingleTaskActivity;
-import me.ele.app.amigo.activity.PatchedSingleTaskActivity2;
-import me.ele.app.amigo.activity.PatchedSingleTopActivity;
-import me.ele.app.amigo.activity.PatchedSingleTopActivity2;
 import me.ele.app.amigo.receiver.DemoReceiver;
 import me.ele.app.amigo.service.BindService;
 import me.ele.app.amigo.service.StartService;
@@ -94,6 +88,12 @@ public class DemoActivity extends AppCompatActivity {
         Toast.makeText(this, "waiting for seconds, and kill this app and relaunch the app to check result", Toast.LENGTH_LONG).show();
     }
 
+    @OnClick(R.id.clear_patch)
+    public void clearPatchApk() {
+        Amigo.clear(getApplication());
+        Toast.makeText(this, "Kill this app, restart the app and check the running apk", Toast.LENGTH_LONG).show();
+    }
+
     @OnClick(R.id.notification)
     void testNotification(View v) {
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -119,70 +119,14 @@ public class DemoActivity extends AppCompatActivity {
         notificationManager.notify(0, notification);
     }
 
-    @OnClick(R.id.start_patched_activity)
-    public void testStartPatchedActivity() {
-        startActivity(new Intent(this, PatchedSingleTopActivity.class));
-        startActivity(new Intent(this, PatchedSingleTopActivity.class).putExtra("extra", new ParcelBean()));
-
-        startActivity(new Intent(this, PatchedSingleTopActivity2.class));
-        startActivity(new Intent(this, PatchedSingleTopActivity2.class).putExtra("extra", "extra1"));
-
-        startActivity(new Intent(this, PatchedSingleTaskActivity.class));
-        startActivity(new Intent(this, PatchedSingleTaskActivity.class).putExtra("extra", "extra1"));
-
-        startActivity(new Intent(this, PatchedSingleTaskActivity2.class));
-        startActivity(new Intent(this, PatchedSingleTaskActivity2.class).putExtra("extra", "extra1"));
-
-        startActivity(new Intent(this, PatchedSingleInstanceActivity.class));
-        startActivity(new Intent(this, PatchedSingleInstanceActivity.class).putExtra("extra", "extra1"));
-
-        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
-        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class).putExtra("extra", "extra1"));
+    @OnClick(R.id.test_patched_activity)
+    public void testPatchedActivities() {
+        startActivity(new Intent(this, TestPatchedActivities.class));
     }
 
-    @OnClick(R.id.clear_patch)
-    public void clearPatchApk() {
-        Amigo.clear(getApplication());
-        Toast.makeText(this, "Kill this app, restart the app and check the running apk", Toast.LENGTH_LONG).show();
-    }
-
-    @OnClick(R.id.start_new_service)
-    public void startNewService() {
-        startService(new Intent(this, StartService.class).putExtra(StartService.TAG, "1"));
-    }
-
-    @OnClick(R.id.stop_new_service)
-    public void stopNewService() {
-        stopService(new Intent(this, StartService.class));
-    }
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.e(TAG, "onServiceConnected");
-            BindService.LocalBinder binder = (BindService.LocalBinder) service;
-            BindService s = binder.getService();
-            Log.e(TAG, "random number from service" + s.getRandomNumber());
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.e(TAG, "onServiceConnected");
-        }
-    };
-
-    @OnClick(R.id.bind_new_service)
-    public void bindNewService() {
-        bindService(new Intent(this, BindService.class).putExtra(BindService.TAG, "1"), connection, 0);
-    }
-
-    @OnClick(R.id.unbind_new_service)
-    public void unbindNewService() {
-        try {
-            unbindService(connection);
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(DemoActivity.this, "Service not registered", Toast.LENGTH_SHORT).show();
-        }
+    @OnClick(R.id.test_patched_services)
+    public void testPatchedServices() {
+        startActivity(new Intent(this, TestPatchedServices.class));
     }
 
     @OnClick(R.id.trigger_receiver_action)

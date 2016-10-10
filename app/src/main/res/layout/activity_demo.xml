@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -15,73 +14,49 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Apply Patch Apk Immediately"
-            android:textAllCaps="false"/>
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/apply_patch_apk_later"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Apply Patch Apk Later"
-            android:textAllCaps="false"/>
-
-        <Button
-            android:id="@+id/notification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Notification"
-            android:textAllCaps="false"
-            />
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/clear_patch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Clear Patch"
-            android:textAllCaps="false"
-            />
+            android:textAllCaps="false" />
 
         <Button
-            android:id="@+id/start_patched_activity"
+            android:id="@+id/notification"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="start patched activity"
-            android:textAllCaps="false"
-            />
+            android:text="Notification"
+            android:textAllCaps="false" />
 
         <Button
-            android:id="@+id/start_new_service"
+            android:id="@+id/test_patched_activity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="start MyService"
-            android:textAllCaps="false"/>
+            android:text="Test patched activity"
+            android:textAllCaps="false" />
 
         <Button
-            android:id="@+id/stop_new_service"
+            android:id="@+id/test_patched_services"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="stop MyService"
-            android:textAllCaps="false"/>
-
-        <Button
-            android:id="@+id/bind_new_service"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="bind Service"
-            android:textAllCaps="false"/>
-
-        <Button
-            android:id="@+id/unbind_new_service"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="unbind Service"
-            android:textAllCaps="false"/>
+            android:text="Test patched service"
+            android:textAllCaps="false" />
 
         <Button
             android:id="@+id/trigger_receiver_action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="trigger receiver"
-            android:textAllCaps="false"/>
+            android:textAllCaps="false" />
 
     </LinearLayout>
 
