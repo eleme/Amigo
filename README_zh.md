@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-      classpath 'me.ele:amigo:0.3.0'
+      classpath 'me.ele:amigo:0.3.1'
    }
    ```
 
@@ -24,6 +24,10 @@ Amigo
    ```
 
    就这样轻松的集成了Amigo。
+
+示例
+----
+执行命令 `./gradlew runHost preparePatch`. 到Demo页面查看.
 
 
 开发样例

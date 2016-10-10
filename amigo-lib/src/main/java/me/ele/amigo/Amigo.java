@@ -60,7 +60,7 @@ public class Amigo extends Application {
     private SharedPreferences sharedPref;
 
     private ClassLoader originalClassLoader;
-    private ClassLoader patchedClassLoader;
+    private AmigoClassLoader patchedClassLoader;
 
     private AmigoDirs amigoDirs;
     private PatchApks patchApks;
@@ -138,6 +138,7 @@ public class Amigo extends Application {
             setAPKClassLoader(amigoClassLoader);
             setDexElements(amigoClassLoader, checksum);
             setNativeLibraryDirectories(amigoClassLoader, checksum);
+            patchedClassLoader = amigoClassLoader;
 
             AssetManager assetManager = AssetManager.class.newInstance();
             Method addAssetPath = getMatchedMethod(AssetManager.class, "addAssetPath", String.class);
@@ -149,7 +150,6 @@ public class Amigo extends Application {
             setApkInstrumentation();
             setApkHandler();
 
-            patchedClassLoader = amigoClassLoader;
 
             sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
             clearOldPatches(checksum);
@@ -180,7 +180,7 @@ public class Amigo extends Application {
     private void setApkHandler() throws Exception {
         Handler handler = (Handler) readField(instance(), "mH", true);
         Object callback = readField(handler, "mCallback", true);
-        AmigoCallback value = new AmigoCallback(this, (Handler.Callback) callback);
+        AmigoCallback value = new AmigoCallback(this, patchedClassLoader, (Handler.Callback) callback);
         writeField(handler, "mCallback", value);
         Log.e(TAG, "hook handler success");
     }

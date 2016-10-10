@@ -24,11 +24,13 @@ public class AmigoCallback implements Handler.Callback {
 
     private Handler.Callback mCallback = null;
     private Context context;
+    private AmigoClassLoader classLoader;
 
 
-    public AmigoCallback(Context context, Handler.Callback callback) {
-        mCallback = callback;
+    public AmigoCallback(Context context, AmigoClassLoader amigoClassLoader, Handler.Callback callback) {
+        this.mCallback = callback;
         this.context = context;
+        this.classLoader = amigoClassLoader;
     }
 
     @Override
@@ -46,13 +48,14 @@ public class AmigoCallback implements Handler.Callback {
     private boolean handleLaunchActivity(Message msg) {
         try {
             Intent stubIntent = (Intent) FieldUtils.readField(msg.obj, "intent");
+            stubIntent.setExtrasClassLoader(classLoader);
             Intent targetIntent = stubIntent.getParcelableExtra(EXTRA_TARGET_INTENT);
             if (targetIntent != null) {
                 ComponentName targetComponentName = targetIntent.resolveActivity(context.getPackageManager());
                 Log.e(TAG, "targetComponentName--->" + targetComponentName);
                 ActivityInfo targetActivityInfo = ActivityFinder.getActivityInfoInNewApp(context, targetComponentName.getClassName());
                 if (targetActivityInfo != null) {
-
+                    targetIntent.setExtrasClassLoader(classLoader);
                     targetIntent.putExtra(EXTRA_TARGET_INFO, targetActivityInfo);
                     FieldUtils.writeDeclaredField(msg.obj, "intent", targetIntent);
                     FieldUtils.writeDeclaredField(msg.obj, "activityInfo", targetActivityInfo);

@@ -12,7 +12,7 @@ In your project's `build.gradle`
 
 ```groovy
 dependencies {
-  classpath 'me.ele:amigo:0.3.0'
+  classpath 'me.ele:amigo:0.3.1'
 }
 ```
 In your module's `build.gradle`
@@ -25,6 +25,7 @@ you are good to go now, as simple as this.
 
 ## Demo
 There is a app module sub project. And there is an Demo page in the app demonstrating how to apply patch apk. Please ref the usage.
+Run the task `./gradlew runHost preparePatch`. And go to the `demo` page.
 
 ## Development
 #### Process
@@ -95,17 +96,6 @@ some time-tense operation is handled in a new process with an activity, you may 
  
  - **the only limit is your imagination**
 
-play with demo
-----
-
-if you try to experience Amigo's magic, you can integrate with your own app as you like;
-also you can play with this app demo following the procedures below.
-
-   1. ./gradlew clean assembleRelease & adb install .../build/outputs/apk/app-release.apk
-   2. change code wherever you like & ./gradlew clean assembleRelease
-   3. adb push .../build/outputs/apk/app-release.apk /sdcard/demo.apk
-   4. click the "apply patch apk" button, and see the changes you made then.
-   
 ## retrieve hotfix file
 
 - make it simple, you just need a fully new apk

@@ -69,7 +69,6 @@ public class DemoActivity extends AppCompatActivity {
             return;
         }
         Amigo.work(this, patchApkFile);
-        return;
     }
 
     @OnClick(R.id.apply_patch_apk_later)
@@ -93,7 +92,6 @@ public class DemoActivity extends AppCompatActivity {
         }
         Amigo.workLater(this, patchApkFile);
         Toast.makeText(this, "waiting for seconds, and kill this app and relaunch the app to check result", Toast.LENGTH_LONG).show();
-        return;
     }
 
     @OnClick(R.id.notification)
@@ -124,7 +122,7 @@ public class DemoActivity extends AppCompatActivity {
     @OnClick(R.id.start_patched_activity)
     public void testStartPatchedActivity() {
         startActivity(new Intent(this, PatchedSingleTopActivity.class));
-        startActivity(new Intent(this, PatchedSingleTopActivity.class).putExtra("extra", "extra1"));
+        startActivity(new Intent(this, PatchedSingleTopActivity.class).putExtra("extra", new ParcelBean()));
 
         startActivity(new Intent(this, PatchedSingleTopActivity2.class));
         startActivity(new Intent(this, PatchedSingleTopActivity2.class).putExtra("extra", "extra1"));
