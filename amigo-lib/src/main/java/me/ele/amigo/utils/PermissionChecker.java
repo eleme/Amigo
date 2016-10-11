@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class PermissionChecker {
@@ -27,8 +28,13 @@ public class PermissionChecker {
             if (hostPs == null) {
                 extraPermissions.addAll(Arrays.asList(patchPs));
             } else {
-                List<String> patchPsList = Arrays.asList(patchPs);
-                patchPsList.removeAll(Arrays.asList(hostPs));
+                List<String> patchPsList = new LinkedList<>();
+                for (String patchP : patchPs) {
+                    patchPsList.add(patchP);
+                }
+                for (String hostP : hostPs) {
+                    patchPsList.remove(hostP);
+                }
                 extraPermissions.addAll(patchPsList);
             }
             if (extraPermissions.size() == 0) {
