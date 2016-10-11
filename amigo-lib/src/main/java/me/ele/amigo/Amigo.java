@@ -491,7 +491,7 @@ public class Amigo extends Application {
         return CommonUtils.getVersionCode(ctx, PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
     }
 
-    private static String getWorkingPatchApkChecksum(Context ctx) {
+    public static String getWorkingPatchApkChecksum(Context ctx) {
         if (!hasWorked()) return "";
         return ctx.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
     }
