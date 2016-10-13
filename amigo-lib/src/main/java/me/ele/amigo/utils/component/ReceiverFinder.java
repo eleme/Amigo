@@ -65,13 +65,13 @@ public class ReceiverFinder extends ComponentFinder {
         return addedReceivers;
     }
 
-    public static void registerNewReceivers(Context context) {
+    public static void registerNewReceivers(Context context, ClassLoader classLoader) {
         try {
             List<ActivityInfo> addedReceivers = getNewAddedReceivers(context);
             for (ActivityInfo addedReceiver : addedReceivers) {
                 List<IntentFilter> filters = getReceiverIntentFilter(context, addedReceiver);
                 for (IntentFilter filter : filters) {
-                    BroadcastReceiver receiver = (BroadcastReceiver) ReceiverFinder.class.getClassLoader().loadClass(addedReceiver.name).newInstance();
+                    BroadcastReceiver receiver = (BroadcastReceiver) classLoader.loadClass(addedReceiver.name).newInstance();
                     context.registerReceiver(receiver, filter);
                 }
             }

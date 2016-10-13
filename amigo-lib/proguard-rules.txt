@@ -19,3 +19,5 @@
 
 -keep class me.ele.amigo.** { *; }
 -keep class **.R$** { *; }
+-keep class android.util.Singleton
+-keep class android.app.**

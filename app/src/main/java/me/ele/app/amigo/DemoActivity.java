@@ -4,12 +4,9 @@ package me.ele.app.amigo;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -25,9 +22,6 @@ import butterknife.OnClick;
 import me.ele.amigo.Amigo;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
-import me.ele.app.amigo.receiver.DemoReceiver;
-import me.ele.app.amigo.service.BindService;
-import me.ele.app.amigo.service.StartService;
 
 public class DemoActivity extends AppCompatActivity {
 
@@ -131,6 +125,6 @@ public class DemoActivity extends AppCompatActivity {
 
     @OnClick(R.id.trigger_receiver_action)
     public void triggerReceiverAction() {
-        sendBroadcast(new Intent("me.ele.test").putExtra(DemoReceiver.TAG, "1"));
+        sendBroadcast(new Intent("me.ele.test").putExtra("DemoReceiver", "1"));
     }
 }

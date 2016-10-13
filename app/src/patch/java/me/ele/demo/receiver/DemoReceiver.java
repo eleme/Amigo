@@ -1,4 +1,4 @@
-package me.ele.app.amigo.receiver;
+package me.ele.demo.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.widget.Toast;
 
 public class DemoReceiver extends BroadcastReceiver {
 
-    public static final String TAG = DemoReceiver.class.getName();
+    public static final String TAG = "DemoReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
