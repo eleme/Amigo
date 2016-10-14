@@ -43,6 +43,14 @@ android {
             minifyEnabled false
             zipAlignEnabled true
         }
+
+        noamigo {
+            debuggable true
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            zipAlignEnabled true
+            buildConfigField 'boolean', 'AMIGO_DISABLED', 'true'
+        }
     }
 }
 

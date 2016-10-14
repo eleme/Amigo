@@ -25,22 +25,7 @@ class AmigoPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
 
-        Configuration configuration = project.rootProject.buildscript.configurations.getByName(
-                'classpath')
-        configuration.allDependencies.all { Dependency dependency ->
-            if (dependency.group == GROUP && dependency.name == NAME) {
-                version = dependency.version
-            }
-        }
-        println 'amigo plugin version: ' + version
-
-        project.dependencies {
-            if (Util.containsProject(project, 'amigo-lib')) {
-                compile project.project(':amigo-lib')
-            } else {
-                compile "me.ele:amigo-lib:${version}"
-            }
-        }
+        addAmigoLibDependency(project)
 
         project.plugins.withId('com.android.application') {
             project.android.applicationVariants.all { ApkVariant variant ->
@@ -52,9 +37,13 @@ class AmigoPlugin implements Plugin<Project> {
                     throw RuntimeException("Sorry, instant run conflicts with Amigo, so please disable Instant Run")
                 }
 
-                Task prepareDependencyTask = project.tasks.findByName("prepare${variant.name.capitalize()}Dependencies")
-                prepareDependencyTask.doFirst {
-                    clearAmigoDependency(project)
+                Map buildConfigFields = variant.buildType.buildConfigFields
+                boolean disabled = buildConfigFields.containsKey('AMIGO_DISABLED') && Boolean.valueOf(buildConfigFields.get('AMIGO_DISABLED').value)
+                if (disabled) {
+                    variant.javaCompile.doLast {
+                        clearAmigoDependency(project)
+                    }
+                    return
                 }
 
                 variant.outputs.each { BaseVariantOutput output ->
@@ -124,10 +113,29 @@ class AmigoPlugin implements Plugin<Project> {
         }
     }
 
+    void addAmigoLibDependency(Project project) {
+        Configuration configuration = project.rootProject.buildscript.configurations.getByName('classpath')
+        configuration.allDependencies.all { Dependency dependency ->
+            if (dependency.group == GROUP && dependency.name == NAME) {
+                version = dependency.version
+            }
+        }
+        println 'amigo plugin version: ' + version
+
+        project.dependencies {
+            if (Util.containsProject(project, 'amigo-lib')) {
+                compile project.project(':amigo-lib')
+            } else {
+                compile "me.ele:amigo-lib:${version}"
+            }
+        }
+    }
+
     void clearAmigoDependency(Project project) {
+        println 'clear amigo-lib aar'
         File jarPath = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
         if (jarPath.exists()) {
-            jarPath.delete()
+            jarPath.deleteDir()
         }
     }
 
