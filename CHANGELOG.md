@@ -1,3 +1,8 @@
+## Version [0.4.2](https://github.com/eleme/Amigo/releases/tag/v0.4.2)
+_2016-10-15_
+* fix load receiver error
+* avoid service from mixed up
+
 ## Version [0.4.1](https://github.com/eleme/Amigo/releases/tag/v0.4.1)
 _2016-10-11_
 * fix check permission bug
