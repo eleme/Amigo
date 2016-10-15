@@ -44,7 +44,7 @@
             android:label="Patched : single instance activity 2"
             android:launchMode="singleInstance"/>
 
-        <receiver android:name=".receiver.DemoReceiver">
+        <receiver android:name="me.ele.demo.receiver.DemoReceiver">
             <intent-filter>
                 <action android:name="me.ele.test"/>
             </intent-filter>

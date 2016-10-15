@@ -151,7 +151,7 @@ public class Amigo extends Application {
 
             setApkInstrumentation();
             setApkHandler();
-            dynamicRegisterReceivers();
+            dynamicRegisterReceivers(amigoClassLoader);
 
             sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
             clearOldPatches(checksum);
@@ -188,8 +188,8 @@ public class Amigo extends Application {
         MethodUtils.invokeStaticMethod(hookFactoryClazz, "install", this, amigoClassLoader);
     }
 
-    private void dynamicRegisterReceivers() {
-        ReceiverFinder.registerNewReceivers(this);
+    private void dynamicRegisterReceivers(ClassLoader classLoader) {
+        ReceiverFinder.registerNewReceivers(this, classLoader);
     }
 
     private void setApkInstrumentation() throws Exception {
