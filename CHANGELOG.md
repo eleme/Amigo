@@ -1,3 +1,7 @@
+## Version [0.4.3](https://github.com/eleme/Amigo/releases/tag/v0.4.3)
+_2016-10-17_
+* optimize app init time
+
 ## Version [0.4.2](https://github.com/eleme/Amigo/releases/tag/v0.4.2)
 _2016-10-15_
 * fix load receiver error
