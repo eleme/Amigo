@@ -81,10 +81,6 @@ public class Amigo extends Application {
                         || !patchApks.exists(workingPatchApkChecksum)) {
                     throw new RuntimeException("Patch apk doesn't exists");
                 }
-                if (!checkSignature(workingPatchApkChecksum)) {
-                    loadPatchError = LoadPatchError.record(LoadPatchError.SIG_ERR, null);
-                    throw new RuntimeException("Patch apk has illegal signature");
-                }
             } catch (RuntimeException e) {
                 e.printStackTrace();
                 if (ProcessUtils.isMainProcess(this)) {
@@ -422,12 +418,16 @@ public class Amigo extends Application {
         if (!PermissionChecker.checkPatchPermission(context, patchFile)) {
             throw new IllegalStateException("patch apk cannot request more permissions than host");
         }
+
+        if (!checkSignature(context, patchFile)) {
+            throw new IllegalStateException("patch apk's signature is different with host");
+        }
     }
 
-    private boolean checkSignature(String checksum) {
+    private static boolean checkSignature(Context context, File patchFile) {
         try {
-            Signature appSig = CommonUtils.getSignature(this);
-            Signature patchSig = patchApks.signature(checksum);
+            Signature appSig = CommonUtils.getSignature(context);
+            Signature patchSig = CommonUtils.getSignature(context, patchFile);
             return appSig.hashCode() == patchSig.hashCode();
         } catch (Exception e) {
             e.printStackTrace();
