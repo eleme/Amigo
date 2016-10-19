@@ -1,3 +1,7 @@
+## Version [0.4.4](https://github.com/eleme/Amigo/releases/tag/v0.4.4)
+_2016-10-19
+* fix delete directory bug
+
 ## Version [0.4.3](https://github.com/eleme/Amigo/releases/tag/v0.4.3)
 _2016-10-17_
 * optimize app init time

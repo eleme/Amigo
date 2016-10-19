@@ -56,6 +56,7 @@ public final class AmigoDirs {
 
     private AmigoDirs(Context context) {
         this.context = context;
+        ensureAmigoDir();
     }
 
     public File amigoDir() {
@@ -131,8 +132,15 @@ public final class AmigoDirs {
         }
     }
 
+    public boolean isOptedDexExists(String checksum) {
+        return dexOptDir(checksum).listFiles() != null && dexOptDir(checksum).listFiles().length > 0;
+    }
+
     public void delete() {
         FileUtils.removeFile(amigoDir);
         FileUtils.removeFile(cacheDir);
+        for (File dir : optDirs.values()) {
+            FileUtils.removeFile(dir);
+        }
     }
 }

@@ -123,7 +123,7 @@ public class Amigo extends Application {
         try {
             Log.e(TAG, "patchApkChecksum-->" + checksum + ", sp record checksum--->"
                     + sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, ""));
-            if (isPatchApkFirstRun(checksum) || !isOptedDexExists(checksum)) {
+            if (isPatchApkFirstRun(checksum) || !AmigoDirs.getInstance(this).isOptedDexExists(checksum)) {
                 // TODO This is workaround for now, refactor in future.
                 sharedPref.edit().remove(checksum).commit();
                 releasePatchApk(checksum);
@@ -158,7 +158,7 @@ public class Amigo extends Application {
         }
     }
 
-  private String getDexPath(String checksum) throws LoadPatchApkException {
+    private String getDexPath(String checksum) throws LoadPatchApkException {
         File[] patchDexFiles = AmigoDirs.getInstance(this).dexDir(checksum).listFiles(
                 new FileFilter() {
                     @Override
@@ -172,9 +172,9 @@ public class Amigo extends Application {
                 dexPath += ":" + patchDex.getAbsolutePath();
             }
         } else {
-            LoadPatchApkException e= new LoadPatchApkException("Amigo: no dexes avilable");
+            LoadPatchApkException e = new LoadPatchApkException("Amigo: no dexes avilable");
             e.fillInStackTrace();
-            throw  e;
+            throw e;
         }
         return dexPath;
     }
@@ -229,13 +229,6 @@ public class Amigo extends Application {
 
     private boolean isPatchApkFirstRun(String checksum) {
         return !sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "").equals(checksum);
-    }
-
-    private boolean isOptedDexExists(String checksum) {
-        if (amigoDirs.dexOptDir(checksum).listFiles() != null) {
-            return amigoDirs.dexOptDir(checksum).listFiles().length > 0;
-        }
-        return false;
     }
 
     private boolean checkUpgrade() {
