@@ -45,6 +45,14 @@ android {
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+
+        noamigo {
+            debuggable true
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            zipAlignEnabled true
+            buildConfigField 'boolean', 'AMIGO_DISABLED', 'true'
+        }
     }
 }
 
