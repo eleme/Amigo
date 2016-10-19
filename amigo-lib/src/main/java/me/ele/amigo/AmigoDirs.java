@@ -130,4 +130,9 @@ public final class AmigoDirs {
             throw new RuntimeException("Initiate amigo files for patch apk: " + checksum + " failed (" + e.getMessage() + ").");
         }
     }
+
+    public void delete() {
+        FileUtils.removeFile(amigoDir);
+        FileUtils.removeFile(cacheDir);
+    }
 }
