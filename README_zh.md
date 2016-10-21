@@ -13,7 +13,7 @@ Amigo
 
    ```groovy
    dependencies {
-      classpath 'me.ele:amigo:0.4.3'
+      classpath 'me.ele:amigo:0.4.4'
    }
    ```
 
