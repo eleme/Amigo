@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="me.ele.app.amigo">
+    package="me.ele.app.amigo">
 
     <application
         >
@@ -46,10 +46,13 @@
 
         <receiver android:name="me.ele.demo.receiver.DemoReceiver">
             <intent-filter>
-                <action android:name="me.ele.test"/>
+                <action android:name="me.ele.test" />
             </intent-filter>
         </receiver>
 
+        <provider
+            android:name=".demo.PatchedContentProvider"
+            android:authorities="me.ele.app.amigo.demo.provider" />
 
     </application>
 

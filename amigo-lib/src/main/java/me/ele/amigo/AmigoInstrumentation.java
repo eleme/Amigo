@@ -35,26 +35,26 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
 
     private boolean isPatchedActivity(Context who, Intent intent) {
         ComponentName componentName = intent.getComponent();
-        if(componentName == null) {
+        if (componentName == null) {
             return false;
         }
 
         ActivityInfo[] activityInfos = ActivityFinder.getAppActivities(who);
-        if(activityInfos == null || activityInfos.length == 0) {
+        if (activityInfos == null || activityInfos.length == 0) {
             return false;
         }
 
         for (ActivityInfo activityInfo : activityInfos) {
-            if(activityInfo.name.equals(componentName.getClassName())) {
+            if (activityInfo.name.equals(componentName.getClassName())) {
                 return false;
             }
         }
 
-        return ActivityFinder.getActivityInfoInNewApp(who, componentName.getClassName() )!= null;
+        return ActivityFinder.getActivityInfoInNewApp(who, componentName.getClassName()) != null;
     }
 
     private Intent wrapIntent(Context who, Intent intent) {
-        if(!isPatchedActivity(who, intent)) {
+        if (!isPatchedActivity(who, intent)) {
             return intent;
         }
 

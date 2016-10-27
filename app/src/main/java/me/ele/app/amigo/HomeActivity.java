@@ -25,8 +25,6 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        setTitle("Home Activity");
-
         ButterKnife.bind(this);
 
         Log.e(TAG, "onCreate");
