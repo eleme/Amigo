@@ -1,4 +1,4 @@
-package me.ele.app.amigo.service;
+package me.ele.demo.service;
 
 import android.app.Service;
 import android.content.Intent;

@@ -7,10 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import me.ele.app.amigo.activity.PatchedSingleInstanceActivity;
-import me.ele.app.amigo.activity.PatchedSingleTaskActivity;
-import me.ele.app.amigo.activity.PatchedSingleTopActivity;
-import me.ele.app.amigo.activity.PatchedStandardActivity;
 
 /**
  * Created by wwm on 9/30/16.
@@ -27,33 +23,43 @@ public class TestPatchedActivities extends AppCompatActivity {
 
     @OnClick(R.id.start_standard_activity)
     public void startStandard() {
-        startActivity(new Intent(this, PatchedStandardActivity.class));
+        try {
+            startActivity(new Intent().setClassName(this, "me.ele.demo.activity.PatchedStandardActivity"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @OnClick(R.id.start_single_top_activity)
     public void startSingleTop() {
-        startActivity(new Intent(this, PatchedSingleTopActivity.class));
-        startActivity(new Intent(this, PatchedSingleTopActivity.class).putExtra("extra", new ParcelBean()));
+        try {
+            startActivity(new Intent().setClassName(this, "me.ele.demo.activity.PatchedSingleTopActivity"));
+            startActivity(new Intent().putExtra("extra", new ParcelBean()).setClassName(this, "me.ele.demo.activity.PatchedSingleTopActivity"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-//        startActivity(new Intent(this, PatchedSingleTopActivity2.class));
-//        startActivity(new Intent(this, PatchedSingleTopActivity2.class).putExtra("extra", "extra1"));
     }
 
     @OnClick(R.id.start_single_task_activity)
     public void startSingleTask() {
-        startActivity(new Intent(this, PatchedSingleTaskActivity.class));
-        startActivity(new Intent(this, PatchedSingleTaskActivity.class).putExtra("extra", "extra1"));
+        try {
+            startActivity(new Intent().setClassName(this, "me.ele.demo.activity.PatchedSingleTaskActivity"));
+            startActivity(new Intent().putExtra("extra", "extra1").setClassName(this, "me.ele.demo.activity.PatchedSingleTaskActivity"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-//        startActivity(new Intent(this, PatchedSingleTaskActivity2.class));
-//        startActivity(new Intent(this, PatchedSingleTaskActivity2.class).putExtra("extra", "extra1"));
     }
 
     @OnClick(R.id.start_single_instance_activity)
     public void startSingleInstance() {
-        startActivity(new Intent(this, PatchedSingleInstanceActivity.class));
-        startActivity(new Intent(this, PatchedSingleInstanceActivity.class).putExtra("extra", "extra1"));
+        try {
+            startActivity(new Intent().setClassName(this, "me.ele.demo.activity.PatchedSingleTaskActivity"));
+            startActivity(new Intent().putExtra("extra", "extra1").setClassName(this, "me.ele.demo.activity.PatchedSingleTaskActivity"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-//        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
-//        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class).putExtra("extra", "extra1"));
     }
 }
