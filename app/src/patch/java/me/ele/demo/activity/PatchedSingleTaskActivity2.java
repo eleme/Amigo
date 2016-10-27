@@ -1,23 +1,20 @@
-package me.ele.app.amigo.activity;
+package me.ele.demo.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-/**
- * Created by wwm on 9/20/16.
- */
-public class PatchedSingleInstanceActivity2 extends AppCompatActivity {
+public class PatchedSingleTaskActivity2 extends AppCompatActivity {
 
-    private static final String TAG = PatchedSingleInstanceActivity2.class.getSimpleName();
+    public static final String TAG = PatchedSingleTaskActivity2.class.getSimpleName();
+
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Log.d(TAG, "onCreate: " + hashCode());
-//        startActivity(new Intent(this, PatchedSingleInstanceActivity2.class));
     }
 
     @Override

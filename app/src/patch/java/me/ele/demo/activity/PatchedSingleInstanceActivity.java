@@ -1,4 +1,4 @@
-package me.ele.app.amigo.activity;
+package me.ele.demo.activity;
 
 import android.content.Intent;
 import android.os.Bundle;

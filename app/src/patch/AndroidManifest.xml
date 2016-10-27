@@ -4,43 +4,43 @@
 
     <application
         >
-        <service android:name="me.ele.app.amigo.service.StartService"/>
-        <service android:name="me.ele.app.amigo.service.BindService"/>
+        <service android:name="me.ele.demo.service.StartService"/>
+        <service android:name="me.ele.demo.service.BindService"/>
 
 
         <!--test: add new activity in patch apk-->
         <activity
-            android:name=".activity.PatchedStandardActivity"
+            android:name="me.ele.demo.activity.PatchedStandardActivity"
             android:label="Patched : standard activity"/>
 
         <activity
-            android:name=".activity.PatchedSingleTopActivity"
+            android:name="me.ele.demo.activity.PatchedSingleTopActivity"
             android:label="Patched : single top activity"
             android:launchMode="singleTop"/>
 
         <activity
-            android:name=".activity.PatchedSingleTopActivity2"
+            android:name="me.ele.demo.activity.PatchedSingleTopActivity2"
             android:label="Patched : single top activity 2"
             android:launchMode="singleTop"/>
 
         <activity
-            android:name=".activity.PatchedSingleTaskActivity"
+            android:name="me.ele.demo.activity.PatchedSingleTaskActivity"
             android:label="Patched : single task activity"
             android:launchMode="singleTask"/>
 
         <activity
-            android:name=".activity.PatchedSingleTaskActivity2"
+            android:name="me.ele.demo.activity.PatchedSingleTaskActivity2"
             android:label="Patched : single task activity 2"
             android:launchMode="singleTask"/>
 
         <activity
-            android:name=".activity.PatchedSingleInstanceActivity"
+            android:name="me.ele.demo.activity.PatchedSingleInstanceActivity"
             android:label="Patched : single instance activity"
             android:launchMode="singleInstance"
             android:screenOrientation="landscape"/>
 
         <activity
-            android:name=".activity.PatchedSingleInstanceActivity2"
+            android:name="me.ele.demo.activity.PatchedSingleInstanceActivity2"
             android:label="Patched : single instance activity 2"
             android:launchMode="singleInstance"/>
 
