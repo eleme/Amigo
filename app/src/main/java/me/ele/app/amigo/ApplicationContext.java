@@ -5,6 +5,8 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 import android.util.Log;
 
+//import com.facebook.drawee.backends.pipeline.Fresco;
+
 public class ApplicationContext extends Application {
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
@@ -19,7 +21,8 @@ public class ApplicationContext extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.e(TAG, "onCreate: " + this);
+        Log.e(TAG, "====onCreate: yeah fixed ====" + this);
+//        Fresco.initialize(this);
     }
 
 }

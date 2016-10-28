@@ -56,6 +56,7 @@ public class IActivityManagerHook extends ProxyHook {
             Object proxyActivityManager = MyProxy.newProxyInstance(objClass.getClassLoader(), ifs, this);
             FieldUtils.writeStaticField(cls, "gDefault", proxyActivityManager);
             Log.i(TAG, "Install ActivityManager Hook 1 old=%s,new=%s", proxyObj, proxyActivityManager);
+            original_gDefault = gDefault;
         } else if (SingletonCompat.isSingleton(gDefault)) {
             Object mInstance = FieldUtils.readField(gDefault, "mInstance");
             if (mInstance == null) {
@@ -68,6 +69,7 @@ public class IActivityManagerHook extends ProxyHook {
             final Object object = MyProxy.newProxyInstance(proxyObj.getClass().getClassLoader(), ifs, IActivityManagerHook.this);
             Object iam1 = ActivityManagerNativeCompat.getDefault();
 
+            Object instance = FieldUtils.readField(gDefault, "mInstance");;
             FieldUtils.writeField(gDefault, "mInstance", object);
 
             FieldUtils.writeStaticField(cls, "gDefault", new android.util.Singleton<Object>() {
@@ -83,8 +85,35 @@ public class IActivityManagerHook extends ProxyHook {
             if (iam1 == iam2) {
                 FieldUtils.writeField(gDefault, "mInstance", object);
             }
+            original_gDefault = gDefault;
+            gDefault_mInstance = instance;
         } else {
-            throw new AndroidRuntimeException("Can not install IActivityManagerNative hook");
+            throw new AndroidRuntimeException("Can not install IActivityManagerNative hook, gDefault=" + gDefault);
         }
+    }
+
+    private void rollbackProxyActivityManager() {
+        if (original_gDefault != null) {
+            return;
+        }
+
+        try {
+            Class cls = ActivityManagerNativeCompat.Class();
+            FieldUtils.writeStaticField(cls, "gDefault", original_gDefault);
+            if(gDefault_mInstance != null) {
+                FieldUtils.writeField(original_gDefault, "mInstance", gDefault_mInstance);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Object original_gDefault = null;
+    private Object gDefault_mInstance = null;
+
+    @Override
+    protected void onUnInstall(ClassLoader classLoader) throws Throwable {
+        super.onUnInstall(classLoader);
+        rollbackProxyActivityManager();
     }
 }

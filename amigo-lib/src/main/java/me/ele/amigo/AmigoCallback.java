@@ -17,20 +17,14 @@ import static me.ele.amigo.AmigoInstrumentation.EXTRA_TARGET_INTENT;
 
 public class AmigoCallback implements Handler.Callback {
 
-    private static final String TAG = AmigoCallback.class.getSimpleName();
-
     public static final int LAUNCH_ACTIVITY = 100;
-
-
+    private static final String TAG = AmigoCallback.class.getSimpleName();
     private Handler.Callback mCallback = null;
     private Context context;
-    private AmigoClassLoader classLoader;
 
-
-    public AmigoCallback(Context context, AmigoClassLoader amigoClassLoader, Handler.Callback callback) {
+    public AmigoCallback(Context context, Handler.Callback callback) {
         this.mCallback = callback;
         this.context = context;
-        this.classLoader = amigoClassLoader;
     }
 
     @Override
@@ -47,24 +41,54 @@ public class AmigoCallback implements Handler.Callback {
 
     private boolean handleLaunchActivity(Message msg) {
         try {
-            Intent stubIntent = (Intent) FieldUtils.readField(msg.obj, "intent");
-            stubIntent.setExtrasClassLoader(classLoader);
-            Intent targetIntent = stubIntent.getParcelableExtra(EXTRA_TARGET_INTENT);
+            ClassLoader classLoader = context.getClassLoader();
+            Intent intent = (Intent) FieldUtils.readField(msg.obj, "intent");
+            intent.setExtrasClassLoader(classLoader);
+            Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
             if (targetIntent != null) {
-                ComponentName targetComponentName = targetIntent.resolveActivity(context.getPackageManager());
+                ComponentName targetComponentName =
+                        targetIntent.resolveActivity(context.getPackageManager());
                 Log.e(TAG, "targetComponentName--->" + targetComponentName);
-                ActivityInfo targetActivityInfo = ActivityFinder.getActivityInfoInNewApp(context, targetComponentName.getClassName());
+                ActivityInfo targetActivityInfo = ActivityFinder.getActivityInfoInNewApp(context,
+                        targetComponentName.getClassName());
                 if (targetActivityInfo != null) {
                     targetIntent.setExtrasClassLoader(classLoader);
                     targetIntent.putExtra(EXTRA_TARGET_INFO, targetActivityInfo);
                     FieldUtils.writeDeclaredField(msg.obj, "intent", targetIntent);
                     FieldUtils.writeDeclaredField(msg.obj, "activityInfo", targetActivityInfo);
-
                     Log.e(TAG, "handleLaunchActivity OK");
                 } else {
                     Log.e(TAG, "handleLaunchActivity oldInfo==null");
                 }
             } else {
+                ActivityInfo activityInfo =
+                        (ActivityInfo) FieldUtils.readField(msg.obj, "activityInfo");
+                String activityName = activityInfo.targetActivity != null ?
+                        activityInfo.targetActivity : activityInfo.name;
+                if (ActivityFinder.getActivityInfoInNewApp(context, activityName) == null) {
+                    Log.e(TAG, "#handleLaunchActivity: Activity["
+                            + intent.getComponent().getClassName()
+                            + "] was only declared in the host apk.");
+                    if (isLaunchActivity(intent, activityName)) {
+                        activityInfo.targetActivity =
+                                ActivityFinder.getNewLauncherComponent(context).getClassName();
+                        ActivityInfo targetActivityInfo =
+                                ActivityFinder.getActivityInfoInNewApp(context, activityInfo.targetActivity);
+                        FieldUtils.writeDeclaredField(msg.obj, "activityInfo", targetActivityInfo);
+                    } else {
+                        // TODO this host activity was launched by using a scheme url,
+                        // we can navigate to a matched patch activity instead.
+                        Intent toPatchLauncherIntent = new Intent().setComponent(
+                                ActivityFinder.getNewLauncherComponent(context))
+                                .setFlags(
+                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                                | Intent.FLAG_ACTIVITY_NEW_TASK
+                                                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        context.startActivity(toPatchLauncherIntent);
+                        return true;
+                    }
+                }
+
                 Log.e(TAG, "handleLaunchActivity targetIntent==null");
             }
         } catch (Exception e) {
@@ -77,4 +101,9 @@ public class AmigoCallback implements Handler.Callback {
         return false;
     }
 
+    private boolean isLaunchActivity(Intent intent, String targetActivity) {
+        return (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(
+                Intent.CATEGORY_LAUNCHER)) || targetActivity.equals(
+                ActivityFinder.getLauncherComponent(context).getClassName());
+    }
 }

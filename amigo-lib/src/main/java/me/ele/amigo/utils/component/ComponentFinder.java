@@ -19,6 +19,7 @@ public class ComponentFinder {
 
     protected static List<Object> receivers;
     protected static List<Object> services;
+    protected static List<Object> activities;
     private static boolean hasParsePackage = false;
 
     protected static File getHotFixApk(Context context) {
@@ -63,6 +64,7 @@ public class ComponentFinder {
 
             receivers = (List<Object>) FieldUtils.readField(mPackage, "receivers");
             services = (List<Object>) FieldUtils.readField(mPackage, "services");
+            activities = (List<Object>) FieldUtils.readField(mPackage, "activities");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,6 +76,10 @@ public class ComponentFinder {
 
         if (services == null) {
             services = Collections.EMPTY_LIST;
+        }
+
+        if (activities == null) {
+            activities = Collections.EMPTY_LIST;
         }
 
         hasParsePackage = true;
