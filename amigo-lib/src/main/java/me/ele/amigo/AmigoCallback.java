@@ -74,16 +74,16 @@ public class AmigoCallback implements Handler.Callback {
                                 ActivityFinder.getNewLauncherComponent(context).getClassName();
                         ActivityInfo targetActivityInfo =
                                 ActivityFinder.getActivityInfoInNewApp(context, activityInfo.targetActivity);
+                        targetActivityInfo.targetActivity = activityInfo.targetActivity;
                         FieldUtils.writeDeclaredField(msg.obj, "activityInfo", targetActivityInfo);
                     } else {
                         // TODO this host activity was launched by using a scheme url,
                         // we can navigate to a matched patch activity instead.
                         Intent toPatchLauncherIntent = new Intent().setComponent(
                                 ActivityFinder.getNewLauncherComponent(context))
-                                .setFlags(
-                                        Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                                | Intent.FLAG_ACTIVITY_NEW_TASK
-                                                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                        | Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         context.startActivity(toPatchLauncherIntent);
                         return true;
                     }
@@ -102,8 +102,7 @@ public class AmigoCallback implements Handler.Callback {
     }
 
     private boolean isLaunchActivity(Intent intent, String targetActivity) {
-        return (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(
-                Intent.CATEGORY_LAUNCHER)) || targetActivity.equals(
-                ActivityFinder.getLauncherComponent(context).getClassName());
+        return (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_LAUNCHER))
+                || targetActivity.equals(ActivityFinder.getLauncherComponent(context).getClassName());
     }
 }
