@@ -13,7 +13,6 @@ import android.util.Log;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.Map;
 
 import me.ele.amigo.exceptions.LoadPatchApkException;
@@ -29,7 +28,7 @@ import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.reflect.FieldUtils.readField;
 import static me.ele.amigo.reflect.FieldUtils.readStaticField;
 import static me.ele.amigo.reflect.FieldUtils.writeField;
-import static me.ele.amigo.reflect.MethodUtils.getMatchedMethod;
+import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 
 public class Amigo extends Application {
     private static final String TAG = Amigo.class.getSimpleName();
@@ -42,7 +41,6 @@ public class Amigo extends Application {
 
     private SharedPreferences sharedPref;
 
-    private AmigoClassLoader patchedClassLoader;
     private Instrumentation originalInstrumentation = null;
     private Object originalCallback = null;
 
@@ -54,9 +52,7 @@ public class Amigo extends Application {
     public void onCreate() {
         super.onCreate();
         try {
-            sharedPref = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-            amigoDirs = AmigoDirs.getInstance(this);
-            patchApks = PatchApks.getInstance(this);
+            init();
             String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
             Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
             if (PatchChecker.checkUpgrade(this)) {
@@ -101,10 +97,17 @@ public class Amigo extends Application {
         }
     }
 
+    /**
+     * WARNING: do not modify this method's name, used for hotfix itself
+     */
+    private void init() {
+        sharedPref = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
+        amigoDirs = AmigoDirs.getInstance(this);
+        patchApks = PatchApks.getInstance(this);
+    }
+
     private void runPatchApk(String checksum) throws LoadPatchApkException {
         try {
-            Log.e(TAG, "patchApkChecksum-->" + checksum + ", sp record checksum--->"
-                    + sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, ""));
             if (isPatchApkFirstRun(checksum) || !isOptedDexExists(checksum)) {
                 // TODO This is workaround for now, refactor in future.
                 sharedPref.edit().remove(checksum).commit();
@@ -113,35 +116,67 @@ public class Amigo extends Application {
                 PatchChecker.checkDexAndSo(this, checksum);
             }
 
-            PatchDexAndSoLoader.loadPatchDexAndSo(this, checksum);
-            revertBitFlag |= 1;
-            patchedClassLoader = (AmigoClassLoader) getClassLoader();
-            PatchResourceLoader.loadPatchResources(this, checksum);
-            setApkInstrumentation();
-            revertBitFlag |= 1 << 1;
-            setApkHandlerCallback();
-            revertBitFlag |= 1 << 2;
-            ReceiverFinder.registerNewReceivers(this, patchedClassLoader);
-            HookFactory.install(this, patchedClassLoader);
-            ContentProviderFinder.installPatchContentProviders(this);
-
-            sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
-            PatchCleaner.clearOldPatches(this, checksum);
-            runPatchedApplication(checksum);
+            AmigoClassLoader classLoader = AmigoClassLoader.newInstance(this, checksum);
+            Object newAmigoInstance = null;
+            try {
+                Class<?> clazz = classLoader.loadClass(Amigo.class.getName());
+                newAmigoInstance = clazz.newInstance();
+                invokeMethod(newAmigoInstance, "attach", getBaseContext());
+                invokeMethod(newAmigoInstance, "init");
+                invokeMethod(newAmigoInstance, "installAndHook", checksum, classLoader);
+                Log.i(TAG, "installAndHook successfully with patch");
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, String.format("installAndHook fails with patch %s", e));
+                if (newAmigoInstance != null) {
+                    try {
+                        invokeMethod(newAmigoInstance, "revertAll");
+                        Log.i(TAG, "revertAll newAmigoInstance successfully");
+                    } catch (Exception ee) {
+                        ee.printStackTrace();
+                        Log.i(TAG, "revertAll newAmigoInstance fails");
+                    }
+                }
+                installAndHook(checksum, classLoader);
+                Log.i(TAG, "installAndHook successfully with host");
+            }
         } catch (Exception e) {
             throw new LoadPatchApkException(e);
         }
     }
 
+    /**
+     * WARNING: do not modify this method's name, used for hotfix itself
+     * WARNING: all new extra operation should be done here
+     */
+    private void installAndHook(String checksum, ClassLoader classLoader) throws Exception {
+        setAPKClassLoader(classLoader);
+        revertBitFlag |= 1;
+        setApkResource(checksum);
+        setApkInstrumentation();
+        revertBitFlag |= 1 << 1;
+        setApkHandlerCallback();
+        revertBitFlag |= 1 << 2;
+        dynamicRegisterNewReceivers();
+        installHookFactory();
+        installPatchContentProviders();
+
+        sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
+        PatchCleaner.clearOldPatches(this, checksum);
+        runPatchedApplication(checksum);
+    }
+
+    private void setApkResource(String checksum) throws Exception {
+        PatchResourceLoader.loadPatchResources(this, checksum);
+        Log.i(TAG, "hook Resources success");
+    }
+
     private void setApkInstrumentation() throws Exception {
-        Instrumentation oldInstrumentation =
-                (Instrumentation) readField(instance(), "mInstrumentation", true);
-        Log.e(TAG, "oldInstrumentation--->" + oldInstrumentation);
-        AmigoInstrumentation instrumentation = new AmigoInstrumentation(oldInstrumentation);
-        writeField(instance(), "mInstrumentation", instrumentation, true);
-        originalInstrumentation = instrumentation;
-        Log.e(TAG, "setApkInstrumentation success classloader-->"
-                + instrumentation.getClass().getClassLoader());
+        Instrumentation oldIns = (Instrumentation) readField(instance(), "mInstrumentation", true);
+        AmigoInstrumentation ins = new AmigoInstrumentation(oldIns);
+        writeField(instance(), "mInstrumentation", ins, true);
+        originalInstrumentation = ins;
+        Log.i(TAG, "hook instrumentation success");
     }
 
     private void rollbackApkInstrumentation() {
@@ -158,8 +193,24 @@ public class Amigo extends Application {
         AmigoCallback value = new AmigoCallback(this, (Handler.Callback) callback);
         writeField(handler, "mCallback", value);
         originalCallback = callback;
-        Log.e(TAG, "hook handler success");
+        Log.i(TAG, "hook handler success");
     }
+
+    private void dynamicRegisterNewReceivers() {
+        ReceiverFinder.registerNewReceivers(this, getClassLoader());
+        Log.i(TAG, "dynamic register new receivers success");
+    }
+
+    private void installHookFactory() {
+        HookFactory.install(this, getClassLoader());
+        Log.i(TAG, "installHookFactory success");
+    }
+
+    private void installPatchContentProviders() {
+        ContentProviderFinder.installPatchContentProviders(this);
+        Log.i(TAG, "installPatchContentProviders success");
+    }
+
 
     private void rollbackApkHandlerCallback() {
         try {
@@ -210,13 +261,14 @@ public class Amigo extends Application {
         String applicationName = (String) readStaticField(acd, "n");
         Application application =
                 (Application) getClassLoader().loadClass(applicationName).newInstance();
-        Method attach = getMatchedMethod(Application.class, "attach", Context.class);
-        attach.setAccessible(true);
-        attach.invoke(application, getBaseContext());
+        invokeMethod(application, "attach", getBaseContext());
         setAPKApplication(application);
         application.onCreate();
     }
 
+    /**
+     * WARNING: do not modify this method's name, used for hotfix itself
+     */
     private void revertAll() throws Exception {
         if ((revertBitFlag & 1) != 0) {
             setAPKClassLoader(Amigo.class.getClassLoader());
@@ -228,18 +280,15 @@ public class Amigo extends Application {
             rollbackApkHandlerCallback();
         }
         ReceiverFinder.unregisterNewReceivers(this);
-        HookFactory.uninstallAllHooks(patchedClassLoader);
+        HookFactory.uninstallAllHooks(getClassLoader());
         PatchResourceLoader.revertLoadPatchResources();
         // TODO unregister providers
     }
 
     private void runPatchedApplication(String patchApkCheckSum) throws Exception {
-        String applicationName = getPatchApplicationName(patchApkCheckSum);
-        Application application =
-                (Application) patchedClassLoader.loadClass(applicationName).newInstance();
-        Method attach = getMatchedMethod(Application.class, "attach", Context.class);
-        attach.setAccessible(true);
-        attach.invoke(application, getBaseContext());
+        String appName = getPatchApplicationName(patchApkCheckSum);
+        Application application = (Application) getClassLoader().loadClass(appName).newInstance();
+        invokeMethod(application, "attach", getBaseContext());
         setAPKApplication(application);
         application.onCreate();
     }
@@ -247,8 +296,8 @@ public class Amigo extends Application {
     private String getPatchApplicationName(String patchApkCheckSum) throws Exception {
         String applicationName = null;
         try {
-            Class acd = patchedClassLoader.loadClass("me.ele.amigo.acd");
-            if (acd != null && acd.getClassLoader() == patchedClassLoader) {
+            Class acd = getClassLoader().loadClass("me.ele.amigo.acd");
+            if (acd != null && acd.getClassLoader() == getClassLoader()) {
                 applicationName = (String) readStaticField(acd, "n");
             }
         } catch (ClassNotFoundException classNotFoundExp) {

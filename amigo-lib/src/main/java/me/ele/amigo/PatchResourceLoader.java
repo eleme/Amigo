@@ -7,8 +7,6 @@ import android.os.Build;
 import android.util.ArrayMap;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -16,7 +14,6 @@ import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 import static me.ele.amigo.reflect.FieldUtils.getField;
 import static me.ele.amigo.reflect.FieldUtils.readField;
 import static me.ele.amigo.reflect.FieldUtils.writeField;
-import static me.ele.amigo.reflect.MethodUtils.getMatchedMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 import static me.ele.amigo.reflect.MethodUtils.invokeStaticMethod;
 
@@ -26,16 +23,13 @@ class PatchResourceLoader {
 
     static void loadPatchResources(Context context, String checksum) throws Exception {
         AssetManager newAssetManager = AssetManager.class.newInstance();
-        Method addAssetPath = getMatchedMethod(AssetManager.class, "addAssetPath", String.class);
-        addAssetPath.setAccessible(true);
-        addAssetPath.invoke(newAssetManager, PatchApks.getInstance(context).patchPath(checksum));
+        invokeMethod(newAssetManager, "addAssetPath", PatchApks.getInstance(context).patchPath(checksum));
         invokeMethod(newAssetManager, "ensureStringBlocks");
         replaceAssetManager(context, newAssetManager);
     }
 
     private static void replaceAssetManager(Context context, AssetManager newAssetManager)
-            throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException,
-            InvocationTargetException {
+            throws Exception {
         Collection<WeakReference<Resources>> references;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Class<?> resourcesManagerClass = Class.forName("android.app.ResourcesManager");

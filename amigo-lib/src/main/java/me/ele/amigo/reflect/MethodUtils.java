@@ -48,8 +48,7 @@ public class MethodUtils {
     }
 
 
-    public static Method getMatchedMethod(Class<?> cls, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
-
+    private static Method getMatchedMethod(Class<?> cls, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
         try {
             final Method method = cls.getDeclaredMethod(methodName, parameterTypes);
             MemberUtils.setAccessibleWorkaround(method);
@@ -57,22 +56,33 @@ public class MethodUtils {
         } catch (final NoSuchMethodException e) {
             //ignore
         }
-        // search through all methods
+
         Method bestMatch = null;
-        final Method[] methods = cls.getDeclaredMethods();
-        for (final Method method : methods) {
-            // compare name and parameters
-            if (method.getName().equals(methodName) && MemberUtils.isAssignable(parameterTypes, method.getParameterTypes(), true)) {
-                bestMatch = method;
-                final Method accessibleMethod = getMethodFromElse(method);
-                if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
-                        accessibleMethod.getParameterTypes(),
-                        bestMatch.getParameterTypes(),
-                        parameterTypes) < 0)) {
-                    bestMatch = accessibleMethod;
+        while (cls != null) {
+            // search through all methods
+            final Method[] methods = cls.getDeclaredMethods();
+            for (final Method method : methods) {
+                // compare name and parameters
+                if (method.getName().equals(methodName) && MemberUtils.isAssignable(parameterTypes, method.getParameterTypes(), true)) {
+                    bestMatch = method;
+                    final Method accessibleMethod = getMethodFromElse(method);
+                    if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
+                            accessibleMethod.getParameterTypes(),
+                            bestMatch.getParameterTypes(),
+                            parameterTypes) < 0)) {
+                        bestMatch = accessibleMethod;
+                        break;
+                    }
                 }
             }
+
+            if (bestMatch == null) {
+                cls = cls.getSuperclass();
+            } else {
+                break;
+            }
         }
+
         if (bestMatch != null) {
             MemberUtils.setAccessibleWorkaround(bestMatch);
         }
