@@ -55,9 +55,13 @@ public abstract class AbstractServiceStub extends Service {
                     if (!ServiceManager.getDefault().hasServiceRunning()) {
                         stopSelf(startId);
                         boolean stopService = getApplication().stopService(intent);
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart=%s intent=%s", android.os.Process.myPid(), android.os.Process.myUid(), getClass().getSimpleName(), stopService, intent);
+                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart=%s " +
+                                "intent=%s", android.os.Process.myPid(), android.os.Process.myUid
+                                (), getClass().getSimpleName(), stopService, intent);
                     } else {
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart intent=%s skip,has service running", android.os.Process.myPid(), android.os.Process.myUid(), getClass().getSimpleName(), intent);
+                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart " +
+                                "intent=%s skip,has service running", android.os.Process.myPid(),
+                                android.os.Process.myUid(), getClass().getSimpleName(), intent);
                     }
 
                 } else {
@@ -84,7 +88,9 @@ public abstract class AbstractServiceStub extends Service {
                             } catch (Exception e) {
                             }
                         }
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s 2", android.os.Process.myPid(), android.os.Process.myUid(), getClass().getSimpleName());
+                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s 2", android
+                                .os.Process.myPid(), android.os.Process.myUid(), getClass()
+                                .getSimpleName());
                         android.os.Process.killProcess(android.os.Process.myPid());
                     }
                 }.start();

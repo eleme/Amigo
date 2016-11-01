@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.util.Log;
 
 import java.io.File;
 import java.util.Arrays;
@@ -19,6 +20,8 @@ import static me.ele.amigo.Amigo.WORKING_PATCH_APK_CHECKSUM;
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
 
 public class ContentProviderFinder extends ComponentFinder {
+
+    private static final String TAG = ContentProviderFinder.class.getSimpleName();
 
     public static ProviderInfo[] getAppContentProvider(Context context) {
         PackageManager packageManager = context.getPackageManager();
@@ -54,9 +57,11 @@ public class ContentProviderFinder extends ComponentFinder {
     public static void installPatchContentProviders(Context context) {
         ProviderInfo[] providers = getNewContentProvider(context);
         if (ArrayUtil.isEmpty(providers)) {
+            Log.d(TAG, "installPatchContentProviders: there is no any new provider");
             return;
         }
 
+        Log.d(TAG, "installPatchContentProviders: " + Arrays.toString(providers));
         try {
             MethodUtils.invokeMethod(instance(), "installContentProviders",
                     new Object[]{context, Arrays.asList(providers)},

@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -24,7 +23,7 @@ import me.ele.amigo.Amigo;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
 
-public class DemoActivity extends AppCompatActivity {
+public class DemoActivity extends BaseActivity {
 
     public static final String TAG = DemoActivity.class.getSimpleName();
 
@@ -34,7 +33,6 @@ public class DemoActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_demo);
-        setTitle("Demo");
 
         ButterKnife.bind(this);
     }
@@ -154,7 +152,7 @@ public class DemoActivity extends AppCompatActivity {
     @OnClick(R.id.test_patched_provider)
     public void testPatchedProvider() {
         Cursor cursor = getContentResolver().query(
-                Uri.parse("content://me.ele.app.amigo.demo.provider/student"),
+                Uri.parse("content://me.ele.app.amigo.provider.student?id=0"),
                 null, null, null, null);
         Log.d(TAG, "testPatchedProvider: patched provider loaded ? " + (cursor != null));
         if (cursor != null) {

@@ -23,7 +23,7 @@ public class A {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
             String line = reader.readLine();
             is.close();
-            return  line;
+            return line;
         } catch (Exception e) {
             e.printStackTrace();
         }

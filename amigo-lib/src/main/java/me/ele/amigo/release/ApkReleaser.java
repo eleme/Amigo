@@ -72,7 +72,8 @@ public class ApkReleaser {
             public void run() {
                 isReleasing = true;
                 DexReleaser.releaseDexes(patchApks.patchFile(checksum), amigoDirs.dexDir(checksum));
-                NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum), amigoDirs.libDir(checksum));
+                NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
+                        amigoDirs.libDir(checksum));
                 dexOptimization(checksum);
             }
         });
@@ -110,7 +111,8 @@ public class ApkReleaser {
                             }
                         }
                     }
-                    Log.e(TAG, String.format("dex %s consume %d ms", dex.getAbsolutePath(), System.currentTimeMillis() - startTime));
+                    Log.e(TAG, String.format("dex %s consume %d ms", dex.getAbsolutePath(),
+                            System.currentTimeMillis() - startTime));
                     countDownLatch.countDown();
                 }
             });

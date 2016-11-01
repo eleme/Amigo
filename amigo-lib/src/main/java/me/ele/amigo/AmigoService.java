@@ -33,8 +33,11 @@ public class AmigoService extends Service {
                 case WHAT:
                     Context context = AmigoService.this;
                     if (!isMainProcessRunning(context)) {
-                        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-                        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        Intent launchIntent = context.getPackageManager()
+                                .getLaunchIntentForPackage(context.getPackageName());
+                        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                | Intent.FLAG_ACTIVITY_NEW_TASK);
                         context.startActivity(launchIntent);
                         Log.e(TAG, "start launchIntent");
                         stopSelf();

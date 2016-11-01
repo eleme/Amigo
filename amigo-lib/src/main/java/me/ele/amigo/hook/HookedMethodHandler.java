@@ -19,7 +19,8 @@ public class HookedMethodHandler {
     }
 
 
-    public synchronized Object doHookInner(Object receiver, Method method, Object[] args) throws Throwable {
+    public synchronized Object doHookInner(Object receiver, Method method, Object[] args) throws
+            Throwable {
         long b = System.currentTimeMillis();
         try {
             useFakedResult = false;
@@ -38,7 +39,8 @@ public class HookedMethodHandler {
         } finally {
             long time = System.currentTimeMillis() - b;
             if (time > 5) {
-                Log.i(TAG, "doHookInner method(%s.%s) cost %s ms", method.getDeclaringClass().getName(), method.getName(), time);
+                Log.i(TAG, "doHookInner method(%s.%s) cost %s ms", method.getDeclaringClass()
+                        .getName(), method.getName(), time);
             }
         }
     }
@@ -52,6 +54,7 @@ public class HookedMethodHandler {
         return false;
     }
 
-    protected void afterInvoke(Object receiver, Method method, Object[] args, Object invokeResult) throws Throwable {
+    protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+            invokeResult) throws Throwable {
     }
 }

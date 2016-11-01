@@ -15,7 +15,8 @@ public class StartService extends Service {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         Log.e(TAG, "onStart");
-        Toast.makeText(StartService.this, "start service success with data " + intent.getStringExtra(TAG), Toast.LENGTH_SHORT).show();
+        Toast.makeText(StartService.this, "start service success with data " + intent
+                .getStringExtra(TAG), Toast.LENGTH_SHORT).show();
     }
 
     @Override

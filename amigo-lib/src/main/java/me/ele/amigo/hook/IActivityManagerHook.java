@@ -52,10 +52,13 @@ public class IActivityManagerHook extends ProxyHook {
             setProxyObj(gDefault);
             Class<?> objClass = proxyObj.getClass();
             List<Class<?>> interfaces = Utils.getAllInterfaces(objClass);
-            Class[] ifs = interfaces != null && interfaces.size() > 0 ? interfaces.toArray(new Class[interfaces.size()]) : new Class[0];
-            Object proxyActivityManager = MyProxy.newProxyInstance(objClass.getClassLoader(), ifs, this);
+            Class[] ifs = interfaces != null && interfaces.size() > 0 ? interfaces.toArray(new
+                    Class[interfaces.size()]) : new Class[0];
+            Object proxyActivityManager = MyProxy.newProxyInstance(objClass.getClassLoader(),
+                    ifs, this);
             FieldUtils.writeStaticField(cls, "gDefault", proxyActivityManager);
-            Log.i(TAG, "Install ActivityManager Hook 1 old=%s,new=%s", proxyObj, proxyActivityManager);
+            Log.i(TAG, "Install ActivityManager Hook 1 old=%s,new=%s", proxyObj,
+                    proxyActivityManager);
             original_gDefault = gDefault;
         } else if (SingletonCompat.isSingleton(gDefault)) {
             Object mInstance = FieldUtils.readField(gDefault, "mInstance");
@@ -65,11 +68,14 @@ public class IActivityManagerHook extends ProxyHook {
             }
             setProxyObj(mInstance);
             List<Class<?>> interfaces = Utils.getAllInterfaces(proxyObj.getClass());
-            Class[] ifs = interfaces != null && interfaces.size() > 0 ? interfaces.toArray(new Class[interfaces.size()]) : new Class[0];
-            final Object object = MyProxy.newProxyInstance(proxyObj.getClass().getClassLoader(), ifs, IActivityManagerHook.this);
+            Class[] ifs = interfaces != null && interfaces.size() > 0 ? interfaces.toArray(new
+                    Class[interfaces.size()]) : new Class[0];
+            final Object object = MyProxy.newProxyInstance(proxyObj.getClass().getClassLoader(),
+                    ifs, IActivityManagerHook.this);
             Object iam1 = ActivityManagerNativeCompat.getDefault();
 
-            Object instance = FieldUtils.readField(gDefault, "mInstance");;
+            Object instance = FieldUtils.readField(gDefault, "mInstance");
+            ;
             FieldUtils.writeField(gDefault, "mInstance", object);
 
             FieldUtils.writeStaticField(cls, "gDefault", new android.util.Singleton<Object>() {
@@ -88,7 +94,8 @@ public class IActivityManagerHook extends ProxyHook {
             original_gDefault = gDefault;
             gDefault_mInstance = instance;
         } else {
-            throw new AndroidRuntimeException("Can not install IActivityManagerNative hook, gDefault=" + gDefault);
+            throw new AndroidRuntimeException("Can not install IActivityManagerNative hook, " +
+                    "gDefault=" + gDefault);
         }
     }
 
@@ -100,7 +107,7 @@ public class IActivityManagerHook extends ProxyHook {
         try {
             Class cls = ActivityManagerNativeCompat.Class();
             FieldUtils.writeStaticField(cls, "gDefault", original_gDefault);
-            if(gDefault_mInstance != null) {
+            if (gDefault_mInstance != null) {
                 FieldUtils.writeField(original_gDefault, "mInstance", gDefault_mInstance);
             }
         } catch (Exception e) {

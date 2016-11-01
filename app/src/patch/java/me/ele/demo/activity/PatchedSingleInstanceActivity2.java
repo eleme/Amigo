@@ -2,13 +2,14 @@ package me.ele.demo.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
+import me.ele.app.amigo.BaseActivity;
 
 /**
  * Created by wwm on 9/20/16.
  */
-public class PatchedSingleInstanceActivity2 extends AppCompatActivity {
+public class PatchedSingleInstanceActivity2 extends BaseActivity {
 
     private static final String TAG = PatchedSingleInstanceActivity2.class.getSimpleName();
 

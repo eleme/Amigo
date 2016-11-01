@@ -25,7 +25,8 @@ class MemberUtils {
             return false;
         }
         final Member m = (Member) o;
-        if (!o.isAccessible() && Modifier.isPublic(m.getModifiers()) && isPackageAccess(m.getDeclaringClass().getModifiers())) {
+        if (!o.isAccessible() && Modifier.isPublic(m.getModifiers()) && isPackageAccess(m
+                .getDeclaringClass().getModifiers())) {
             try {
                 o.setAccessible(true);
                 return true;
@@ -40,7 +41,8 @@ class MemberUtils {
         return isAssignable(cls, toClass, true);
     }
 
-    static boolean isAssignable(Class<?>[] classArray, Class<?>[] toClassArray, final boolean autoboxing) {
+    static boolean isAssignable(Class<?>[] classArray, Class<?>[] toClassArray, final boolean
+            autoboxing) {
         if (Utils.isSameLength(classArray, toClassArray) == false) {
             return false;
         }
@@ -131,7 +133,8 @@ class MemberUtils {
         return toClass.isAssignableFrom(cls);
     }
 
-    private static final Map<Class<?>, Class<?>> primitiveWrapperMap = new HashMap<Class<?>, Class<?>>();
+    private static final Map<Class<?>, Class<?>> primitiveWrapperMap = new HashMap<Class<?>,
+            Class<?>>();
 
     static {
         primitiveWrapperMap.put(Boolean.TYPE, Boolean.class);
@@ -145,7 +148,8 @@ class MemberUtils {
         primitiveWrapperMap.put(Void.TYPE, Void.TYPE);
     }
 
-    private static final Map<Class<?>, Class<?>> wrapperPrimitiveMap = new HashMap<Class<?>, Class<?>>();
+    private static final Map<Class<?>, Class<?>> wrapperPrimitiveMap = new HashMap<Class<?>,
+            Class<?>>();
 
     static {
         for (final Class<?> primitiveClass : primitiveWrapperMap.keySet()) {
@@ -168,13 +172,15 @@ class MemberUtils {
         return wrapperPrimitiveMap.get(cls);
     }
 
-    static int compareParameterTypes(final Class<?>[] left, final Class<?>[] right, final Class<?>[] actual) {
+    static int compareParameterTypes(final Class<?>[] left, final Class<?>[] right, final
+    Class<?>[] actual) {
         final float leftCost = getTotalTransformationCost(actual, left);
         final float rightCost = getTotalTransformationCost(actual, right);
         return leftCost < rightCost ? -1 : rightCost < leftCost ? 1 : 0;
     }
 
-    private static float getTotalTransformationCost(final Class<?>[] srcArgs, final Class<?>[] destArgs) {
+    private static float getTotalTransformationCost(final Class<?>[] srcArgs, final Class<?>[]
+            destArgs) {
         float totalCost = 0.0f;
         for (int i = 0; i < srcArgs.length; i++) {
             Class<?> srcClass, destClass;
@@ -213,7 +219,8 @@ class MemberUtils {
         return cost;
     }
 
-    private static float getPrimitivePromotionCost(final Class<?> srcClass, final Class<?> destClass) {
+    private static float getPrimitivePromotionCost(final Class<?> srcClass, final Class<?>
+            destClass) {
         float cost = 0.0f;
         Class<?> cls = srcClass;
         if (!cls.isPrimitive()) {

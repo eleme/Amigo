@@ -6,7 +6,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -19,8 +18,7 @@ import me.ele.amigo.reflect.MethodUtils;
 /**
  * Created by wwm on 9/30/16.
  */
-
-public class TestPatchedServices extends AppCompatActivity {
+public class TestPatchedServices extends BaseActivity {
 
     private static final String TAG = "TestPatchedServices";
 
@@ -34,7 +32,8 @@ public class TestPatchedServices extends AppCompatActivity {
     @OnClick(R.id.start_new_service)
     public void startNewService() {
         try {
-            startService(new Intent().setClassName(this, "me.ele.demo.service.StartService").putExtra("StartService", "1"));
+            startService(new Intent().setClassName(this, "me.ele.demo.service.StartService")
+                    .putExtra("StartService", "1"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,11 +53,13 @@ public class TestPatchedServices extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.e(TAG, "onServiceConnected");
             try {
-                Class LocalBinderClazz = Class.forName("me.ele.demo.service.BindService$LocalBinder");
+                Class LocalBinderClazz = Class.forName("me.ele.demo.service" +
+                        ".BindService$LocalBinder");
                 Object binder = service;
                 Method getServiceMethod = LocalBinderClazz.getDeclaredMethod("getService");
                 Object s = getServiceMethod.invoke(binder);
-                Log.e(TAG, "random number from service" + MethodUtils.invokeMethod(s, "getRandomNumber"));
+                Log.e(TAG, "random number from service" + MethodUtils.invokeMethod(s,
+                        "getRandomNumber"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -74,7 +75,8 @@ public class TestPatchedServices extends AppCompatActivity {
     @OnClick(R.id.bind_new_service)
     public void bindNewService() {
         try {
-            bindService(new Intent().setClassName(this, "me.ele.demo.service.BindService").putExtra("BindService", "1"), connection, 0);
+            bindService(new Intent().setClassName(this, "me.ele.demo.service.BindService")
+                    .putExtra("BindService", "1"), connection, 0);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -5,31 +5,33 @@ import java.lang.reflect.Method;
 
 public class MethodUtils {
 
-    public static Object invokeMethod(Object object, String methodName, Object[] args, Class<?>[] parameterTypes)
-            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static Object invokeMethod(Object object, String methodName, Object[] args, Class<?>[]
+            parameterTypes) throws NoSuchMethodException, IllegalAccessException,
+            InvocationTargetException {
         parameterTypes = Utils.nullToEmpty(parameterTypes);
         args = Utils.nullToEmpty(args);
         Method method = getMatchedMethod(object.getClass(), methodName, parameterTypes);
-        method.setAccessible(true);
         if (method == null) {
             throw new NoSuchMethodException("No such accessible method: "
                     + methodName + "() on object: "
                     + object.getClass().getName());
         }
+        method.setAccessible(true);
         return method.invoke(object, args);
     }
 
-    public static Object invokeStaticMethod(Class clazz, String methodName, Object[] args, Class<?>[] parameterTypes)
-            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static Object invokeStaticMethod(Class clazz, String methodName, Object[] args,
+                                            Class<?>[] parameterTypes) throws
+            NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         parameterTypes = Utils.nullToEmpty(parameterTypes);
         args = Utils.nullToEmpty(args);
         Method method = getMatchedMethod(clazz, methodName, parameterTypes);
-        method.setAccessible(true);
         if (method == null) {
             throw new NoSuchMethodException("No such accessible method: "
                     + methodName + "() on object: "
                     + clazz.getName());
         }
+        method.setAccessible(true);
         return method.invoke(null, args);
     }
 
@@ -48,7 +50,9 @@ public class MethodUtils {
     }
 
 
-    private static Method getMatchedMethod(Class<?> cls, String methodName, Class<?>... parameterTypes) throws NoSuchMethodException {
+    public static Method getMatchedMethod(Class<?> cls, String methodName, Class<?>...
+            parameterTypes) throws NoSuchMethodException {
+
         try {
             final Method method = cls.getDeclaredMethod(methodName, parameterTypes);
             MemberUtils.setAccessibleWorkaround(method);
@@ -63,10 +67,12 @@ public class MethodUtils {
             final Method[] methods = cls.getDeclaredMethods();
             for (final Method method : methods) {
                 // compare name and parameters
-                if (method.getName().equals(methodName) && MemberUtils.isAssignable(parameterTypes, method.getParameterTypes(), true)) {
+                if (method.getName().equals(methodName) && MemberUtils.isAssignable
+                        (parameterTypes, method.getParameterTypes(), true)) {
                     bestMatch = method;
                     final Method accessibleMethod = getMethodFromElse(method);
-                    if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
+                    if (accessibleMethod != null && (bestMatch == null || MemberUtils
+                            .compareParameterTypes(
                             accessibleMethod.getParameterTypes(),
                             bestMatch.getParameterTypes(),
                             parameterTypes) < 0)) {
@@ -106,7 +112,8 @@ public class MethodUtils {
         return method;
     }
 
-    private static Method getAccessibleMethodFromSuperclass(final Class<?> cls, final String methodName, final Class<?>... parameterTypes) {
+    private static Method getAccessibleMethodFromSuperclass(final Class<?> cls, final String
+            methodName, final Class<?>... parameterTypes) {
         Class<?> parentClass = cls.getSuperclass();
         while (parentClass != null) {
             try {
@@ -120,7 +127,8 @@ public class MethodUtils {
     }
 
 
-    private static Method getAccessibleMethodFromInterfaceNest(Class<?> cls, final String methodName, final Class<?>... parameterTypes) {
+    private static Method getAccessibleMethodFromInterfaceNest(Class<?> cls, final String
+            methodName, final Class<?>... parameterTypes) {
         // Search up the superclass chain
         for (; cls != null; cls = cls.getSuperclass()) {
 
@@ -138,7 +146,8 @@ public class MethodUtils {
                      */
                 }
                 // Recursively check our parent interfaces
-                Method method = getAccessibleMethodFromInterfaceNest(interfaces[i], methodName, parameterTypes);
+                Method method = getAccessibleMethodFromInterfaceNest(interfaces[i], methodName,
+                        parameterTypes);
                 if (method != null) {
                     return method;
                 }

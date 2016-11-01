@@ -67,7 +67,9 @@ public class Log {
     }
 
     private static File getLogFile() {
-        File file = new File(Environment.getExternalStorageDirectory(), String.format("360Log/Plugin/Log_%s_%s.log", sFormat1.format(new Date()), android.os.Process.myPid()));
+        File file = new File(Environment.getExternalStorageDirectory(), String.format
+                ("360Log/Plugin/Log_%s_%s.log", sFormat1.format(new Date()), android.os.Process
+                        .myPid()));
         File dir = file.getParentFile();
         if (!dir.exists()) {
             dir.mkdirs();
@@ -84,7 +86,8 @@ public class Log {
         sHandler = new Handler(sHandlerThread.getLooper());
     }
 
-    private static void logToFile(final int level, final String tag, final String format, final Object[] args, final Throwable tr) {
+    private static void logToFile(final int level, final String tag, final String format, final
+    Object[] args, final Throwable tr) {
         sHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -93,7 +96,8 @@ public class Log {
         });
     }
 
-    private static void logToFileInner(int level, String tag, String format, Object[] args, Throwable tr) {
+    private static void logToFileInner(int level, String tag, String format, Object[] args,
+                                       Throwable tr) {
         PrintWriter writer = null;
         try {
             if (!isFileLog()) {
@@ -106,7 +110,9 @@ public class Log {
             }
             writer = new PrintWriter(new FileWriter(logFile, true));
             String msg = String.format(format, args);
-            String log = String.format("%s %s-%s/%s %s/%s %s", sFormat.format(new Date()), Process.myPid(), Process.myUid(), getProcessName(), levelToStr(level), tag, msg);
+            String log = String.format("%s %s-%s/%s %s/%s %s", sFormat.format(new Date()),
+                    Process.myPid(), Process.myUid(), getProcessName(), levelToStr(level), tag,
+                    msg);
             writer.println(log);
             if (tr != null) {
                 tr.printStackTrace(writer);
@@ -128,7 +134,8 @@ public class Log {
         return "?";
     }
 
-    private static void println(final int level, final String tag, final String format, final Object[] args, final Throwable tr) {
+    private static void println(final int level, final String tag, final String format, final
+    Object[] args, final Throwable tr) {
         logToFile(level, tag, format, args, tr);
         String message;
         if (args != null && args.length > 0) {

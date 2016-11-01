@@ -46,13 +46,15 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         private ServiceInfo info = null;
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             info = replaceFirstServiceIntentOfArgs(args);
             return super.beforeInvoke(receiver, method, args);
         }
 
         @Override
-        protected void afterInvoke(Object receiver, Method method, Object[] args, Object invokeResult) throws Throwable {
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
             if (invokeResult instanceof ComponentName) {
                 if (info != null) {
                     setFakedResult(new ComponentName(info.packageName, info.name));
@@ -70,7 +72,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             int index = 1;
             if (args != null && args.length > index && args[index] instanceof Intent) {
                 Intent intent = (Intent) args[index];
@@ -92,13 +95,15 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             if (args != null && args.length > 2) {
                 ComponentName componentName = (ComponentName) args[0];
                 if (isComponentNameInNewApp(context, componentName)) {
                     IBinder token = (IBinder) args[1];
                     Integer startId = (Integer) args[2];
-                    boolean re = ServiceManager.getDefault().stopServiceToken(context, componentName, token, startId);
+                    boolean re = ServiceManager.getDefault().stopServiceToken(context,
+                            componentName, token, startId);
                     setFakedResult(re);
                     return true;
                 }
@@ -117,7 +122,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         private ServiceInfo info = null;
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             info = replaceFirstServiceIntentOfArgs(args);
             int index = findIServiceConnectionIndex(method);
             if (info != null && index >= 0) {
@@ -126,13 +132,15 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
                     public void connected(ComponentName name, IBinder service) {
                         try {
-                            MethodUtils.invokeMethod(oldIServiceConnection, "connected", new ComponentName(mInfo.packageName, mInfo.name), service);
+                            MethodUtils.invokeMethod(oldIServiceConnection, "connected", new
+                                    ComponentName(mInfo.packageName, mInfo.name), service);
                         } catch (Exception e) {
                             Log.e(TAG, "invokeMethod connected", e);
                         }
                     }
                 };
-                ServiceManager.getDefault().addServiceIntent(oldIServiceConnection, (Intent) args[findFirstIntentIndexInArgs(args)]);
+                ServiceManager.getDefault().addServiceIntent(oldIServiceConnection, (Intent)
+                        args[findFirstIntentIndexInArgs(args)]);
             }
             return super.beforeInvoke(receiver, method, args);
         }
@@ -141,7 +149,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             Class<?>[] parameterTypes = method.getParameterTypes();
             if (parameterTypes != null && parameterTypes.length > 0) {
                 for (int index = 0; index < parameterTypes.length; index++) {
-                    if (parameterTypes[index] != null && TextUtils.equals(parameterTypes[index].getSimpleName(), "IServiceConnection")) {
+                    if (parameterTypes[index] != null && TextUtils.equals(parameterTypes[index]
+                            .getSimpleName(), "IServiceConnection")) {
                         return index;
                     }
                 }
@@ -150,7 +159,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected void afterInvoke(Object receiver, Method method, Object[] args, Object invokeResult) throws Throwable {
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
             if (invokeResult instanceof ComponentName) {
                 if (info != null) {
                     setFakedResult(new ComponentName(info.packageName, info.name));
@@ -176,7 +186,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             replaceFirstServiceIntentOfArgs(args);
             ServiceManager.getDefault().unbind(context, args[findIServiceConnectionIndex(method)]);
             return super.beforeInvoke(receiver, method, args);
@@ -186,7 +197,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             Class<?>[] parameterTypes = method.getParameterTypes();
             if (parameterTypes != null && parameterTypes.length > 0) {
                 for (int index = 0; index < parameterTypes.length; index++) {
-                    if (parameterTypes[index] != null && TextUtils.equals(parameterTypes[index].getSimpleName(), "IServiceConnection")) {
+                    if (parameterTypes[index] != null && TextUtils.equals(parameterTypes[index]
+                            .getSimpleName(), "IServiceConnection")) {
                         return index;
                     }
                 }
@@ -202,7 +214,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             replaceFirstServiceIntentOfArgs(args);
             return super.beforeInvoke(receiver, method, args);
         }
@@ -215,13 +228,15 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         }
 
         @Override
-        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws Throwable {
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
             replaceFirstServiceIntentOfArgs(args);
             return super.beforeInvoke(receiver, method, args);
         }
     }
 
-    private static ServiceInfo replaceFirstServiceIntentOfArgs(Object[] args) throws RemoteException {
+    private static ServiceInfo replaceFirstServiceIntentOfArgs(Object[] args) throws
+            RemoteException {
         int intentOfArgIndex = findFirstIntentIndexInArgs(args);
         if (args != null && args.length > 1 && intentOfArgIndex >= 0) {
             Intent intent = (Intent) args[intentOfArgIndex];
@@ -273,7 +288,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
 
     private static boolean isComponentNameInNewApp(Context context, ComponentName componentName) {
-        return ServiceFinder.resolveServiceInfo(context, new Intent().setComponent(componentName)) != null;
+        return ServiceFinder.resolveServiceInfo(context, new Intent().setComponent(componentName)
+        ) != null;
     }
 
 

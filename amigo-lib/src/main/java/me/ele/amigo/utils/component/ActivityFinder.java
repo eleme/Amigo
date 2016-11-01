@@ -7,12 +7,19 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.util.Log;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
+import me.ele.amigo.Amigo;
+import me.ele.amigo.AmigoDirs;
+import me.ele.amigo.PatchApks;
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.utils.ArrayUtil;
+import me.ele.amigo.utils.FileUtils;
 
 public class ActivityFinder extends ComponentFinder {
 
@@ -31,7 +38,6 @@ public class ActivityFinder extends ComponentFinder {
         return null;
     }
 
-    // do cache
     public static ActivityInfo[] getNewAppActivities(Context context) {
         PackageManager pm = context.getPackageManager();
         if (!isHotfixApkValid(context)) {
@@ -42,6 +48,11 @@ public class ActivityFinder extends ComponentFinder {
             File file = getHotFixApk(context);
             PackageInfo info =
                     pm.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_ACTIVITIES);
+            String checkSum = PatchApks.getInstance(context).patchPath(Amigo
+                    .getWorkingPatchApkChecksum(context));
+            info.applicationInfo.sourceDir = checkSum;
+            info.applicationInfo.publicSourceDir = checkSum;
+            info.applicationInfo.uid = context.getApplicationInfo().uid;
             activityInfosCache = info.activities;
         }
         return activityInfosCache;
@@ -92,6 +103,8 @@ public class ActivityFinder extends ComponentFinder {
 
         for (ActivityInfo info : infos) {
             if (info.name.equals(activityClassName)) {
+                Log.d("ActivityFinder", "getActivityInfoInNewApp: " + info.applicationInfo
+                        .sourceDir);
                 return info;
             }
         }

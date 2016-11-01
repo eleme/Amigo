@@ -48,11 +48,15 @@ public abstract class ActivityStub extends Activity {
             SingleInstanceStub8.class);
 
     // [stub activity name : target activity instance]
-    private static final Map<String, ActivityRecord> usedSingleTopStubs = new LinkedHashMap<>(SINGLE_TOP_STUBS.size(), 0.75f, true);
-    private static final Map<String, ActivityRecord> usedSingleTaskStubs = new LinkedHashMap<>(SINGLE_TASK_STUBS.size(), 0.75f, true);
-    private static final Map<String, ActivityRecord> usedSingleInstanceStubs = new LinkedHashMap<>(SINGLE_INSTANCE_STUBS.size(), 0.75f, true);
+    private static final Map<String, ActivityRecord> usedSingleTopStubs = new LinkedHashMap<>
+            (SINGLE_TOP_STUBS.size(), 0.75f, true);
+    private static final Map<String, ActivityRecord> usedSingleTaskStubs = new LinkedHashMap<>
+            (SINGLE_TASK_STUBS.size(), 0.75f, true);
+    private static final Map<String, ActivityRecord> usedSingleInstanceStubs = new
+            LinkedHashMap<>(SINGLE_INSTANCE_STUBS.size(), 0.75f, true);
 
-    private static Class findActivityStub(String componentName, Map<String, ActivityRecord> recordMap, List<Class<? extends ActivityStub>> stubs) {
+    private static Class findActivityStub(String componentName, Map<String, ActivityRecord>
+            recordMap, List<Class<? extends ActivityStub>> stubs) {
         Log.d("stub", "findActivityStub for component[" + componentName + "]");
         for (Class stub : stubs) {
             ActivityRecord record = recordMap.get(stub.getName());
@@ -71,7 +75,8 @@ public abstract class ActivityStub extends Activity {
         return null;
     }
 
-    private static void recycleEarliestUsedActivityStub(Map<String, ActivityRecord> recordMap, int limit) {
+    private static void recycleEarliestUsedActivityStub(Map<String, ActivityRecord> recordMap,
+                                                        int limit) {
         if (recordMap.size() < limit) {
             return;
         }
@@ -111,7 +116,8 @@ public abstract class ActivityStub extends Activity {
                 clazz = findActivityStub(activityInfo.name, usedSingleTaskStubs, SINGLE_TASK_STUBS);
                 break;
             case LAUNCH_SINGLE_INSTANCE:
-                clazz = findActivityStub(activityInfo.name, usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS);
+                clazz = findActivityStub(activityInfo.name, usedSingleInstanceStubs,
+                        SINGLE_INSTANCE_STUBS);
                 break;
             default:
                 clazz = ActivityStub.StandardStub.class;
@@ -129,17 +135,20 @@ public abstract class ActivityStub extends Activity {
                 recycleEarliestUsedActivityStub(usedSingleTaskStubs, SINGLE_TASK_STUBS.size());
                 break;
             case LAUNCH_SINGLE_INSTANCE:
-                recycleEarliestUsedActivityStub(usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS.size());
+                recycleEarliestUsedActivityStub(usedSingleInstanceStubs, SINGLE_INSTANCE_STUBS
+                        .size());
                 break;
             default:
                 break;
         }
     }
 
-    public static void onActivityCreated(Class stubActivityClazz, Activity activity, String activityClazzName /*alternatively*/) {
+    public static void onActivityCreated(Class stubActivityClazz, Activity activity, String
+            activityClazzName /*alternatively*/) {
         Map<String, ActivityRecord> recordMap = getActivityRecordMap(stubActivityClazz);
         if (recordMap != null)
-            recordMap.put(stubActivityClazz.getName(), new ActivityRecord(activity, activityClazzName));
+            recordMap.put(stubActivityClazz.getName(), new ActivityRecord(activity,
+                    activityClazzName));
     }
 
     public static void onActivityDestroyed(Class stubActivityClazz, Activity activity) {
@@ -240,7 +249,8 @@ public abstract class ActivityStub extends Activity {
 
         public ActivityRecord(Activity activity, String activityClazzName) {
             this.activity = activity;
-            this.activityClazzName = activity != null ? activity.getClass().getName() : activityClazzName;
+            this.activityClazzName = activity != null ? activity.getClass().getName() :
+                    activityClazzName;
         }
     }
 

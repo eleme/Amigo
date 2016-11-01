@@ -10,7 +10,8 @@ public class ActivityThreadCompat {
 
     private static Class sClass;
 
-    public synchronized static final Object instance() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public synchronized static final Object instance() throws ClassNotFoundException,
+            NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         if (sActivityThread == null) {
             sActivityThread = MethodUtils.invokeStaticMethod(clazz(), "currentActivityThread");
         }
