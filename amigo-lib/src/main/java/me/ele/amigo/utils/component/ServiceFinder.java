@@ -25,7 +25,8 @@ public class ServiceFinder extends ComponentFinder {
     public static ServiceInfo[] getAppServices(Context context) {
         try {
             PackageManager pm = context.getPackageManager();
-            PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_SERVICES);
+            PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager
+                    .GET_SERVICES);
             return info.services;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
@@ -96,16 +97,19 @@ public class ServiceFinder extends ComponentFinder {
         List<ServiceInfo> serviceInfos = ServiceFinder.getNewAddedServices(context);
         if (serviceInfos != null && serviceInfos.size() >= 0) {
             for (ServiceInfo serviceInfo : serviceInfos) {
-                List<IntentFilter> intentFilters = ServiceFinder.getIntentFilter(context, serviceInfo);
+                List<IntentFilter> intentFilters = ServiceFinder.getIntentFilter(context,
+                        serviceInfo);
                 if (intentFilters != null && intentFilters.size() > 0) {
                     for (IntentFilter intentFilter : intentFilters) {
-                        int match = intentFilter.match(context.getContentResolver(), intent, true, "");
+                        int match = intentFilter.match(context.getContentResolver(), intent,
+                                true, "");
                         if (match >= 0) {
                             return serviceInfo;
                         }
                     }
                 } else {
-                    if (componentName != null && serviceInfo.name.equals(componentName.getClassName())) {
+                    if (componentName != null && serviceInfo.name.equals(componentName
+                            .getClassName())) {
                         return serviceInfo;
                     }
                 }

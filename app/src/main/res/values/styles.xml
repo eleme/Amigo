@@ -6,12 +6,16 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowAnimationStyle">@style/ActivityAnimationStyle</item>
     </style>
 
-    <style name="amigoThemeDemo" parent="Theme.AppCompat.DayNight.DarkActionBar">
-        <item name="colorPrimary">#000000</item>
-        <item name="colorPrimaryDark">#000000</item>
-        <item name="colorAccent">#000000</item>
-    </style>
+    <style name="amigoThemeDemo" parent="AppTheme" />
 
+    <style name="ActivityAnimationStyle"
+           parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenExitAnimation">@anim/left_out_offset</item>
+        <item name="android:activityOpenEnterAnimation">@anim/right_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/right_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/left_in_offset</item>
+    </style>
 </resources>

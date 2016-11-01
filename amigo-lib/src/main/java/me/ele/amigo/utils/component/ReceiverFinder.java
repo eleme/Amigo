@@ -21,7 +21,8 @@ public class ReceiverFinder extends ComponentFinder {
     public static ActivityInfo[] getAppReceivers(Context context) {
         try {
             PackageManager pm = context.getPackageManager();
-            PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_RECEIVERS);
+            PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager
+                    .GET_RECEIVERS);
             return info.receivers;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
@@ -72,7 +73,8 @@ public class ReceiverFinder extends ComponentFinder {
             for (ActivityInfo addedReceiver : addedReceivers) {
                 List<IntentFilter> filters = getReceiverIntentFilter(context, addedReceiver);
                 for (IntentFilter filter : filters) {
-                    BroadcastReceiver receiver = (BroadcastReceiver) classLoader.loadClass(addedReceiver.name).newInstance();
+                    BroadcastReceiver receiver = (BroadcastReceiver) classLoader.loadClass
+                            (addedReceiver.name).newInstance();
                     context.registerReceiver(receiver, filter);
                     registeredReceivers.add(receiver);
                 }
@@ -93,7 +95,8 @@ public class ReceiverFinder extends ComponentFinder {
         }
     }
 
-    private static List<IntentFilter> getReceiverIntentFilter(Context context, ActivityInfo receiverInfo) {
+    private static List<IntentFilter> getReceiverIntentFilter(Context context, ActivityInfo
+            receiverInfo) {
         parsePackage(context);
         Object data = null;
         for (Object receiver : receivers) {

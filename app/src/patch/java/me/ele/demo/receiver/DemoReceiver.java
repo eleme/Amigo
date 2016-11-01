@@ -13,6 +13,7 @@ public class DemoReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.e(TAG, "onReceive");
-        Toast.makeText(context, "action received with data " + intent.getStringExtra(TAG), Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "action received with data " + intent.getStringExtra(TAG), Toast
+                .LENGTH_SHORT).show();
     }
 }

@@ -33,11 +33,13 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
             if (cause != null && MyProxy.isMethodDeclaredThrowable(method, cause)) {
                 throw cause;
             } else if (cause != null) {
-                RuntimeException runtimeException = !TextUtils.isEmpty(cause.getMessage()) ? new RuntimeException(cause.getMessage()) : new RuntimeException();
+                RuntimeException runtimeException = !TextUtils.isEmpty(cause.getMessage()) ? new
+                        RuntimeException(cause.getMessage()) : new RuntimeException();
                 runtimeException.initCause(cause);
                 throw runtimeException;
             } else {
-                RuntimeException runtimeException = !TextUtils.isEmpty(e.getMessage()) ? new RuntimeException(e.getMessage()) : new RuntimeException();
+                RuntimeException runtimeException = !TextUtils.isEmpty(e.getMessage()) ? new
+                        RuntimeException(e.getMessage()) : new RuntimeException();
                 runtimeException.initCause(e);
                 throw runtimeException;
             }
@@ -66,7 +68,8 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
             if (MyProxy.isMethodDeclaredThrowable(method, e)) {
                 throw e;
             } else {
-                RuntimeException runtimeException = !TextUtils.isEmpty(e.getMessage()) ? new RuntimeException(e.getMessage()) : new RuntimeException();
+                RuntimeException runtimeException = !TextUtils.isEmpty(e.getMessage()) ? new
+                        RuntimeException(e.getMessage()) : new RuntimeException();
                 runtimeException.initCause(e);
                 throw runtimeException;
             }

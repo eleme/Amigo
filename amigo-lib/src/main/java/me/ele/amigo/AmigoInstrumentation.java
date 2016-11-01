@@ -67,7 +67,8 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         }
 
         Intent stubIntent = new Intent();
-        stubIntent.setComponent(new ComponentName(componentName.getPackageName(), stubClazz.getName()));
+        stubIntent.setComponent(new ComponentName(componentName.getPackageName(), stubClazz
+                .getName()));
         stubIntent.putExtra(EXTRA_TARGET_INTENT, intent);
         stubIntent.setFlags(intent.getFlags());
         intent.putExtra(EXTRA_STUB_NAME, stubClazz);
@@ -76,12 +77,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target,
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            Activity target,
                                             Intent intent, int requestCode, Bundle options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
+                    int.class, Bundle.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -94,12 +99,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target,
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            Activity target,
                                             Intent intent, int requestCode) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
+                    int.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -112,11 +121,15 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Fragment target, Intent intent, int requestCode) {
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            Fragment target, Intent intent, int requestCode) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class, int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class,
+                    int.class, Bundle.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -129,11 +142,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Fragment target, Intent intent, int requestCode, Bundle options) {
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            Fragment target, Intent intent, int requestCode,
+                                            Bundle options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class, int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class,
+                    int.class, Bundle.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -146,11 +164,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, Activity target, Intent intent, int requestCode, Bundle options, UserHandle user) {
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            Activity target, Intent intent, int requestCode,
+                                            Bundle options, UserHandle user) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class, int.class, Bundle.class, UserHandle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options, user);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
+                    int.class, Bundle.class, UserHandle.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode, options, user);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -163,11 +186,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
-    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token, String target, Intent intent, int requestCode, Bundle options) {
+    public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
+                                            String target, Intent intent, int requestCode, Bundle
+                                                        options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity", Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token, target, intent, requestCode, options);
+            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int
+                            .class, Bundle.class);
+            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+                    target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -204,7 +232,8 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                 if (targetInfo != null) {
                     activity.setRequestedOrientation(targetInfo.screenOrientation);
 
-                    ComponentName componentName = new ComponentName(activity, getDelegateActivityName(activity, activity.getClass().getName()));
+                    ComponentName componentName = new ComponentName(activity,
+                            getDelegateActivityName(activity, activity.getClass().getName()));
                     FieldUtils.writeField(activity, "mComponent", componentName);
 
                     Class stubClazz = (Class) targetIntent.getSerializableExtra(EXTRA_STUB_NAME);
@@ -234,7 +263,8 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
 
         Intent intent = activity.getIntent();
         Class stubClazz;
-        if (intent != null && (stubClazz = (Class) intent.getSerializableExtra(EXTRA_STUB_NAME)) != null)
+        if (intent != null && (stubClazz = (Class) intent.getSerializableExtra(EXTRA_STUB_NAME))
+                != null)
             ActivityStub.onActivityDestroyed(stubClazz, activity);
     }
 

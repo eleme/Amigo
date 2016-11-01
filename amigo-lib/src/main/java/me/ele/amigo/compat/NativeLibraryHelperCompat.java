@@ -41,7 +41,8 @@ public class NativeLibraryHelperCompat {
             Object[] args = new Object[2];
             args[0] = apkFile;
             args[1] = sharedLibraryDir;
-            return (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(), "copyNativeBinariesIfNeededLI", args);
+            return (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(),
+                    "copyNativeBinariesIfNeededLI", args);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -58,7 +59,8 @@ public class NativeLibraryHelperCompat {
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private static int copyNativeBinariesAfterL(File apkFile, File sharedLibraryDir) {
         try {
-            Object handleInstance = MethodUtils.invokeStaticMethod(handleClass(), "create", apkFile);
+            Object handleInstance = MethodUtils.invokeStaticMethod(handleClass(), "create",
+                    apkFile);
             if (handleInstance == null) {
                 return -1;
             }
@@ -71,7 +73,8 @@ public class NativeLibraryHelperCompat {
                     if (abis == null || abis.isEmpty()) {
                         return 0;
                     }
-                    int abiIndex = (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(), "findSupportedAbi", handleInstance, Build.SUPPORTED_64_BIT_ABIS);
+                    int abiIndex = (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass
+                            (), "findSupportedAbi", handleInstance, Build.SUPPORTED_64_BIT_ABIS);
                     if (abiIndex >= 0) {
                         abi = Build.SUPPORTED_64_BIT_ABIS[abiIndex];
                     }
@@ -82,7 +85,8 @@ public class NativeLibraryHelperCompat {
                     if (abis == null || abis.isEmpty()) {
                         return 0;
                     }
-                    int abiIndex = (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(), "findSupportedAbi", handleInstance, Build.SUPPORTED_32_BIT_ABIS);
+                    int abiIndex = (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass
+                            (), "findSupportedAbi", handleInstance, Build.SUPPORTED_32_BIT_ABIS);
                     if (abiIndex >= 0) {
                         abi = Build.SUPPORTED_32_BIT_ABIS[abiIndex];
                     }
@@ -97,7 +101,8 @@ public class NativeLibraryHelperCompat {
             args[0] = handleInstance;
             args[1] = sharedLibraryDir;
             args[2] = abi;
-            return (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(), "copyNativeBinaries", args);
+            return (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(),
+                    "copyNativeBinaries", args);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -112,7 +117,8 @@ public class NativeLibraryHelperCompat {
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private static boolean isVM64() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private static boolean isVM64() throws ClassNotFoundException, NoSuchMethodException,
+            InvocationTargetException, IllegalAccessException {
         Set<String> supportedAbis = getAbisFromApk(getHostApk());
         if (Build.SUPPORTED_64_BIT_ABIS.length == 0) {
             return false;
@@ -123,7 +129,9 @@ public class NativeLibraryHelperCompat {
         }
 
         for (String supportedAbi : supportedAbis) {
-            if ("arm64-v8a".endsWith(supportedAbi) || "x86_64".equals(supportedAbi) || "mips64".equals(supportedAbi)) {
+            if ("arm64-v8a".endsWith(supportedAbi)
+                    || "x86_64".equals(supportedAbi)
+                    || "mips64".equals(supportedAbi)) {
                 return true;
             }
         }
@@ -143,7 +151,8 @@ public class NativeLibraryHelperCompat {
                     continue;
                 }
                 if (name.startsWith("lib/") && !entry.isDirectory() && name.endsWith(".so")) {
-                    String supportedAbi = name.substring(name.indexOf("/") + 1, name.lastIndexOf("/"));
+                    String supportedAbi = name.substring(name.indexOf("/") + 1, name.lastIndexOf
+                            ("/"));
                     supportedAbis.add(supportedAbi);
                 }
             }
@@ -156,8 +165,10 @@ public class NativeLibraryHelperCompat {
         return null;
     }
 
-    private static String getHostApk() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        Application application = (Application) MethodUtils.invokeStaticMethod(ActivityThreadCompat.clazz(), "currentApplication");
+    private static String getHostApk() throws ClassNotFoundException, NoSuchMethodException,
+            IllegalAccessException, InvocationTargetException {
+        Application application = (Application) MethodUtils.invokeStaticMethod
+                (ActivityThreadCompat.clazz(), "currentApplication");
         return application.getApplicationInfo().sourceDir;
     }
 }

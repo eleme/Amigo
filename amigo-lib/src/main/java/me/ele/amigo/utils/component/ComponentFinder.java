@@ -23,7 +23,8 @@ public class ComponentFinder {
     private static boolean hasParsePackage = false;
 
     protected static File getHotFixApk(Context context) {
-        String workingPatchApkChecksum = context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
+        String workingPatchApkChecksum = context.getSharedPreferences(SP_NAME,
+                MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
         return PatchApks.getInstance(context).patchFile(workingPatchApkChecksum);
     }
 
@@ -56,10 +57,12 @@ public class ComponentFinder {
             } catch (Exception e) {
                 e.printStackTrace();
 
-                mPackageParser = sPackageParserClass.getDeclaredConstructor(String.class).newInstance(file.getPath());
+                mPackageParser = sPackageParserClass.getDeclaredConstructor(String.class)
+                        .newInstance(file.getPath());
                 DisplayMetrics metrics = new DisplayMetrics();
                 metrics.setToDefaults();
-                mPackage = MethodUtils.invokeMethod(mPackageParser, "parsePackage", file, file.getPath(), metrics, 0);
+                mPackage = MethodUtils.invokeMethod(mPackageParser, "parsePackage", file, file
+                        .getPath(), metrics, 0);
             }
 
             receivers = (List<Object>) FieldUtils.readField(mPackage, "receivers");

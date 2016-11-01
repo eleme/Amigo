@@ -69,7 +69,8 @@ public class ServiceManager {
     private void handleCreateServiceOne(ServiceInfo info) throws Exception {
         Object activityThread = ActivityThreadCompat.instance();
         IBinder fakeToken = new MyFakeIBinder();
-        Class CreateServiceData = Class.forName(ActivityThreadCompat.clazz().getName() + "$CreateServiceData");
+        Class CreateServiceData = Class.forName(ActivityThreadCompat.clazz().getName() +
+                "$CreateServiceData");
         Constructor init = CreateServiceData.getDeclaredConstructor();
         if (!init.isAccessible()) {
             init.setAccessible(true);
@@ -79,7 +80,8 @@ public class ServiceManager {
         FieldUtils.writeField(data, "token", fakeToken);
         FieldUtils.writeField(data, "info", info);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            FieldUtils.writeField(data, "compatInfo", CompatibilityInfoCompat.DEFAULT_COMPATIBILITY_INFO());
+            FieldUtils.writeField(data, "compatInfo", CompatibilityInfoCompat
+                    .DEFAULT_COMPATIBILITY_INFO());
         }
 
         MethodUtils.invokeMethod(activityThread, "handleCreateService", data);
@@ -266,7 +268,8 @@ public class ServiceManager {
         return 0;
     }
 
-    public boolean stopServiceToken(Context context, ComponentName cn, IBinder token, int startId) throws Exception {
+    public boolean stopServiceToken(Context context, ComponentName cn, IBinder token, int
+            startId) throws Exception {
         Service service = mTokenServices.get(token);
         if (service != null) {
             Integer lastId = mServiceTaskIds.get(token);

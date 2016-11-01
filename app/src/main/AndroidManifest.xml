@@ -29,6 +29,7 @@
 
         <activity
             android:name=".DemoActivity"
+            android:label="@string/demo"
             android:screenOrientation="portrait" />
 
         <activity

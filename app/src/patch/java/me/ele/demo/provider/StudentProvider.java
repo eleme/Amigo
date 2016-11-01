@@ -1,4 +1,4 @@
-package me.ele.app.amigo.demo;
+package me.ele.demo.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -14,18 +14,18 @@ import android.util.Log;
 
 import java.util.HashMap;
 
-public class PatchedContentProvider extends ContentProvider {
+public class StudentProvider extends ContentProvider {
 
-    private static final String TAG = PatchedContentProvider.class.getSimpleName();
+    private static final String TAG = StudentProvider.class.getSimpleName();
 
     private static final String DB_NAME = "demo.db";
     private static final String DB_STUDENT_TABLE = "tb_student";
     private static final int DB_VERSION = 1;
     private static final HashMap<String, String> articleProjectionMap;
     private static final String DB_CREATE = "create table " + DB_STUDENT_TABLE +
-        " (" + Student.ID + " integer primary key, " +
-        Student.NAME + " text not null, " +
-        Student.GENDER + " integer)";
+            " (" + Student.ID + " integer primary key, " +
+            Student.NAME + " text not null, " +
+            Student.GENDER + " integer)";
 
     static {
         articleProjectionMap = new HashMap<>();
@@ -58,14 +58,14 @@ public class PatchedContentProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
-        String sortOrder) {
+                        String sortOrder) {
         Log.d(TAG, "query: " + uri);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         SQLiteQueryBuilder sqlBuilder = new SQLiteQueryBuilder();
         sqlBuilder.setTables(DB_STUDENT_TABLE);
         sqlBuilder.setProjectionMap(articleProjectionMap);
         return sqlBuilder.query(db, projection, selection, selectionArgs, null, null,
-            TextUtils.isEmpty(sortOrder) ? Student.DEFAULT_SORT_ORDER : sortOrder, null);
+                TextUtils.isEmpty(sortOrder) ? Student.DEFAULT_SORT_ORDER : sortOrder, null);
     }
 
     @Nullable
@@ -111,7 +111,7 @@ public class PatchedContentProvider extends ContentProvider {
     private static class DBHelper extends SQLiteOpenHelper {
 
         public DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory,
-            int version) {
+                        int version) {
             super(context, name, factory, version);
         }
 

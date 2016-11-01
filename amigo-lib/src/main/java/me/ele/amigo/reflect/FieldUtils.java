@@ -62,7 +62,8 @@ public class FieldUtils {
             try {
                 final Field test = class1.getField(fieldName);
                 Validate.isTrue(match == null, "Reference to field %s is ambiguous relative to %s"
-                        + "; a matching field exists on two or more implemented interfaces.", fieldName, cls);
+                        + "; a matching field exists on two or more implemented interfaces.",
+                        fieldName, cls);
                 match = test;
             } catch (final NoSuchFieldException ex) { // NOPMD
                 // ignore
@@ -74,7 +75,8 @@ public class FieldUtils {
         return match;
     }
 
-    public static Object readField(final Field field, final Object target, final boolean forceAccess) throws IllegalAccessException {
+    public static Object readField(final Field field, final Object target, final boolean
+            forceAccess) throws IllegalAccessException {
         Validate.isTrue(field != null, "The field must not be null");
         if (forceAccess && !field.isAccessible()) {
             field.setAccessible(true);
@@ -85,7 +87,8 @@ public class FieldUtils {
     }
 
 
-    public static void writeField(final Field field, final Object target, final Object value, final boolean forceAccess)
+    public static void writeField(final Field field, final Object target, final Object value,
+                                  final boolean forceAccess)
             throws IllegalAccessException {
         Validate.isTrue(field != null, "The field must not be null");
         if (forceAccess && !field.isAccessible()) {
@@ -97,7 +100,8 @@ public class FieldUtils {
     }
 
 
-    public static Object readField(final Field field, final Object target) throws IllegalAccessException {
+    public static Object readField(final Field field, final Object target) throws
+            IllegalAccessException {
         return readField(field, target, true);
     }
 
@@ -106,7 +110,8 @@ public class FieldUtils {
     }
 
 
-    public static Object readField(final Object target, final String fieldName) throws IllegalAccessException {
+    public static Object readField(final Object target, final String fieldName) throws
+            IllegalAccessException {
         Validate.isTrue(target != null, "target object must not be null");
         final Class<?> cls = target.getClass();
         final Field field = getField(cls, fieldName, true);
@@ -115,7 +120,8 @@ public class FieldUtils {
         return readField(field, target, false);
     }
 
-    public static Object readField(final Object target, final String fieldName, final boolean forceAccess) throws IllegalAccessException {
+    public static Object readField(final Object target, final String fieldName, final boolean
+            forceAccess) throws IllegalAccessException {
         Validate.isTrue(target != null, "target object must not be null");
         final Class<?> cls = target.getClass();
         final Field field = getField(cls, fieldName, forceAccess);
@@ -125,52 +131,63 @@ public class FieldUtils {
     }
 
 
-    public static void writeField(final Object target, final String fieldName, final Object value) throws IllegalAccessException {
+    public static void writeField(final Object target, final String fieldName, final Object
+            value) throws IllegalAccessException {
         writeField(target, fieldName, value, true);
     }
 
-    public static void writeField(final Object target, final String fieldName, final Object value, final boolean forceAccess) throws IllegalAccessException {
+    public static void writeField(final Object target, final String fieldName, final Object
+            value, final boolean forceAccess) throws IllegalAccessException {
         Validate.isTrue(target != null, "target object must not be null");
         final Class<?> cls = target.getClass();
         final Field field = getField(cls, fieldName, true);
-        Validate.isTrue(field != null, "Cannot locate declared field %s.%s", cls.getName(), fieldName);
+        Validate.isTrue(field != null, "Cannot locate declared field %s.%s", cls.getName(),
+                fieldName);
         // already forced access above, don't repeat it here:
         writeField(field, target, value, forceAccess);
     }
 
-    public static void writeField(final Field field, final Object target, final Object value) throws IllegalAccessException {
+    public static void writeField(final Field field, final Object target, final Object value)
+            throws IllegalAccessException {
         writeField(field, target, value, true);
     }
 
-    public static Object readStaticField(final Field field, final boolean forceAccess) throws IllegalAccessException {
+    public static Object readStaticField(final Field field, final boolean forceAccess) throws
+            IllegalAccessException {
         Validate.isTrue(field != null, "The field must not be null");
-        Validate.isTrue(Modifier.isStatic(field.getModifiers()), "The field '%s' is not static", field.getName());
+        Validate.isTrue(Modifier.isStatic(field.getModifiers()), "The field '%s' is not static",
+                field.getName());
         return readField(field, (Object) null, forceAccess);
     }
 
-    public static Object readStaticField(final Class<?> cls, final String fieldName) throws IllegalAccessException {
+    public static Object readStaticField(final Class<?> cls, final String fieldName) throws
+            IllegalAccessException {
         final Field field = getField(cls, fieldName, true);
         Validate.isTrue(field != null, "Cannot locate field '%s' on %s", fieldName, cls);
         // already forced access above, don't repeat it here:
         return readStaticField(field, true);
     }
 
-    public static void writeStaticField(final Field field, final Object value, final boolean forceAccess) throws IllegalAccessException {
+    public static void writeStaticField(final Field field, final Object value, final boolean
+            forceAccess) throws IllegalAccessException {
         Validate.isTrue(field != null, "The field must not be null");
-        Validate.isTrue(Modifier.isStatic(field.getModifiers()), "The field %s.%s is not static", field.getDeclaringClass().getName(),
+        Validate.isTrue(Modifier.isStatic(field.getModifiers()), "The field %s.%s is not static",
+                field.getDeclaringClass().getName(),
                 field.getName());
         writeField(field, (Object) null, value, forceAccess);
     }
 
 
-    public static void writeStaticField(final Class<?> cls, final String fieldName, final Object value) throws IllegalAccessException {
+    public static void writeStaticField(final Class<?> cls, final String fieldName, final Object
+            value) throws IllegalAccessException {
         final Field field = getField(cls, fieldName, true);
         Validate.isTrue(field != null, "Cannot locate field %s on %s", fieldName, cls);
         // already forced access above, don't repeat it here:
         writeStaticField(field, value, true);
     }
 
-    public static Field getDeclaredField(final Class<?> cls, final String fieldName, final boolean forceAccess) {
+    public static Field getDeclaredField(final Class<?> cls, final String fieldName, final
+    boolean forceAccess) {
         Validate.isTrue(cls != null, "The class must not be null");
         Validate.isTrue(!TextUtils.isEmpty(fieldName), "The field name must not be blank/empty");
         try {
@@ -190,11 +207,13 @@ public class FieldUtils {
         return null;
     }
 
-    public static void writeDeclaredField(final Object target, final String fieldName, final Object value) throws IllegalAccessException {
+    public static void writeDeclaredField(final Object target, final String fieldName, final
+    Object value) throws IllegalAccessException {
         Validate.isTrue(target != null, "target object must not be null");
         final Class<?> cls = target.getClass();
         final Field field = getDeclaredField(cls, fieldName, true);
-        Validate.isTrue(field != null, "Cannot locate declared field %s.%s", cls.getName(), fieldName);
+        Validate.isTrue(field != null, "Cannot locate declared field %s.%s", cls.getName(),
+                fieldName);
         // already forced access above, don't repeat it here:
         writeField(field, target, value, false);
     }

@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Amigo</string>
+    <string name="app_name2">Amigo222</string>
     <string name="app_name3">Amigo3</string>
-    <string name="app_name2">Amigo2</string>
     <string name="action_settings">Settings</string>
     <string name="added_string">replace Resources successfully</string>
     <string name="added_string1">replace Resources successfully1</string>
+    <string name="demo">demo</string>
+    <string name="app_name1111111">dlskae4</string>
 </resources>

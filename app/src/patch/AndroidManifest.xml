@@ -51,8 +51,8 @@
         </receiver>
 
         <provider
-            android:name=".demo.PatchedContentProvider"
-            android:authorities="me.ele.app.amigo.demo.provider" />
+            android:name="me.ele.demo.provider.StudentProvider"
+            android:authorities="${applicationId}.provider.student" />
 
     </application>
 

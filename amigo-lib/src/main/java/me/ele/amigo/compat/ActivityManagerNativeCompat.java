@@ -15,7 +15,8 @@ public class ActivityManagerNativeCompat {
         return sClass;
     }
 
-    public static Object getDefault() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    public static Object getDefault() throws ClassNotFoundException, NoSuchMethodException,
+            IllegalAccessException, InvocationTargetException {
         return MethodUtils.invokeStaticMethod(Class(), "getDefault");
     }
 }

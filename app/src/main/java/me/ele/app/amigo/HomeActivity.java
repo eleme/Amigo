@@ -2,7 +2,6 @@ package me.ele.app.amigo;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -14,7 +13,7 @@ import me.ele.app.amigo.dev.DevActivity;
 import me.ele.demo.A;
 
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends BaseActivity {
 
     public static final String TAG = HomeActivity.class.getSimpleName();
 

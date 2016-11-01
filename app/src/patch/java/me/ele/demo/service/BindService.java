@@ -32,7 +32,8 @@ public class BindService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.e(TAG, "onBind");
-        Toast.makeText(BindService.this, "bind service success with data" + intent.getStringExtra(TAG), Toast.LENGTH_SHORT).show();
+        Toast.makeText(BindService.this, "bind service success with data" + intent.getStringExtra
+                (TAG), Toast.LENGTH_SHORT).show();
         return mBinder;
     }
 

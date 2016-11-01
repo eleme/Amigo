@@ -45,6 +45,7 @@ public class AmigoCallback implements Handler.Callback {
             Intent intent = (Intent) FieldUtils.readField(msg.obj, "intent");
             intent.setExtrasClassLoader(classLoader);
             Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
+
             if (targetIntent != null) {
                 ComponentName targetComponentName =
                         targetIntent.resolveActivity(context.getPackageManager());
@@ -65,28 +66,29 @@ public class AmigoCallback implements Handler.Callback {
                         (ActivityInfo) FieldUtils.readField(msg.obj, "activityInfo");
                 String activityName = activityInfo.targetActivity != null ?
                         activityInfo.targetActivity : activityInfo.name;
-                if (ActivityFinder.getActivityInfoInNewApp(context, activityName) == null) {
-                    Log.e(TAG, "#handleLaunchActivity: Activity["
-                            + intent.getComponent().getClassName()
-                            + "] was only declared in the host apk.");
-                    if (isLaunchActivity(intent, activityName)) {
-                        activityInfo.targetActivity =
-                                ActivityFinder.getNewLauncherComponent(context).getClassName();
-                        ActivityInfo targetActivityInfo =
-                                ActivityFinder.getActivityInfoInNewApp(context, activityInfo.targetActivity);
-                        targetActivityInfo.targetActivity = activityInfo.targetActivity;
-                        FieldUtils.writeDeclaredField(msg.obj, "activityInfo", targetActivityInfo);
-                    } else {
-                        // TODO this host activity was launched by using a scheme url,
-                        // we can navigate to a matched patch activity instead.
-                        Intent toPatchLauncherIntent = new Intent().setComponent(
-                                ActivityFinder.getNewLauncherComponent(context))
-                                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                        | Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        context.startActivity(toPatchLauncherIntent);
-                        return true;
-                    }
+                ActivityInfo newActivityInfo = null;
+                if (isLaunchActivity(intent, activityName)) {
+                    activityInfo.targetActivity =
+                            ActivityFinder.getNewLauncherComponent(context).getClassName();
+                    newActivityInfo =
+                            ActivityFinder.getActivityInfoInNewApp(context, activityInfo
+                                    .targetActivity);
+                    newActivityInfo.targetActivity = activityInfo.targetActivity;
+                    FieldUtils.writeDeclaredField(msg.obj, "activityInfo", newActivityInfo);
+                } else if ((newActivityInfo = ActivityFinder.getActivityInfoInNewApp(context,
+                        activityName)) != null) {
+                    // TODO check intent filter ?
+                    FieldUtils.writeDeclaredField(msg.obj, "activityInfo", newActivityInfo);
+                } else {
+                    // TODO this host activity was launched by using a scheme url,
+                    // we can navigate to a matched patch activity instead.
+                    Intent toPatchLauncherIntent = new Intent().setComponent(
+                            ActivityFinder.getNewLauncherComponent(context))
+                            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    context.startActivity(toPatchLauncherIntent);
+                    return true;
                 }
 
                 Log.e(TAG, "handleLaunchActivity targetIntent==null");
@@ -102,7 +104,8 @@ public class AmigoCallback implements Handler.Callback {
     }
 
     private boolean isLaunchActivity(Intent intent, String targetActivity) {
-        return (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_LAUNCHER))
-                || targetActivity.equals(ActivityFinder.getLauncherComponent(context).getClassName());
+        return (Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent
+                .CATEGORY_LAUNCHER)) || targetActivity.equals(ActivityFinder.getLauncherComponent
+                (context).getClassName());
     }
 }

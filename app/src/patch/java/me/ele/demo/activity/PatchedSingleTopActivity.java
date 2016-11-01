@@ -3,12 +3,14 @@ package me.ele.demo.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+
+import me.ele.app.amigo.BaseActivity;
+
 import android.util.Log;
 
 import me.ele.app.amigo.R;
 
-public class PatchedSingleTopActivity extends AppCompatActivity {
+public class PatchedSingleTopActivity extends BaseActivity {
 
     public static final String TAG = PatchedSingleTopActivity.class.getSimpleName();
 
