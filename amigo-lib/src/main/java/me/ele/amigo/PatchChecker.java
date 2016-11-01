@@ -11,7 +11,6 @@ import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.CrcUtils;
 import me.ele.amigo.utils.PermissionChecker;
 
-import static android.content.ContentValues.TAG;
 import static android.content.Context.MODE_MULTI_PROCESS;
 import static me.ele.amigo.Amigo.SP_NAME;
 import static me.ele.amigo.Amigo.VERSION_CODE;
@@ -19,6 +18,8 @@ import static me.ele.amigo.utils.CrcUtils.getCrc;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 
 class PatchChecker {
+
+    private static final String TAG = PatchChecker.class.getName();
 
     static boolean checkUpgrade(Context context) {
         boolean result = false;
@@ -37,13 +38,11 @@ class PatchChecker {
         String patchChecksum = CrcUtils.getCrc(patchFile);
         if (!PatchApks.getInstance(context).exists(patchChecksum)) {
             copyFile(patchFile, PatchApks.getInstance(context).patchFile(patchChecksum));
-            return patchChecksum;
-        } else {
-            return null;
         }
+        return patchChecksum;
     }
 
-    static void checkPatchApk(Context context, File patchFile) {
+    private static void checkPatchApk(Context context, File patchFile) {
         if (patchFile == null) {
             throw new NullPointerException("param apkFile cannot be null");
         }
@@ -80,9 +79,12 @@ class PatchChecker {
         SharedPreferences sp = context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         AmigoDirs amigoDirs = AmigoDirs.getInstance(context);
         File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
+
         for (File dexFile : dexFiles) {
             String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
             String checksum = getCrc(dexFile);
+            Log.e(TAG, "dexFile-->" + dexFile);
+            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
             if (!savedChecksum.equals(checksum)) {
                 throw new IllegalStateException("wrong dex check sum");
             }
@@ -104,6 +106,8 @@ class PatchChecker {
             for (File nativeFile : nativeFiles) {
                 String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
                 String checksum = getCrc(nativeFile);
+                Log.e(TAG, "native lib -->" + nativeFile);
+                Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
                 if (!savedChecksum.equals(checksum)) {
                     throw new IllegalStateException("wrong native lib check sum");
                 }
