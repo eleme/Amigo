@@ -3,117 +3,50 @@ package me.ele.amigo.compat;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
-import android.util.Pair;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 import me.ele.amigo.reflect.MethodUtils;
 
 
 public class RCompat {
 
-    private static Resources resources;
+    public static final String TAG = RCompat.class.getSimpleName();
 
-    private static final String[] classNames = {"R$anim", "R$attr", "R$bool", "R$color",
-            "R$dimen", "R$drawable", "R$id", "R$integer",
-            "R$layout", "R$menu", "R$mipmap", "R$string",
-            "R$style", "R$styleable"};
-    private static final List<Class> classes = new ArrayList<>(classNames.length);
-    private static final Map<Class, Map<Field, Integer>> allFields = new HashMap<>();
+    private static Resources hostResources;
+    private static Resources patchResources;
 
-    public static int getIdentifier(Context context, int id) {
-        Resources resources = getResources(context);
-        Pair<String, String> pair = getIdInfo(context, id);
-        return resources.getIdentifier(pair.first, pair.second.substring("R$".length()), context.getPackageName());
+    public static int getHostIdentifier(Context context, int id) {
+        hostResources = getHostResources(context);
+        patchResources = getPatchResources(context);
+        return hostResources.getIdentifier(patchResources.getResourceEntryName(id),
+                patchResources.getResourceTypeName(id), context.getPackageName());
     }
 
-    private static Pair<String, String> getIdInfo(Context context, int id) {
-        initClasses(context);
-        initAllFields();
-        Field hitField = null;
-        Iterator<Map.Entry<Class, Map<Field, Integer>>> iterator = allFields.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Class, Map<Field, Integer>> entry = iterator.next();
-            Map<Field, Integer> map = entry.getValue();
-            if (!map.isEmpty()) {
-                Iterator<Map.Entry<Field, Integer>> it = map.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<Field, Integer> en = it.next();
-                    if (en.getValue() == id) {
-                        hitField = en.getKey();
-                        break;
-                    }
-                }
-            }
-            if (hitField != null) {
-                break;
-            }
-        }
-
-        if (hitField == null) {
-            return null;
-        }
-
-        String name = hitField.getName();
-        String defType = hitField.getDeclaringClass().getSimpleName();
-        return new Pair<>(name, defType);
+    public static int getPatchIdentifier(Context context, int id) {
+        hostResources = getHostResources(context);
+        patchResources = getPatchResources(context);
+        return patchResources.getIdentifier(hostResources.getResourceEntryName(id), hostResources
+                .getResourceTypeName(id), context.getPackageName());
     }
 
-    private static void initClasses(Context context) {
-        if (classes.size() > 0) {
-            return;
+    private static Resources getPatchResources(Context context) {
+        if (patchResources != null) {
+            return patchResources;
         }
 
-        for (int i = 0; i < classNames.length; i++) {
-            try {
-                classes.add(Class.forName(context.getPackageName() + "." + classNames[i]));
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static void initAllFields() {
-        if (!allFields.isEmpty()) {
-            return;
-        }
-        for (Class<?> clazz : classes) {
-            if (allFields.get(clazz) == null) {
-                allFields.put(clazz, new HashMap<Field, Integer>());
-            }
-            Map<Field, Integer> map = allFields.get(clazz);
-            Field[] fields = clazz.getDeclaredFields();
-            if (fields.length == 0) {
-                continue;
-            }
-            for (Field field : fields) {
-                try {
-                    Object value = field.get(null);
-                    if (value.getClass() == int.class || value.getClass() == Integer.class) {
-                        map.put(field, (int) value);
-                    }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        return patchResources = context.getResources();
     }
 
 
-    private static Resources getResources(Context context) {
-        if (resources != null) {
-            return resources;
+    private static Resources getHostResources(Context context) {
+        if (hostResources != null) {
+            return hostResources;
         }
 
         try {
             AssetManager assetManager = AssetManager.class.newInstance();
-            MethodUtils.invokeMethod(assetManager, "addAssetPath", context.getApplicationInfo().sourceDir);
-            return resources = new Resources(assetManager,
+            MethodUtils.invokeMethod(assetManager, "addAssetPath", context.getApplicationInfo()
+                    .sourceDir);
+            return hostResources = new Resources(assetManager,
                     context.getResources().getDisplayMetrics(),
                     context.getResources().getConfiguration());
         } catch (Exception e) {
