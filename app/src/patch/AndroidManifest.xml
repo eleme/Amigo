@@ -2,47 +2,46 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="me.ele.app.amigo">
 
-    <application
-        >
-        <service android:name="me.ele.demo.service.StartService"/>
-        <service android:name="me.ele.demo.service.BindService"/>
+    <application>
+        <service android:name="me.ele.demo.service.StartService" />
+        <service android:name="me.ele.demo.service.BindService" />
 
 
         <!--test: add new activity in patch apk-->
         <activity
             android:name="me.ele.demo.activity.PatchedStandardActivity"
-            android:label="Patched : standard activity"/>
+            android:label="Patched : standard activity" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleTopActivity"
             android:label="Patched : single top activity"
-            android:launchMode="singleTop"/>
+            android:launchMode="singleTop" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleTopActivity2"
             android:label="Patched : single top activity 2"
-            android:launchMode="singleTop"/>
+            android:launchMode="singleTop" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleTaskActivity"
             android:label="Patched : single task activity"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleTaskActivity2"
             android:label="Patched : single task activity 2"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleInstanceActivity"
             android:label="Patched : single instance activity"
             android:launchMode="singleInstance"
-            android:screenOrientation="landscape"/>
+            android:screenOrientation="landscape" />
 
         <activity
             android:name="me.ele.demo.activity.PatchedSingleInstanceActivity2"
             android:label="Patched : single instance activity 2"
-            android:launchMode="singleInstance"/>
+            android:launchMode="singleInstance" />
 
         <receiver android:name="me.ele.demo.receiver.DemoReceiver">
             <intent-filter>
@@ -53,6 +52,10 @@
         <provider
             android:name="me.ele.demo.provider.StudentProvider"
             android:authorities="${applicationId}.provider.student" />
+
+        <meta-data
+            android:name="data_key"
+            android:value="BBB" />
 
     </application>
 

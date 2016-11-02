@@ -17,6 +17,7 @@ import java.util.Map;
 
 import me.ele.amigo.exceptions.LoadPatchApkException;
 import me.ele.amigo.hook.HookFactory;
+import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.ProcessUtils;
@@ -157,13 +158,17 @@ public class Amigo extends Application {
         revertBitFlag |= 1 << 1;
         setApkHandlerCallback();
         revertBitFlag |= 1 << 2;
-        dynamicRegisterNewReceivers();
+
         installHookFactory();
+
+        runPatchedApplication(checksum);
+
+        dynamicRegisterNewReceivers();
         installPatchContentProviders();
 
         sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
         PatchCleaner.clearOldPatches(this, checksum);
-        runPatchedApplication(checksum);
+
     }
 
     private void setApkResource(String checksum) throws Exception {
@@ -197,7 +202,7 @@ public class Amigo extends Application {
     }
 
     private void dynamicRegisterNewReceivers() {
-        ReceiverFinder.registerNewReceivers(this, getClassLoader());
+        ReceiverFinder.registerNewReceivers(getApplicationContext(), getClassLoader());
         Log.i(TAG, "dynamic register new receivers success");
     }
 
@@ -207,7 +212,7 @@ public class Amigo extends Application {
     }
 
     private void installPatchContentProviders() {
-        ContentProviderFinder.installPatchContentProviders(this);
+        ContentProviderFinder.installPatchContentProviders(getApplicationContext());
         Log.i(TAG, "installPatchContentProviders success");
     }
 
@@ -288,6 +293,7 @@ public class Amigo extends Application {
     private void runPatchedApplication(String patchApkCheckSum) throws Exception {
         String appName = getPatchApplicationName(patchApkCheckSum);
         Application application = (Application) getClassLoader().loadClass(appName).newInstance();
+        FieldUtils.writeField(getBaseContext(), "mOuterContext", application);
         invokeMethod(application, "attach", getBaseContext());
         setAPKApplication(application);
         application.onCreate();
@@ -322,6 +328,7 @@ public class Amigo extends Application {
     private void setAPKApplication(Application application) throws Exception {
         Object apk = getLoadedApk();
         writeField(apk, "mApplication", application);
+        writeField(instance(), "mInitialApplication", application);
     }
 
     private static Object getLoadedApk() throws Exception {

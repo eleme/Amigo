@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="me.ele.app.amigo">
+
+    <application>
+
+        <meta-data
+            android:name="data_key"
+            android:value="AAA" />
+
+    </application>
+
+</manifest>
