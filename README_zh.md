@@ -3,6 +3,8 @@ Amigo
 
 [wiki](https://github.com/eleme/Amigo/wiki)
 
+[changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
+
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
    一个Android 平台的hotfix 库, 支持热更新。
@@ -20,7 +22,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'me.ele:amigo:0.4.4'
+        classpath 'me.ele:amigo:0.5.0'
     }
 }
 ```
