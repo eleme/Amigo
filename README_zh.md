@@ -123,6 +123,8 @@ Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用
 - 不支持和Instant Run同时使用
 - `notification` & `widget`中`RemoteViews`的自定义布局不支持修改,只支持内容修复
 
+   任何使用在`RemoteViews`里面的资源id都需要进行这样的包装 ```java RCompat.getHostIdentifier(Context context, int id) ```
+
 - **唯一的限制就是你的想象力**
 
 ## 下载hotfix文件

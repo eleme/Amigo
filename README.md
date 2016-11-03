@@ -114,7 +114,8 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
         ```
         
  -  Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
- - `RemoteViews`'s layout change in `notification` & `widget`is not support 
+ - `RemoteViews`'s layout change in `notification` & `widget`is not support   
+    any resource id in here should be used with ```java RCompat.getHostIdentifier(Context context, int id) ```
 
 ## Retrieve hotfix file
 
