@@ -1,109 +1,134 @@
+
 Amigo
-====
+
 [wiki](https://github.com/eleme/Amigo/wiki)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
-   一个Android 平台的hotfix 库
+   一个Android 平台的hotfix 库, 支持热更新。
 
 
-用法
-----
+## 用法
+
+### 下载依赖
    在project 的`build.gradle` 中
 
-   ```groovy
-   dependencies {
-      classpath 'me.ele:amigo:0.4.4'
-   }
-   ```
+```groovy
+buildscript { 
+    repositories {
+        mavenCentral()
+    }
+    
+    dependencies {
+        classpath 'me.ele:amigo:0.4.4'
+    }
+}
+```
 
    在module 的`build.gradle` 中
 
-   ```groovy
-   apply plugin: 'me.ele.amigo'
-   ```
+```groovy
+apply plugin: 'me.ele.amigo'
+
+android {
+ ...
+}
+```
 
    就这样轻松的集成了Amigo。
+   
+### 自定义loading界面
 
-示例
-----
-执行命令 `./gradlew runHost preparePatch`. 到Demo页面查看.
+在热修复的过程中会进行一些耗时(dex优化)的操作，这些操作会在一个新的进程中的Activity 中执行，所以你可以在Manifest文件中增加下面的两个配置来自定义这个Activity，美化loading界面。
 
+```xml
+<meta-data
+   android:name="amigo_layout"
+   android:value="{your-layout-name}" />
 
-开发样例
-----
-#### 流程
-1. 我们在`app/build.gradle`提供了两个gradle task: `:app:runHost`, `:app:preparePatch`, 可以有效的帮助加快开发.
+<meta-data
+   android:name="amigo_theme"
+   android:value="{your-theme-name}" />
+```
 
-    * `./gradlew runHost`, 编译并启动宿主app
-    * `./gradlew preparePatch`, 编译patch apk并推到设备sdcard中
-    * 在app中应用patch apk
+### 运行patch apk
+   补丁包生效方式有两种可以选择：
 
-#### Gradle 插件
-Gradle插件的代码在buildSrc目录下,这样每次编译项目时都会使用最新的插件代码。
+*    稍后生效
 
-#### amigo lib
-Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用amigo-lib这个模块,从而无需每次推送到maven仓库。
-
-### 生效补丁包
-   补丁包生效有两种方式可以选择：
-
-   * 稍后生效补丁包
-
-   	如果不想立即生效而是用户第二次打开App 时才打入补丁包，第二次打开时就会自动生效。可以通过这个方法
-   	
-	```java
+     如果不想立即生效而是用户第二次打开App 时才打入补丁包，可以通过这个方法：
+     
+    ```java
     Amigo.workLater(context, apkFile);
     ```
+    
+*    立即生效
 
-   * 立即生效补丁包
+     如果想要补丁包立即生效，调用以下方法，App 会立即重启，并且打入补丁包:
+     
+    ```java
+    Amigo.work(context, apkFile);
+    ```
+    
+### 清除patch
 
-   	如果想要补丁包立即生效，调用以下两个方法之一，App 会立即重启，并且打入补丁包。
-
-   	```Java
-   	Amigo.work(context, apkFile);
-   	```
-
-### 停用patch apk
-
-```Java
+```java
 Amigo.clear(context);
 ```
 
-**提示**：当主进程重启之后, 将会使用宿主apk, 同时删除所有的patch files.
+**提示**: 将App下次启动时删除所有的patch文件.
+
+## 示例
+
+执行命令 `./gradlew runHost preparePatch` 到Demo页面查看.
 
 
-### 自定义界面
+## 开发样例
 
-在热修复的过程中会有一些耗时的操作，这些操作会在一个新的进程中的Activity 中执行，所以你可以通过以下方式来自定义这个Activity。
+### Amigo gradle 插件
+Gradle插件的代码在buildSrc目录下,这样每次编译项目时都会使用最新的插件代码。
 
-```Java
-<meta-data
-  android:name="amigo_layout"
-  android:value="{your-layout-name}" />
+### Amigo lib
+Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用amigo-lib这个模块,从而无需每次推送到maven仓库。
 
-<meta-data
-  android:name="amigo_theme"
-  android:value="{your-theme-name}" />
-```
-
-### 局限
- - 新的apk中, 新增`provider`暂时不支持
-      
- - launcher activity的全类名暂时不支持修改
+### 测试
+我们在`app/build.gradle`提供了两个gradle task: `:app:runHost`, `:app:preparePatch`, 可以有效的帮助加快开发.
  
- - `notification` & `widget`中`RemoteViews`的自定义布局不支持修改,只支持内容修复
- 
- - 可能会和google play上架协议有冲突
- 
- - **唯一的限制就是你的想象力**
+*   `./gradlew runHost`, 编译并启动宿主app
+*   `./gradlew preparePatch`, 编译patch apk并推到设备sdcard中
+*   在app中应用patch apk
 
-### 下载hotfix文件
+## 局限
+- patch包中新增provider
+    * 修改声明方式，authorities须以"**${youPackageName}.provider**"开头
+    
+        ```xml
+        <provider
+            android:name="me.ele.demo.provider.StudentProvider"
+            android:authorities="${youPackageName}.provider.student" />
+        ```
 
-- 简单来说,你只需要下载一个全新的apk
 
-- 为用户的流量照想, 你可能只想下载一个差分文件
- [bspatch](https://github.com/eleme/bspatch)可能是你的一个选择
+    * 修改调用方式
+    
+        ```java
+        // 1. app进程内使用时，无需做任何修改
+        Cursor cursor = getContentResolver().query(Uri.parse("content://" + getPackageName() + ".provider.student?id=0"), null, null, null, null);
+        // 2. 其他进程中的使用时，需要修改uri为以下形式, 其中targetPackageName为你的App的包名
+        Cursor cursor = getContentResolver().query(Uri.parse("content://" + targetPackageName + ".provider/student?id=0"), null, null, null, null);
+        ```
+        
+- 不支持和Instant Run同时使用
+- `notification` & `widget`中`RemoteViews`的自定义布局不支持修改,只支持内容修复
+
+- **唯一的限制就是你的想象力**
+
+## 下载hotfix文件
+
+- 简单来说, 你只需要下载一个全新的apk
+
+- 为用户的流量着想, 你可能只想下载一个差分文件
+   [bspatch](https://github.com/eleme/bspatch)可能是你的一个选择
 
 ## Inspired by
 
@@ -112,8 +137,7 @@ Amigo.clear(context);
 [DroidPlugin](https://github.com/DroidPluginTeam/DroidPlugin)
 
 
-License
-====
+## License
 
    	Copyright 2016 ELEME Inc.  
 

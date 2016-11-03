@@ -88,7 +88,8 @@ public final class AmigoDirs {
                 return;
             }
 
-            amigoDir = new File(context.getFilesDir(), AMIGO_FOLDER_NAME);
+            // data dir's real path
+            amigoDir = new File(context.getFilesDir().getCanonicalPath(), AMIGO_FOLDER_NAME);
             FileUtils.mkdirChecked(amigoDir);
 
             cacheDir = new File(applicationInfo.dataDir, CODE_CACHE_NAME);
@@ -134,8 +135,8 @@ public final class AmigoDirs {
     }
 
     public boolean isOptedDexExists(String checksum) {
-        return dexOptDir(checksum).listFiles() != null && dexOptDir(checksum).listFiles().length
-                > 0;
+        return dexOptDir(checksum).listFiles() != null
+                && dexOptDir(checksum).listFiles().length > 0;
     }
 
     public void delete() {

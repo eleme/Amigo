@@ -338,7 +338,6 @@ public class Amigo extends Application {
 
     public static void work(Context context, File patchFile) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile);
-        if (patchChecksum == null) return;
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
                 .edit()
                 .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, patchChecksum)

@@ -104,6 +104,11 @@
             android:exported="false"
             />
 
+        <provider
+            android:authorities="${applicationId}.provider"
+            android:exported="true"
+            android:name=".stub.ProviderStub"/>
+
     </application>
 
 </manifest>

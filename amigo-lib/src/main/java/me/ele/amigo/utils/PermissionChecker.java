@@ -22,8 +22,10 @@ public class PermissionChecker {
         try {
             List<String> extraPermissions = new ArrayList<>();
             PackageManager pm = context.getPackageManager();
-            String[] hostPs = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_PERMISSIONS).requestedPermissions;
-            PackageInfo packageInfo = pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), PackageManager.GET_PERMISSIONS);
+            String[] hostPs = pm.getPackageInfo(context.getPackageName(), PackageManager
+                    .GET_PERMISSIONS).requestedPermissions;
+            PackageInfo packageInfo = pm.getPackageArchiveInfo(patchApk.getAbsolutePath(),
+                    PackageManager.GET_PERMISSIONS);
             if (packageInfo == null) {
                 throw new IllegalPatchApkException();
             }

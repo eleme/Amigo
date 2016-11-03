@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="me.ele.app.amigo">
+          package="me.ele.app.amigo">
 
     <application
         >
@@ -52,6 +52,7 @@
 
         <provider
             android:name="me.ele.demo.provider.StudentProvider"
+            android:exported="true"
             android:authorities="${applicationId}.provider.student" />
 
     </application>
