@@ -100,7 +100,7 @@ public class IActivityManagerHook extends ProxyHook {
     }
 
     private void rollbackProxyActivityManager() {
-        if (original_gDefault != null) {
+        if (original_gDefault == null) {
             return;
         }
 

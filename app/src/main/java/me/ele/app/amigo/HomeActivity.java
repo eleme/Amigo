@@ -1,6 +1,7 @@
 package me.ele.app.amigo;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,6 +21,9 @@ public class HomeActivity extends BaseActivity {
     @BindView(R.id.info)
     TextView infoView;
 
+    @BindView(R.id.meta_data)
+    TextView metaDataView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,6 +34,14 @@ public class HomeActivity extends BaseActivity {
         Log.e(TAG, "getApplication from HomeActivity-->" + getApplication());
 
         infoView.setText(A.getDes());
+
+        try {
+            String metaData = getPackageManager().getApplicationInfo(getPackageName(),
+                    PackageManager.GET_META_DATA).metaData.getString("data_key");
+            metaDataView.setText("metaData:" + metaData);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @OnClick(R.id.goto_demo)

@@ -15,6 +15,7 @@ public class HookFactory {
 
     public static void install(Context context, ClassLoader cl) {
         installHook(new IActivityManagerHook(context), cl);
+        installHook(new IPackageManagerHook(context), cl);
     }
 
     private static void installHook(Hook hook, ClassLoader cl) {

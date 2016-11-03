@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:gravity="center_horizontal"
-              android:orientation="vertical"
-              tools:context="me.ele.app.amigo.HomeActivity">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    tools:context="me.ele.app.amigo.HomeActivity">
 
     <TextView
         android:id="@+id/info"
@@ -16,20 +15,29 @@
         android:textColor="@android:color/holo_red_light"
         android:textSize="20sp"
         android:textStyle="bold"
-        tools:text="Test"/>
+        tools:text="Test" />
+
+    <TextView
+        android:id="@+id/meta_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:textColor="@android:color/holo_red_light"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/goto_demo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Demo Usage"
-        android:textAllCaps="false"/>
+        android:textAllCaps="false" />
 
     <Button
         android:id="@+id/goto_dev"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Development"
-        android:textAllCaps="false"/>
+        android:textAllCaps="false" />
 
 </LinearLayout>
