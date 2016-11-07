@@ -1,12 +1,19 @@
 package me.ele.amigo.utils.component;
 
 import android.content.Context;
+import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ServiceInfo;
+import android.os.Bundle;
 import android.util.DisplayMetrics;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import me.ele.amigo.Amigo;
 import me.ele.amigo.PatchApks;
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.reflect.MethodUtils;
@@ -15,29 +22,26 @@ import static android.content.Context.MODE_MULTI_PROCESS;
 import static me.ele.amigo.Amigo.SP_NAME;
 import static me.ele.amigo.Amigo.WORKING_PATCH_APK_CHECKSUM;
 
-public class ComponentFinder {
+class ComponentFinder {
 
-    protected static List<Object> receivers;
-    protected static List<Object> services;
-    protected static List<Object> activities;
+    static List<Activity> sReceivers = Collections.EMPTY_LIST;
+    static List<Service> sServices = Collections.EMPTY_LIST;
+    static List<Activity> sActivities = Collections.EMPTY_LIST;
+    static List<Object> sProviders = Collections.EMPTY_LIST;
     private static boolean hasParsePackage = false;
 
-    protected static File getHotFixApk(Context context) {
+    static File getHotFixApk(Context context) {
         String workingPatchApkChecksum = context.getSharedPreferences(SP_NAME,
                 MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
         return PatchApks.getInstance(context).patchFile(workingPatchApkChecksum);
     }
 
-    protected static boolean isHotfixApkValid(Context context) {
+    static boolean isHotfixApkValid(Context context) {
         File file = getHotFixApk(context);
-        if (file == null || !file.exists()) {
-            return false;
-        }
-
-        return true;
+        return file != null && file.exists();
     }
 
-    protected static void parsePackage(Context context) {
+    static void parsePackage(Context context) {
         if (hasParsePackage) {
             return;
         }
@@ -65,26 +69,92 @@ public class ComponentFinder {
                         .getPath(), metrics, 0);
             }
 
-            receivers = (List<Object>) FieldUtils.readField(mPackage, "receivers");
-            services = (List<Object>) FieldUtils.readField(mPackage, "services");
-            activities = (List<Object>) FieldUtils.readField(mPackage, "activities");
+            List<Object> tempReceivers = (List<Object>) FieldUtils.readField(mPackage,
+                    "receivers");
+            final ArrayList<Activity> providers = new ArrayList<>();
+            if (tempReceivers != null) {
+                for (int i = tempReceivers.size() - 1; i >= 0; i--) {
+                    Object obj = tempReceivers.get(i);
+                    ActivityInfo activityInfo = (ActivityInfo) FieldUtils.readField(obj, "info");
+                    List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
+                            (obj, "intents");
+                    Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
+                    providers.add(new Activity(meta, intentFilters, activityInfo));
+                }
+            }
 
+            List<Object> tempProviders = (List<Object>) FieldUtils.readField(mPackage,
+                    "providers");
+            if (tempProviders != null) {
+                sProviders = tempProviders;
+            }
+
+            List<Object> tempServices = (List<Object>) FieldUtils.readField(mPackage, "services");
+            final ArrayList<Service> services = new ArrayList<>();
+            if (tempServices != null) {
+                for (Object obj : tempServices) {
+                    ServiceInfo serviceInfo = (ServiceInfo) FieldUtils.readField(obj, "info");
+                    List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
+                            (obj, "intents");
+                    Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
+                    services.add(new Service(meta, intentFilters, serviceInfo));
+                }
+            }
+            sServices = services;
+
+            List<Object> tempActivities = (List<Object>) FieldUtils.readField(mPackage,
+                    "activities");
+            final ArrayList<Activity> activities = new ArrayList<>();
+            if (tempActivities != null) {
+                for (Object obj : tempActivities) {
+                    ActivityInfo activityInfo = (ActivityInfo) FieldUtils.readField(obj, "info");
+                    List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
+                            (obj, "intents");
+                    Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
+                    activities.add(new Activity(meta, intentFilters, activityInfo));
+                }
+            }
+            sActivities = activities;
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        if (receivers == null) {
-            receivers = Collections.EMPTY_LIST;
-        }
-
-        if (services == null) {
-            services = Collections.EMPTY_LIST;
-        }
-
-        if (activities == null) {
-            activities = Collections.EMPTY_LIST;
-        }
-
         hasParsePackage = true;
+    }
+
+    static void fillApplicationInfo(Context context, ApplicationInfo applicationInfo) {
+        String patchPath = PatchApks.getInstance(context).patchPath(Amigo
+                .getWorkingPatchApkChecksum(context));
+        applicationInfo.sourceDir = patchPath;
+        applicationInfo.publicSourceDir = patchPath;
+        applicationInfo.uid = context.getApplicationInfo().uid;
+//        applicationInfo.packageName = context.getApplicationContext().getPackageName();
+    }
+
+    static class Component {
+        List<IntentFilter> filters;
+        Bundle metaData;
+
+        Component(Bundle metaData, List<IntentFilter> filters) {
+            this.metaData = metaData;
+            this.filters = filters;
+        }
+    }
+
+    static class Service extends Component {
+        ServiceInfo serviceInfo;
+
+        Service(Bundle metaData, List<IntentFilter> filters, ServiceInfo serviceInfo) {
+            super(metaData, filters);
+            this.serviceInfo = serviceInfo;
+        }
+    }
+
+    static class Activity extends Component {
+        ActivityInfo activityInfo;
+
+        Activity(Bundle metaData, List<IntentFilter> filters, ActivityInfo activityInfo) {
+            super(metaData, filters);
+            this.activityInfo = activityInfo;
+        }
     }
 }

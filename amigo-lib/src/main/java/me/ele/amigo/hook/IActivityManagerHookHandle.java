@@ -28,13 +28,13 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
     @Override
     protected void init() {
-        sHookedMethodHandlers.put("startService", new startService(context));
-        sHookedMethodHandlers.put("stopService", new stopService(context));
-        sHookedMethodHandlers.put("stopServiceToken", new stopServiceToken(context));
-        sHookedMethodHandlers.put("bindService", new bindService(context));
-        sHookedMethodHandlers.put("unbindService", new unbindService(context));
-        sHookedMethodHandlers.put("unbindFinished", new unbindFinished(context));
-        sHookedMethodHandlers.put("peekService", new peekService(context));
+        hookedMethodHandlers.put("startService", new startService(context));
+        hookedMethodHandlers.put("stopService", new stopService(context));
+        hookedMethodHandlers.put("stopServiceToken", new stopServiceToken(context));
+        hookedMethodHandlers.put("bindService", new bindService(context));
+        hookedMethodHandlers.put("unbindService", new unbindService(context));
+        hookedMethodHandlers.put("unbindFinished", new unbindFinished(context));
+        hookedMethodHandlers.put("peekService", new peekService(context));
     }
 
     private static class startService extends HookedMethodHandler {

@@ -17,6 +17,8 @@ import me.ele.amigo.utils.Log;
 public class IActivityManagerHook extends ProxyHook {
 
     private static final String TAG = IActivityManagerHook.class.getSimpleName();
+    private Object original_gDefault = null;
+    private Object gDefault_mInstance = null;
 
     public IActivityManagerHook(Context context) {
         super(context);
@@ -33,9 +35,7 @@ public class IActivityManagerHook extends ProxyHook {
             return super.invoke(proxy, method, args);
         } catch (SecurityException e) {
             String msg = String.format("msg[%s],args[%s]", e.getMessage(), Arrays.toString(args));
-            SecurityException e1 = new SecurityException(msg);
-            e1.initCause(e);
-            throw e1;
+            throw new SecurityException(msg, e);
         }
     }
 
@@ -113,10 +113,9 @@ public class IActivityManagerHook extends ProxyHook {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        original_gDefault = null;
+        original_gDefault = null;
     }
-
-    private Object original_gDefault = null;
-    private Object gDefault_mInstance = null;
 
     @Override
     protected void onUnInstall(ClassLoader classLoader) throws Throwable {

@@ -54,11 +54,11 @@ public class AmigoClassLoader extends BaseDexClassLoader {
         return path.toString();
     }
 
-    private static String getDexPath(Context context, String checksum)
-            throws IllegalStateException {
+    private static String getDexPath(Context context, String checksum) {
         String dexPath = joinPath(AmigoDirs.getInstance(context).dexDir(checksum));
         if (dexPath == null) {
-            throw new IllegalStateException("Amigo: no patch dex available");
+            throw new RuntimeException("Amigo: no patch dex available for checksum[" + checksum +
+                    "]");
         }
         return dexPath;
     }

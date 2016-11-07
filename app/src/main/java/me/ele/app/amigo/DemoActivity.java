@@ -44,7 +44,7 @@ public class DemoActivity extends BaseActivity {
         if (!patchApkFile.exists()) {
             Toast.makeText(this,
                     "No amigo_patch.apk found in the directory: " + dir.getAbsolutePath(),
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         boolean patchWorked = Amigo.hasWorked();
@@ -55,7 +55,7 @@ public class DemoActivity extends BaseActivity {
         int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
         if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
             Toast.makeText(this, patchApkFile.getAbsolutePath()
-                    + " version must be newer than current working patch", Toast.LENGTH_LONG)
+                    + " version must be newer than current working patch", Toast.LENGTH_SHORT)
                     .show();
             return;
         }
@@ -69,7 +69,7 @@ public class DemoActivity extends BaseActivity {
         if (!patchApkFile.exists()) {
             Toast.makeText(this,
                     "No amigo_patch.apk found in the directory: " + dir.getAbsolutePath(),
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         boolean patchWorked = Amigo.hasWorked();
@@ -77,27 +77,27 @@ public class DemoActivity extends BaseActivity {
             Amigo.workLater(this, patchApkFile);
             Toast.makeText(this,
                     "waiting for seconds, and kill this app and relaunch the app to check result",
-                    Toast.LENGTH_LONG).show();
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
         if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
             Toast.makeText(this, patchApkFile.getAbsolutePath()
-                    + " version must be newer than current working patch", Toast.LENGTH_LONG)
+                    + " version must be newer than current working patch", Toast.LENGTH_SHORT)
                     .show();
             return;
         }
         Amigo.workLater(this, patchApkFile);
         Toast.makeText(this,
                 "waiting for seconds, and kill this app and relaunch the app to check result",
-                Toast.LENGTH_LONG).show();
+                Toast.LENGTH_SHORT).show();
     }
 
     @OnClick(R.id.clear_patch)
     public void clearPatchApk() {
         Amigo.clear(getApplication());
         Toast.makeText(this, "Kill this app, restart the app and check the running apk",
-                Toast.LENGTH_LONG).show();
+                Toast.LENGTH_SHORT).show();
     }
 
     @OnClick(R.id.notification)

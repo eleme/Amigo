@@ -33,9 +33,4 @@ public class ApkReleaseActivity extends Activity {
 
         ApkReleaser.getInstance(this).release(checksum);
     }
-
-    @Override
-    public void onBackPressed() {
-        //do nothing
-    }
 }

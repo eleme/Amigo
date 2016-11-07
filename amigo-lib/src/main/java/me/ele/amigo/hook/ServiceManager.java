@@ -1,6 +1,5 @@
 package me.ele.amigo.hook;
 
-import android.app.Application;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -61,9 +60,7 @@ public class ServiceManager {
     }
 
     private ClassLoader getClassLoader(Context context) throws Exception {
-        Application application = (Application) context.getApplicationContext();
-        Object mLoadedApk = FieldUtils.readField(application, "mLoadedApk", true);
-        return (ClassLoader) FieldUtils.readField(mLoadedApk, "mClassLoader", true);
+        return context.getClassLoader();
     }
 
     private void handleCreateServiceOne(ServiceInfo info) throws Exception {

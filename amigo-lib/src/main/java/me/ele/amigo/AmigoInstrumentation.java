@@ -28,6 +28,12 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     private static final String TAG = AmigoInstrumentation.class.getSimpleName();
 
     private Instrumentation oldInstrumentation;
+    private Method methodExecStart1;
+    private Method methodExecStart2;
+    private Method methodExecStart3;
+    private Method methodExecStart4;
+    private Method methodExecStart5;
+    private Method methodExecStart6;
 
     public AmigoInstrumentation(Instrumentation oldInstrumentation) {
         this.oldInstrumentation = oldInstrumentation;
@@ -40,10 +46,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         }
 
         ActivityInfo[] activityInfos = ActivityFinder.getAppActivities(who);
-        if (activityInfos == null || activityInfos.length == 0) {
-            return false;
-        }
-
         for (ActivityInfo activityInfo : activityInfos) {
             if (activityInfo.name.equals(componentName.getClassName())) {
                 return false;
@@ -82,10 +84,15 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                                             Intent intent, int requestCode, Bundle options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
-                    int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart1 == null) {
+                methodExecStart1 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+                                Context.class, IBinder.class, IBinder.class, Activity.class,
+                                Intent.class,
+                                int.class, Bundle.class);
+            }
+            return (ActivityResult) methodExecStart1.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -104,10 +111,15 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                                             Intent intent, int requestCode) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
-                    int.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart2 == null) {
+                methodExecStart2 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+                                Context.class, IBinder.class, IBinder.class, Activity.class,
+                                Intent.class,
+                                int.class);
+            }
+            return (ActivityResult) methodExecStart2.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -125,10 +137,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                                             Fragment target, Intent intent, int requestCode) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class,
-                    int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart3 == null) {
+                methodExecStart3 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+                                Context.class, IBinder.class, IBinder.class, Fragment.class,
+                                Intent.class,
+
+                                int.class, Bundle.class);
+            }
+            return (ActivityResult) methodExecStart3.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -147,10 +165,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                                             Bundle options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, Fragment.class, Intent.class,
-                    int.class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart4 == null) {
+                methodExecStart4 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+
+                                Context.class, IBinder.class, IBinder.class, Fragment.class,
+                                Intent.class,
+                                int.class, Bundle.class);
+            }
+            return (ActivityResult) methodExecStart4.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -169,10 +193,14 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
                                             Bundle options, UserHandle user) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, Activity.class, Intent.class,
-                    int.class, Bundle.class, UserHandle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart5 == null)
+                methodExecStart5 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+                                Context.class, IBinder.class, IBinder.class, Activity.class,
+                                Intent.class,
+                                int.class, Bundle.class, UserHandle.class);
+            return (ActivityResult) methodExecStart5.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode, options, user);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -188,13 +216,16 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     @Override
     public ActivityResult execStartActivity(Context who, IBinder contextThread, IBinder token,
                                             String target, Intent intent, int requestCode, Bundle
-                                                        options) {
+                                                    options) {
         try {
             intent = wrapIntent(who, intent);
-            Method method = oldInstrumentation.getClass().getDeclaredMethod("execStartActivity",
-                    Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int
-                            .class, Bundle.class);
-            return (ActivityResult) method.invoke(oldInstrumentation, who, contextThread, token,
+            if (methodExecStart6 == null)
+                methodExecStart6 = oldInstrumentation.getClass().getDeclaredMethod
+                        ("execStartActivity",
+                        Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int
+                                .class, Bundle.class);
+            return (ActivityResult) methodExecStart6.invoke(oldInstrumentation, who,
+                    contextThread, token,
                     target, intent, requestCode, options);
         } catch (NoSuchMethodException e) {
             e.printStackTrace();

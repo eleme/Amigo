@@ -55,6 +55,7 @@ public class IPackageManagerHook extends ProxyHook {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        original_sPackageManager = null;
     }
 
     @Override

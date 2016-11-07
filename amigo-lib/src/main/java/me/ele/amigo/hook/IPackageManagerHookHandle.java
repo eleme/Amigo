@@ -23,7 +23,7 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
 
     @Override
     protected void init() {
-        sHookedMethodHandlers.put("getApplicationInfo", new getApplicationInfo(context));
+        hookedMethodHandlers.put("getApplicationInfo", new getApplicationInfo(context));
     }
 
     private static class getApplicationInfo extends HookedMethodHandler {

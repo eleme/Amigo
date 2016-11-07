@@ -311,8 +311,8 @@ public class Amigo extends Application {
         }
         if (applicationName == null) {
             applicationName = getPackageManager().getPackageArchiveInfo(
-                    PatchApks.getInstance(this).patchPath(patchApkCheckSum),
-                    PackageManager.GET_META_DATA).applicationInfo.className;
+                    PatchApks.getInstance(this).patchPath(patchApkCheckSum), 0).applicationInfo
+                    .className;
         }
         if (applicationName == null) {
             throw new RuntimeException(
