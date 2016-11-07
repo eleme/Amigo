@@ -122,7 +122,7 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
 - make it simple, you just need a fully new apk
 
 - to save the internet traffic, you may just want to download a diff file
-  [bspatch](https://github.com/eleme/bspatch) is an option for you
+  [bspatch](https://github.com/eleme/bspatch) (`support whole apk diff & fine-grained diff in apk`)is an option for you
   
 
 ## Inspired by
