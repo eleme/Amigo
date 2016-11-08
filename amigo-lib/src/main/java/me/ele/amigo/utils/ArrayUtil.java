@@ -10,4 +10,9 @@ public class ArrayUtil {
         return array != null && array.length > 0;
     }
 
+
+    public static <T> int length(T[] array) {
+        return array != null ? array.length : 0;
+    }
+
 }

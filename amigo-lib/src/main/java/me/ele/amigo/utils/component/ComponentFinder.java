@@ -51,7 +51,6 @@ class ComponentFinder {
 
         Object mPackageParser;
         Object mPackage;
-
         try {
             File file = ActivityFinder.getHotFixApk(context);
             Class sPackageParserClass = Class.forName("android.content.pm.PackageParser");
@@ -71,16 +70,17 @@ class ComponentFinder {
 
             List<Object> tempReceivers = (List<Object>) FieldUtils.readField(mPackage,
                     "receivers");
-            final ArrayList<Activity> providers = new ArrayList<>();
             if (tempReceivers != null) {
+                final ArrayList<Activity> receivers = new ArrayList<>();
                 for (int i = tempReceivers.size() - 1; i >= 0; i--) {
                     Object obj = tempReceivers.get(i);
                     ActivityInfo activityInfo = (ActivityInfo) FieldUtils.readField(obj, "info");
                     List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
                             (obj, "intents");
                     Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
-                    providers.add(new Activity(meta, intentFilters, activityInfo));
+                    receivers.add(new Activity(meta, intentFilters, activityInfo));
                 }
+                sReceivers = receivers;
             }
 
             List<Object> tempProviders = (List<Object>) FieldUtils.readField(mPackage,
@@ -90,8 +90,8 @@ class ComponentFinder {
             }
 
             List<Object> tempServices = (List<Object>) FieldUtils.readField(mPackage, "services");
-            final ArrayList<Service> services = new ArrayList<>();
             if (tempServices != null) {
+                final ArrayList<Service> services = new ArrayList<>();
                 for (Object obj : tempServices) {
                     ServiceInfo serviceInfo = (ServiceInfo) FieldUtils.readField(obj, "info");
                     List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
@@ -99,13 +99,13 @@ class ComponentFinder {
                     Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
                     services.add(new Service(meta, intentFilters, serviceInfo));
                 }
+                sServices = services;
             }
-            sServices = services;
 
             List<Object> tempActivities = (List<Object>) FieldUtils.readField(mPackage,
                     "activities");
-            final ArrayList<Activity> activities = new ArrayList<>();
             if (tempActivities != null) {
+                final ArrayList<Activity> activities = new ArrayList<>();
                 for (Object obj : tempActivities) {
                     ActivityInfo activityInfo = (ActivityInfo) FieldUtils.readField(obj, "info");
                     List<IntentFilter> intentFilters = (List<IntentFilter>) FieldUtils.readField
@@ -113,8 +113,8 @@ class ComponentFinder {
                     Bundle meta = (Bundle) FieldUtils.readField(obj, "metaData");
                     activities.add(new Activity(meta, intentFilters, activityInfo));
                 }
+                sActivities = activities;
             }
-            sActivities = activities;
         } catch (Exception e) {
             e.printStackTrace();
         }

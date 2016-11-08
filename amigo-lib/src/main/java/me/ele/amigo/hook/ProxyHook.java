@@ -28,7 +28,10 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
         try {
             HookedMethodHandler hookedMethodHandler = mHookHandles.getHookedMethodHandler(method);
             if (hookedMethodHandler != null) {
-                return hookedMethodHandler.doHookInner(proxyObj, method, args);
+                Object hookResult = hookedMethodHandler.doHookInner(proxyObj, method, args);
+                long t2 = System.currentTimeMillis();
+                Log.d("ProxyHook", "invoking (%s) \ncost %s ms totally", method, (t2 - t1));
+                return hookResult;
             }
             return method.invoke(proxyObj, args);
         } catch (InvocationTargetException e) {
@@ -70,9 +73,6 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
                 runtimeException.initCause(e);
                 throw runtimeException;
             }
-        } finally {
-            long t2 = System.currentTimeMillis();
-            Log.d("ProxyHook", "invoking (%s) \ncost %s ms totally", method, (t2 - t1));
         }
     }
 }

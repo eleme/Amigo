@@ -12,9 +12,9 @@
         <activity
             android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
-            android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:process=":amigo"
+            android:noHistory="true"
             android:screenOrientation="portrait"/>
 
         <activity

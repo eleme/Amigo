@@ -4,6 +4,7 @@ import android.app.IServiceConnection;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -21,6 +22,7 @@ import me.ele.amigo.utils.component.ServiceFinder;
 public class IActivityManagerHookHandle extends BaseHookHandle {
 
     private static final String TAG = IActivityManagerHookHandle.class.getSimpleName();
+    private static ServiceInfo proxyServiceInfo;
 
     public IActivityManagerHookHandle(Context context) {
         super(context);
@@ -39,11 +41,11 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
     private static class startService extends HookedMethodHandler {
 
+        private ServiceInfo info = null;
+
         public startService(Context context) {
             super(context);
         }
-
-        private ServiceInfo info = null;
 
         @Override
         protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
@@ -115,11 +117,11 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
     private static class bindService extends HookedMethodHandler {
 
+        private ServiceInfo info = null;
+
         public bindService(Context context) {
             super(context);
         }
-
-        private ServiceInfo info = null;
 
         @Override
         protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
@@ -257,20 +259,17 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         return null;
     }
 
-    private static ServiceInfo proxyServiceInfo;
-
     //// TODO: we may need to support new added services in multi-process app
     private static ServiceInfo selectProxyService(ServiceInfo serviceInfo) {
-        if (proxyServiceInfo != null) {
-            return proxyServiceInfo;
-        }
-
-        for (ServiceInfo info : ServiceFinder.getAppServices(context)) {
-            if (info.name.equals(ServiceStub.class.getName())) {
-                return proxyServiceInfo = info;
+        if (proxyServiceInfo == null) {
+            try {
+                proxyServiceInfo = context.getPackageManager().getServiceInfo(new ComponentName
+                        (context.getPackageName(), ServiceStub.class.getName()), 0);
+            } catch (PackageManager.NameNotFoundException e) {
+                throw new RuntimeException(e);
             }
         }
-        return null;
+        return proxyServiceInfo;
     }
 
     private static int findFirstIntentIndexInArgs(Object[] args) {
@@ -291,6 +290,5 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         return ServiceFinder.resolveServiceInfo(context, new Intent().setComponent(componentName)
         ) != null;
     }
-
 
 }
