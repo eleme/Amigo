@@ -55,6 +55,8 @@ public class ApkReleaser {
                     handler.sendEmptyMessageDelayed(WHAT_FINISH, DELAY_FINISH_TIME);
                     break;
                 case WHAT_FINISH:
+                    context = null;
+                    releaser = null;
                     System.exit(0);
                     Process.killProcess(Process.myPid());
                     break;

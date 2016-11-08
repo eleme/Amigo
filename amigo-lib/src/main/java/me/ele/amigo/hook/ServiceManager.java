@@ -1,6 +1,5 @@
 package me.ele.amigo.hook;
 
-import android.app.Application;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -60,10 +59,8 @@ public class ServiceManager {
         mServiceIntents.put(connection, intent);
     }
 
-    private ClassLoader getClassLoader(Context context) throws Exception {
-        Application application = (Application) context.getApplicationContext();
-        Object mLoadedApk = FieldUtils.readField(application, "mLoadedApk", true);
-        return (ClassLoader) FieldUtils.readField(mLoadedApk, "mClassLoader", true);
+    private ClassLoader getClassLoader(Context context) {
+        return context.getClassLoader();
     }
 
     private void handleCreateServiceOne(ServiceInfo info) throws Exception {
@@ -94,7 +91,7 @@ public class ServiceManager {
         mNameService.put(info.name, service);
     }
 
-    private int handleOnStartOne(Context context, Intent intent, int flags) throws Exception {
+    private int handleOnStartOne(Context context, Intent intent, int flags) {
         ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
@@ -116,7 +113,7 @@ public class ServiceManager {
         return -1;
     }
 
-    private void handleOnTaskRemovedOne(Context context, Intent intent) throws Exception {
+    private void handleOnTaskRemovedOne(Context context, Intent intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
             if (info != null) {
@@ -147,7 +144,7 @@ public class ServiceManager {
     }
 
 
-    private IBinder handleOnBindOne(Context context, Intent intent) throws Exception {
+    private IBinder handleOnBindOne(Context context, Intent intent) {
         ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
@@ -160,7 +157,7 @@ public class ServiceManager {
         return null;
     }
 
-    private void handleOnRebindOne(Context context, Intent intent) throws Exception {
+    private void handleOnRebindOne(Context context, Intent intent) {
         ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
@@ -172,7 +169,7 @@ public class ServiceManager {
         }
     }
 
-    private boolean handleOnUnbindOne(Context context, Intent intent) throws Exception {
+    private boolean handleOnUnbindOne(Context context, Intent intent) {
         ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);

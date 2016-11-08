@@ -10,7 +10,7 @@ public abstract class BaseHookHandle {
 
     protected static Context context;
 
-    protected Map<String, HookedMethodHandler> sHookedMethodHandlers = new HashMap<>();
+    protected Map<String, HookedMethodHandler> hookedMethodHandlers = new HashMap<>();
 
     public BaseHookHandle(Context context) {
         this.context = context;
@@ -21,7 +21,7 @@ public abstract class BaseHookHandle {
 
     public HookedMethodHandler getHookedMethodHandler(Method method) {
         if (method != null) {
-            return sHookedMethodHandlers.get(method.getName());
+            return hookedMethodHandlers.get(method.getName());
         } else {
             return null;
         }

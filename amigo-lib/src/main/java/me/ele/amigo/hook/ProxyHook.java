@@ -8,6 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import me.ele.amigo.utils.Log;
+
 public abstract class ProxyHook extends Hook implements InvocationHandler {
 
     protected Object proxyObj;
@@ -20,12 +22,16 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
         this.proxyObj = proxyObj;
     }
 
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
+        long t1 = System.currentTimeMillis();
         try {
             HookedMethodHandler hookedMethodHandler = mHookHandles.getHookedMethodHandler(method);
             if (hookedMethodHandler != null) {
-                return hookedMethodHandler.doHookInner(proxyObj, method, args);
+                Object hookResult = hookedMethodHandler.doHookInner(proxyObj, method, args);
+                long t2 = System.currentTimeMillis();
+                Log.d("ProxyHook", "invoking (%s) \ncost %s ms totally", method, (t2 - t1));
+                return hookResult;
             }
             return method.invoke(proxyObj, args);
         } catch (InvocationTargetException e) {
@@ -44,26 +50,20 @@ public abstract class ProxyHook extends Hook implements InvocationHandler {
                 throw runtimeException;
             }
         } catch (IllegalArgumentException e) {
-            try {
-                StringBuilder sb = new StringBuilder();
-                sb.append(" Amigo{");
-                if (method != null) {
-                    sb.append("method[").append(method.toString()).append("]");
-                } else {
-                    sb.append("method[").append("NULL").append("]");
-                }
-                if (args != null) {
-                    sb.append("args[").append(Arrays.toString(args)).append("]");
-                } else {
-                    sb.append("args[").append("NULL").append("]");
-                }
-                sb.append("}");
-
-                String message = e.getMessage() + sb.toString();
-                throw new IllegalArgumentException(message, e);
-            } catch (Throwable e1) {
-                throw e;
+            final StringBuilder errorMsg = new StringBuilder(e.getMessage());
+            errorMsg.append(" || Amigo{");
+            if (method != null) {
+                errorMsg.append("method[").append(method.toString()).append("]");
+            } else {
+                errorMsg.append("method[").append("NULL").append("]");
             }
+            if (args != null) {
+                errorMsg.append("args[").append(Arrays.toString(args)).append("]");
+            } else {
+                errorMsg.append("args[").append("NULL").append("]");
+            }
+            errorMsg.append("}");
+            throw new IllegalArgumentException(errorMsg.toString(), e);
         } catch (Throwable e) {
             if (MyProxy.isMethodDeclaredThrowable(method, e)) {
                 throw e;

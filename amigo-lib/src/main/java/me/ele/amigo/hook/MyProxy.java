@@ -22,7 +22,7 @@ public class MyProxy {
         }
 
         Class[] es = method.getExceptionTypes();
-        if (es == null && es.length <= 0) {
+        if (es == null || es.length <= 0) {
             return false;
         }
 
@@ -30,15 +30,14 @@ public class MyProxy {
             String methodName = method.getName();
             boolean va = "accept".equals(methodName) || "sendto".equals(methodName);
             if (e instanceof SocketException && va && method.getDeclaringClass().getName()
-                    .indexOf("libcore") >= 0) {
+                    .contains("libcore")) {
                 return true;
             }
         } catch (Throwable e1) {
             //DO NOTHING
         }
-
         for (Class aClass : es) {
-            if (aClass.isInstance(e) || aClass.isAssignableFrom(e.getClass())) {
+            if (aClass.isInstance(e)) {
                 return true;
             }
         }

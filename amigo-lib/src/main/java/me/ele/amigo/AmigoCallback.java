@@ -29,7 +29,6 @@ public class AmigoCallback implements Handler.Callback {
 
     @Override
     public boolean handleMessage(Message msg) {
-
         if (msg.what == LAUNCH_ACTIVITY) {
             return handleLaunchActivity(msg);
         }

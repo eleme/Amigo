@@ -48,55 +48,60 @@ public abstract class AbstractServiceStub extends Service {
     @Override
     public void onStart(Intent intent, int startId) {
         Log.i(TAG, "onStart");
-        try {
-            if (intent != null) {
-                if (intent.getBooleanExtra("ActionKillSelf", false)) {
-                    startKillSelf();
-                    if (!ServiceManager.getDefault().hasServiceRunning()) {
-                        stopSelf(startId);
-                        boolean stopService = getApplication().stopService(intent);
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart=%s " +
-                                "intent=%s", android.os.Process.myPid(), android.os.Process.myUid
-                                (), getClass().getSimpleName(), stopService, intent);
-                    } else {
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart " +
-                                "intent=%s skip,has service running", android.os.Process.myPid(),
-                                android.os.Process.myUid(), getClass().getSimpleName(), intent);
-                    }
+        if (intent == null) {
+            super.onStart(intent, startId);
+            return;
+        }
 
-                } else {
-                    mCreator.onStart(this, intent, 0, startId);
-                }
+        if (intent.getBooleanExtra("ActionKillSelf", false)) {
+            startKillSelf();
+            if (!ServiceManager.getDefault().hasServiceRunning()) {
+                stopSelf(startId);
+                boolean stopService = getApplication().stopService(intent);
+                Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart=%s " +
+                        "intent=%s", android.os.Process.myPid(), android.os.Process.myUid
+                        (), getClass().getSimpleName(), stopService, intent);
+            } else {
+                Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s onStart " +
+                                "intent=%s skip,has service running", android.os.Process
+                                .myPid(),
+                        android.os.Process.myUid(), getClass().getSimpleName(), intent);
             }
-        } catch (Throwable e) {
-            handleException(e);
+        } else {
+            try {
+                mCreator.onStart(this, intent, 0, startId);
+            } catch (Throwable e) {
+                handleException(e);
+            }
         }
         super.onStart(intent, startId);
     }
 
-    private Object sLock = new Object();
+    private final Object sLock = new Object();
 
     private void startKillSelf() {
-        if (isRunning) {
-            try {
-                new Thread() {
-                    @Override
-                    public void run() {
-                        synchronized (sLock) {
-                            try {
-                                sLock.wait();
-                            } catch (Exception e) {
-                            }
+        if (!isRunning) {
+            return;
+        }
+
+        try {
+            new Thread() {
+                @Override
+                public void run() {
+                    synchronized (sLock) {
+                        try {
+                            sLock.wait();
+                        } catch (Exception e) {
                         }
-                        Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s 2", android
-                                .os.Process.myPid(), android.os.Process.myUid(), getClass()
-                                .getSimpleName());
-                        android.os.Process.killProcess(android.os.Process.myPid());
                     }
-                }.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                    Log.i(TAG, "doGc Kill Process(pid=%s,uid=%s has exit) for %s 2", android
+                            .os.Process.myPid(), android.os.Process.myUid(), getClass()
+                            .getSimpleName());
+                    android.os.Process.killProcess(android.os.Process.myPid());
+                }
+            }.start();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

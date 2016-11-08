@@ -71,11 +71,11 @@ public class MethodUtils {
                         (parameterTypes, method.getParameterTypes(), true)) {
                     bestMatch = method;
                     final Method accessibleMethod = getMethodFromElse(method);
-                    if (accessibleMethod != null && (bestMatch == null || MemberUtils
+                    if (accessibleMethod != null && MemberUtils
                             .compareParameterTypes(
-                            accessibleMethod.getParameterTypes(),
-                            bestMatch.getParameterTypes(),
-                            parameterTypes) < 0)) {
+                                    accessibleMethod.getParameterTypes(),
+                                    bestMatch.getParameterTypes(),
+                                    parameterTypes) < 0) {
                         bestMatch = accessibleMethod;
                         break;
                     }
