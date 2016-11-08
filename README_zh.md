@@ -132,7 +132,7 @@ Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用
 - 简单来说, 你只需要下载一个全新的apk
 
 - 为用户的流量着想, 你可能只想下载一个差分文件
-   [bspatch](https://github.com/eleme/bspatch)可能是你的一个选择
+   [bspatch](https://github.com/eleme/bspatch)(可针对Apk差分，或者基于Apk内容更细力度的差分)可能是你的一个选择
 
 ## Inspired by
 

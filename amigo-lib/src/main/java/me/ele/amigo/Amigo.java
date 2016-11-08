@@ -344,7 +344,15 @@ public class Amigo extends Application {
     }
 
     public static void work(Context context, File patchFile) {
-        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile);
+        work(context, patchFile, true);
+    }
+
+    public static void workWithoutCheckingSignature(Context context, File patchFile) {
+        work(context, patchFile, false);
+    }
+
+    private static void work(Context context, File patchFile, boolean checkSignature) {
+        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
         context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
                 .edit()
                 .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, patchChecksum)
@@ -355,11 +363,17 @@ public class Amigo extends Application {
     }
 
     public static void workLater(Context context, File patchFile) {
-        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile);
-        if (patchChecksum != null) {
-            AmigoService.start(context, patchChecksum, true);
-        }
+        workLater(context, patchFile, true);
     }
+
+    public static void workLaterWithoutCheckingSignature(Context context, File patchFile) {
+        workLater(context, patchFile, false);
+    }
+
+    private static void workLater(Context context, File patchFile, boolean checkSignature) {
+        workLater(context, patchFile, checkSignature);
+    }
+
 
     public static boolean hasWorked() {
         ClassLoader classLoader = null;

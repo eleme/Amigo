@@ -33,8 +33,8 @@ class PatchChecker {
         return result;
     }
 
-    static String checkPatchAndCopy(Context context, File patchFile) {
-        PatchChecker.checkPatchApk(context, patchFile);
+    static String checkPatchAndCopy(Context context, File patchFile, boolean checkSignature) {
+        PatchChecker.checkPatchApk(context, patchFile, checkSignature);
         String patchChecksum = CrcUtils.getCrc(patchFile);
         if (!PatchApks.getInstance(context).exists(patchChecksum)) {
             copyFile(patchFile, PatchApks.getInstance(context).patchFile(patchChecksum));
@@ -42,7 +42,7 @@ class PatchChecker {
         return patchChecksum;
     }
 
-    private static void checkPatchApk(Context context, File patchFile) {
+    private static void checkPatchApk(Context context, File patchFile, boolean checkSignature) {
         if (patchFile == null) {
             throw new NullPointerException("param apkFile cannot be null");
         }
@@ -59,7 +59,7 @@ class PatchChecker {
             throw new IllegalStateException("patch apk cannot request more permissions than host");
         }
 
-        if (!checkSignature(context, patchFile)) {
+        if (checkSignature && !checkSignature(context, patchFile)) {
             throw new IllegalStateException("patch apk's signature is different with host");
         }
     }
