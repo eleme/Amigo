@@ -92,7 +92,7 @@ public class ServiceManager {
     }
 
     private int handleOnStartOne(Context context, Intent intent, int flags) {
-        ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+        ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
             if (service != null) {
@@ -115,14 +115,13 @@ public class ServiceManager {
 
     private void handleOnTaskRemovedOne(Context context, Intent intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
             if (info != null) {
                 Service service = mNameService.get(info.name);
                 if (service != null) {
                     ClassLoader classLoader = getClassLoader(context);
                     intent.setExtrasClassLoader(classLoader);
                     service.onTaskRemoved(intent);
-                    QueuedWorkCompat.waitToFinish();
                 }
                 QueuedWorkCompat.waitToFinish();
             }
@@ -138,14 +137,13 @@ public class ServiceManager {
             Object token = findTokenByService(service);
             mTokenServices.remove(token);
             mServiceTaskIds.remove(token);
-            QueuedWorkCompat.waitToFinish();
         }
         QueuedWorkCompat.waitToFinish();
     }
 
 
     private IBinder handleOnBindOne(Context context, Intent intent) {
-        ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+        ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
             if (service != null) {
@@ -158,7 +156,7 @@ public class ServiceManager {
     }
 
     private void handleOnRebindOne(Context context, Intent intent) {
-        ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+        ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
             if (service != null) {
@@ -170,7 +168,7 @@ public class ServiceManager {
     }
 
     private boolean handleOnUnbindOne(Context context, Intent intent) {
-        ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+        ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
         if (info != null) {
             Service service = mNameService.get(info.name);
             if (service != null) {
@@ -186,7 +184,7 @@ public class ServiceManager {
     public int onStart(Context context, Intent intent, int flags, int startId) throws Exception {
         Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
         if (targetIntent != null) {
-            ServiceInfo targetInfo = ServiceFinder.resolveServiceInfo(context, targetIntent);
+            ServiceInfo targetInfo = ServiceFinder.resolveNewServiceInfo(context, targetIntent);
             if (targetInfo != null) {
                 Service service = mNameService.get(targetInfo.name);
                 if (service == null) {
@@ -201,7 +199,7 @@ public class ServiceManager {
     public void onTaskRemoved(Context context, Intent intent) throws Exception {
         Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
         if (targetIntent != null) {
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
             Service service = mNameService.get(info.name);
             if (service == null) {
                 handleCreateServiceOne(info);
@@ -213,7 +211,7 @@ public class ServiceManager {
     public IBinder onBind(Context context, Intent intent) throws Exception {
         Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
         if (targetIntent != null) {
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, targetIntent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, targetIntent);
             Service service = mNameService.get(info.name);
             if (service == null) {
                 handleCreateServiceOne(info);
@@ -226,7 +224,7 @@ public class ServiceManager {
     public void onRebind(Context context, Intent intent) throws Exception {
         Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
         if (targetIntent != null) {
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, targetIntent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, targetIntent);
             Service service = mNameService.get(info.name);
             if (service == null) {
                 handleCreateServiceOne(info);
@@ -238,7 +236,7 @@ public class ServiceManager {
     public boolean onUnbind(Context context, Intent intent) throws Exception {
         Intent targetIntent = intent.getParcelableExtra(EXTRA_TARGET_INTENT);
         if (targetIntent != null) {
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, targetIntent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, targetIntent);
             Service service = mNameService.get(info.name);
             if (service != null) {
                 return handleOnUnbindOne(context, targetIntent);
@@ -247,16 +245,14 @@ public class ServiceManager {
         return false;
     }
 
-    public void unbind(Context context, Object connection) throws Exception {
+    public boolean unbind(Context context, Object connection) throws Exception {
         Intent intent = mServiceIntents.get(connection);
-        if (intent != null) {
-            onUnbind(context, intent);
-        }
+        onUnbind(context, intent);
+        return intent != null;
     }
 
-
     public int stopService(Context context, Intent intent) throws Exception {
-        ServiceInfo targetInfo = ServiceFinder.resolveServiceInfo(context, intent);
+        ServiceInfo targetInfo = ServiceFinder.resolveNewServiceInfo(context, intent);
         if (targetInfo != null) {
             handleOnUnbindOne(context, intent);
             handleOnDestroyOne(targetInfo);
@@ -278,7 +274,7 @@ public class ServiceManager {
             }
             Intent intent = new Intent();
             intent.setComponent(cn);
-            ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
+            ServiceInfo info = ServiceFinder.resolveNewServiceInfo(context, intent);
             if (info != null) {
                 handleOnUnbindOne(context, intent);
                 handleOnDestroyOne(info);

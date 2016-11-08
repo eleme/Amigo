@@ -95,10 +95,9 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             int index = 1;
             if (args != null && args.length > index && args[index] instanceof Intent) {
                 Intent intent = (Intent) args[index];
-                ServiceInfo info = ServiceFinder.resolveServiceInfo(context, intent);
-                if (info != null) {
-                    int re = ServiceManager.getDefault().stopService(context, intent);
-                    setFakedResult(re);
+                int re = ServiceManager.getDefault().stopService(context, intent);
+                if (re == 1) {
+                    setFakedResult(1);
                     return true;
                 }
             }
@@ -206,8 +205,11 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         @Override
         protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
                 Throwable {
-            replaceFirstServiceIntentOfArgs(args);
-            ServiceManager.getDefault().unbind(context, args[findIServiceConnectionIndex(method)]);
+            int index = findIServiceConnectionIndex(method);
+            if (index != -1) {
+                setFakedResult(ServiceManager.getDefault().unbind(context, args[index]));
+                return true;
+            }
             return super.beforeInvoke(receiver, method, args);
         }
 
@@ -258,7 +260,7 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         int intentOfArgIndex = findFirstIntentIndexInArgs(args);
         if (args != null && args.length > 1 && intentOfArgIndex >= 0) {
             Intent intent = (Intent) args[intentOfArgIndex];
-            ServiceInfo serviceInfo = ServiceFinder.resolveServiceInfo(context, intent);
+            ServiceInfo serviceInfo = ServiceFinder.resolveNewServiceInfo(context, intent);
             if (serviceInfo != null) {
                 ServiceInfo proxyService = selectProxyService(serviceInfo);
                 if (proxyService != null) {
@@ -303,7 +305,7 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
 
 
     private static boolean isComponentNameInNewApp(Context context, ComponentName componentName) {
-        return ServiceFinder.resolveServiceInfo(context, new Intent().setComponent(componentName)
+        return ServiceFinder.resolveNewServiceInfo(context, new Intent().setComponent(componentName)
         ) != null;
     }
 
