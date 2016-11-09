@@ -5,7 +5,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Process;
 import android.text.TextUtils;
@@ -371,7 +370,10 @@ public class Amigo extends Application {
     }
 
     private static void workLater(Context context, File patchFile, boolean checkSignature) {
-        workLater(context, patchFile, checkSignature);
+        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (patchChecksum != null) {
+            AmigoService.start(context, patchChecksum, true);
+        }
     }
 
 
