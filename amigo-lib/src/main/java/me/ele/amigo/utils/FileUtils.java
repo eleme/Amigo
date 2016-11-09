@@ -1,5 +1,7 @@
 package me.ele.amigo.utils;
 
+import android.os.Build;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -59,7 +61,9 @@ public class FileUtils {
             return;
         }
 
-        file.setWritable(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            file.setWritable(true);
+        }
 
         if (file.isFile()) {
             file.delete();

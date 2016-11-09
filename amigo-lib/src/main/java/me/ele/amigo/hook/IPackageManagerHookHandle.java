@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.PatchApks;
+import me.ele.amigo.utils.CommonUtils;
 
 public class IPackageManagerHookHandle extends BaseHookHandle {
 
@@ -54,6 +55,10 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
                             metaData = context.getPackageManager().getPackageArchiveInfo
                                     (workingPatchApk, PackageManager.GET_META_DATA)
                                     .applicationInfo.metaData;
+                            if (metaData == null) {
+                                metaData = CommonUtils.getPackageArchiveInfo(workingPatchApk,
+                                        PackageManager.GET_META_DATA).applicationInfo.metaData;
+                            }
                         }
                         ((ApplicationInfo) invokeResult).metaData = metaData;
                     } catch (Exception e) {

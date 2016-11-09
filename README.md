@@ -1,5 +1,3 @@
-#Amigo Usage
-
 [中文版](https://github.com/eleme/Amigo/blob/master/README_zh.md#amigo)
 
 [wiki](https://github.com/eleme/Amigo/wiki)
@@ -8,7 +6,7 @@
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
-Amigo is a hotfix library which can fix almost everything for your Android app.
+Amigo is a hotfix library which can fix everything for your Android app
 
 ## How to use 
 ### Download
@@ -35,6 +33,12 @@ android {
 ...
 }
 ```
+
+### Compatibility
+
+- Supports All Devices From ECLAIR `2.1` to Nougat `7.1`
+- Even support next Android version, no matter small or big change. So Cool, Aha :v:
+- Android 3.0 isn't supported
 
 ### Customize loading page
 Some time-consuming tasks are handled in a separate process to avoid ANR, you can customize the loading activity by add the follow code into your AndroidManifest.xml:
@@ -114,8 +118,12 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
         ```
         
  -  Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
+ 
+ -  Amigo doesn't support Honeycomb `3.0`
+    * Android 3.0 is a version with full of bugs, & Google has closed Android 3.0 Honeycomb.
+    
  - `RemoteViews`'s layout change in `notification` & `widget`is not support   
-    any resource id in here should be used with ```java RCompat.getHostIdentifier(Context context, int id) ```
+    * any resource id in here should be used with ```java RCompat.getHostIdentifier(Context context, int id) ```
 
 ## Retrieve hotfix file
 

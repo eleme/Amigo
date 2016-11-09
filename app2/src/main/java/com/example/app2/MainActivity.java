@@ -5,9 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,11 +15,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
     }
 
-    @OnClick(R.id.test_provider)
-    public void testProvider() {
+    public void testProvider(View view) {
         Cursor cursor = getContentResolver().query(
                 Uri.parse("content://me.ele.app.amigo.provider/student?id=0"),
                 null, null, null, null);

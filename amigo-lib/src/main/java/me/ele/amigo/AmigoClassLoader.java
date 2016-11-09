@@ -5,14 +5,15 @@ import android.util.Log;
 
 import java.io.File;
 
-import dalvik.system.BaseDexClassLoader;
+import dalvik.system.DexClassLoader;
 
-public class AmigoClassLoader extends BaseDexClassLoader {
+
+public class AmigoClassLoader extends DexClassLoader {
     private static final String TAG = AmigoClassLoader.class.getName();
 
     public AmigoClassLoader(String dexPath, File optimizedDirectory, String libraryPath,
                             ClassLoader parent) {
-        super(dexPath, optimizedDirectory, libraryPath, parent);
+        super(dexPath, optimizedDirectory.getAbsolutePath(), libraryPath, parent);
     }
 
     public static AmigoClassLoader newInstance(Context context, String checksum) {

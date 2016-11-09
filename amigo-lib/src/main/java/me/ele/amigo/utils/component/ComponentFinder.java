@@ -58,8 +58,6 @@ class ComponentFinder {
                 mPackageParser = sPackageParserClass.newInstance();
                 mPackage = MethodUtils.invokeMethod(mPackageParser, "parsePackage", file, 0);
             } catch (Exception e) {
-                e.printStackTrace();
-
                 mPackageParser = sPackageParserClass.getDeclaredConstructor(String.class)
                         .newInstance(file.getPath());
                 DisplayMetrics metrics = new DisplayMetrics();

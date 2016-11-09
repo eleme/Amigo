@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="start MyService"
+        android:onClick="startNewService"
         android:textAllCaps="false" />
 
     <Button
@@ -16,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="stop MyService"
+        android:onClick="stopNewService"
         android:textAllCaps="false" />
 
     <Button
@@ -23,6 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="bind Service"
+        android:onClick="bindNewService"
         android:textAllCaps="false" />
 
     <Button
@@ -30,5 +33,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="unbind Service"
+        android:onClick="unbindNewService"
         android:textAllCaps="false" />
 </LinearLayout>

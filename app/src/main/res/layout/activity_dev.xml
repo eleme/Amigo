@@ -9,6 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Launch SubProcess Activity"
+        android:onClick="launchSubProcess"
         android:textAllCaps="false"/>
 
     <Button
@@ -16,6 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Load Asset"
+        android:onClick="loadAsset"
         android:textAllCaps="false"/>
 
 </LinearLayout>

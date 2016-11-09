@@ -2,11 +2,19 @@ package me.ele.amigo.utils;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
+import android.os.Build;
+import android.os.Bundle;
+import android.util.DisplayMetrics;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
+import me.ele.amigo.reflect.FieldUtils;
 
 public class CommonUtils {
 
@@ -31,8 +39,14 @@ public class CommonUtils {
     }
 
     public static Signature getSignature(Context context, File patchApk) {
-        return context.getPackageManager().getPackageArchiveInfo(
-                patchApk.getAbsolutePath(), PackageManager.GET_SIGNATURES).signatures[0];
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            return context.getPackageManager().getPackageArchiveInfo(patchApk.getAbsolutePath(),
+                    PackageManager.GET_SIGNATURES).signatures[0];
+        } else {
+            return getPackageArchiveInfo(patchApk.getAbsolutePath(),
+                    PackageManager.GET_SIGNATURES).signatures[0];
+        }
+
     }
 
     public static ApplicationInfo getApplicationInfo(Context context) throws NameNotFoundException {
@@ -55,5 +69,80 @@ public class CommonUtils {
         ApplicationInfo applicationInfo =
                 pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
         return applicationInfo;
+    }
+
+
+    public static PackageInfo getPackageArchiveInfo(String archiveFilePath, int flags) {
+        // Workaround for https://code.google.com/p/android/issues/detail?id=9151#c8
+        try {
+            Class packageParserClass = Class.forName("android.content.pm.PackageParser");
+            Class packageParserPackageClass = Class.forName("android.content.pm" +
+                    ".PackageParser$Package");
+            Constructor packageParserConstructor = packageParserClass.getConstructor(String.class);
+            Method parsePackageMethod = packageParserClass.getDeclaredMethod(
+                    "parsePackage", File.class, String.class, DisplayMetrics.class, int.class);
+            Method collectCertificatesMethod = packageParserClass.getDeclaredMethod(
+                    "collectCertificates", packageParserPackageClass, int.class);
+            Method generatePackageInfoMethod;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                generatePackageInfoMethod = packageParserClass.getDeclaredMethod(
+                        "generatePackageInfo", packageParserPackageClass, int[].class, int.class,
+                        long.class, long.class);
+            } else {
+                generatePackageInfoMethod = packageParserClass.getDeclaredMethod(
+                        "generatePackageInfo", packageParserPackageClass, int[].class, int.class);
+            }
+            packageParserConstructor.setAccessible(true);
+            parsePackageMethod.setAccessible(true);
+            collectCertificatesMethod.setAccessible(true);
+            generatePackageInfoMethod.setAccessible(true);
+
+            Object packageParser = packageParserConstructor.newInstance(archiveFilePath);
+
+            DisplayMetrics metrics = new DisplayMetrics();
+            metrics.setToDefaults();
+
+            final File sourceFile = new File(archiveFilePath);
+
+            Object pkg = parsePackageMethod.invoke(
+                    packageParser,
+                    sourceFile,
+                    archiveFilePath,
+                    metrics,
+                    0);
+            if (pkg == null) {
+                return null;
+            }
+
+            if ((flags & android.content.pm.PackageManager.GET_SIGNATURES) != 0) {
+                collectCertificatesMethod.invoke(packageParser, pkg, 0);
+            }
+
+            PackageInfo packageInfo;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                packageInfo = (PackageInfo) generatePackageInfoMethod.invoke(null, pkg, null,
+                        flags, 0, 0);
+            } else {
+                packageInfo = (PackageInfo) generatePackageInfoMethod.invoke(null, pkg, null,
+                        flags);
+            }
+
+            if ((flags & PackageManager.GET_META_DATA) != 0) {
+                try {
+                    Bundle mAppMetaData = (Bundle) FieldUtils.readField(pkg, "mAppMetaData", true);
+                    packageInfo.applicationInfo.metaData = mAppMetaData;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+            return packageInfo;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("Signature Monitor", "android.content.pm.PackageParser reflection failed: " + e
+                    .toString());
+        }
+        return null;
     }
 }
