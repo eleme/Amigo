@@ -17,15 +17,26 @@ public class RCompat {
     public static int getHostIdentifier(Context context, int id) {
         hostResources = getHostResources(context);
         patchResources = getPatchResources(context);
-        return hostResources.getIdentifier(patchResources.getResourceEntryName(id),
-                patchResources.getResourceTypeName(id), context.getPackageName());
+        try {
+            return hostResources.getIdentifier(patchResources.getResourceEntryName(id),
+                    patchResources.getResourceTypeName(id), context.getPackageName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
     public static int getPatchIdentifier(Context context, int id) {
         hostResources = getHostResources(context);
         patchResources = getPatchResources(context);
-        return patchResources.getIdentifier(hostResources.getResourceEntryName(id), hostResources
-                .getResourceTypeName(id), context.getPackageName());
+        try {
+            return patchResources.getIdentifier(hostResources.getResourceEntryName(id), hostResources
+                    .getResourceTypeName(id), context.getPackageName());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+
     }
 
     private static Resources getPatchResources(Context context) {
