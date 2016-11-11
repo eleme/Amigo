@@ -65,8 +65,4 @@ public final class PatchApks {
     public int versionCode(String checksum) {
         return CommonUtils.getVersionCode(context, patchFile(checksum));
     }
-
-    public static String getWorkingPatchPath(Context context) {
-        return PatchApks.getInstance(context).patchPath(Amigo.getWorkingPatchApkChecksum(context));
-    }
 }
