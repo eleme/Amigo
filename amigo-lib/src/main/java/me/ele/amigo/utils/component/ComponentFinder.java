@@ -112,6 +112,7 @@ class ComponentFinder {
                     activities.add(new Activity(meta, intentFilters, activityInfo));
                 }
                 sActivities = activities;
+                fillApplicationInfo(context, activities.get(0).activityInfo.applicationInfo);
             }
         } catch (Exception e) {
             e.printStackTrace();

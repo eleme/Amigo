@@ -145,8 +145,7 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             int index = findIServiceConnectionIndex(method);
             if (info != null && index >= 0) {
                 final Object oldIServiceConnection = args[index];
-                args[index] = new MyIServiceConnection(info) {
-
+                MyIServiceConnection proxyConnection = new MyIServiceConnection(info) {
                     public void connected(ComponentName name, IBinder service) {
                         try {
                             MethodUtils.invokeMethod(oldIServiceConnection, "connected", new
@@ -156,8 +155,9 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
                         }
                     }
                 };
-                ServiceManager.getDefault().addServiceIntent(oldIServiceConnection, (Intent)
-                        args[findFirstIntentIndexInArgs(args)]);
+                args[index] = proxyConnection;
+                ServiceManager.getDefault().addBindServiceRecord(oldIServiceConnection, (Intent)
+                        args[findFirstIntentIndexInArgs(args)], proxyConnection);
             }
             return super.beforeInvoke(receiver, method, args);
         }
@@ -207,8 +207,12 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
                 Throwable {
             int index = findIServiceConnectionIndex(method);
             if (index != -1) {
-                setFakedResult(ServiceManager.getDefault().unbind(context, args[index]));
-                return true;
+                Object connection = args[index];
+                Object proxyConnection = ServiceManager.getDefault().getProxyConnection(connection);
+                setFakedResult(ServiceManager.getDefault().unbind(context, connection));
+                if (proxyConnection != null) {
+                    args[index] = proxyConnection;
+                }
             }
             return super.beforeInvoke(receiver, method, args);
         }

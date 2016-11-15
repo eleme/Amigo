@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,7 +35,29 @@ public class ContentProviderFinder extends ComponentFinder {
 
     public static ProviderInfo[] getNewContentProvider(Context context) {
         parsePackage(context);
-        return getProviderInfo(context, sProviders);
+        ProviderInfo[] providersInPatch = getProviderInfo(context, sProviders);
+        ProviderInfo[] providersInHost = getAppContentProvider(context);
+
+        if (ArrayUtil.isEmpty(providersInPatch)) {
+            return null;
+        }
+
+        if (ArrayUtil.isEmpty(providersInHost)) {
+            return providersInPatch;
+        }
+
+        ArrayList<ProviderInfo> newProviders = new ArrayList<>();
+        for (ProviderInfo patchProvider : providersInPatch) {
+            boolean isNew = true;
+            for (ProviderInfo hostProvider : providersInHost) {
+                if (hostProvider.name.equals(patchProvider.name)) {
+                    isNew = false;
+                    break;
+                }
+            }
+            if (isNew) newProviders.add(patchProvider);
+        }
+        return newProviders.toArray(new ProviderInfo[newProviders.size()]);
     }
 
     private static ProviderInfo[] getProviderInfo(Context context, List<Object> components) {
@@ -49,7 +72,6 @@ public class ContentProviderFinder extends ComponentFinder {
                 providerInfos[i] = (ProviderInfo) FieldUtils.readField(components.get(i),
                         "info");
             }
-            fillApplicationInfo(context, providerInfos[0].applicationInfo);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }

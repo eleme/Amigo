@@ -106,7 +106,7 @@ public abstract class AbstractServiceStub extends Service {
     }
 
     private void handleException(Throwable e) {
-        Log.e(TAG, "handleException", e);
+        Log.e(TAG, "handleException: ", e);
     }
 
     @Override

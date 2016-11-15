@@ -92,7 +92,7 @@ public final class AmigoDirs {
             amigoDir = new File(context.getFilesDir().getCanonicalPath(), AMIGO_FOLDER_NAME);
             FileUtils.mkdirChecked(amigoDir);
 
-            cacheDir = new File(applicationInfo.dataDir, CODE_CACHE_NAME);
+            cacheDir = new File(new File(applicationInfo.dataDir).getCanonicalPath(), CODE_CACHE_NAME);
             FileUtils.mkdirChecked(cacheDir);
         } catch (Exception e) {
             throw new RuntimeException("Initiate amigo files failed (" + e.getMessage() + ").");

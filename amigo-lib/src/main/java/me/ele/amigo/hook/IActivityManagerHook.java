@@ -75,7 +75,7 @@ public class IActivityManagerHook extends ProxyHook {
             Object iam1 = ActivityManagerNativeCompat.getDefault();
 
             Object instance = FieldUtils.readField(gDefault, "mInstance");
-            ;
+
             FieldUtils.writeField(gDefault, "mInstance", object);
 
             FieldUtils.writeStaticField(cls, "gDefault", new android.util.Singleton<Object>() {
