@@ -51,6 +51,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         hookedMethodHandlers.put("startActivityAsUser", new startActivityAsUser(context));
         hookedMethodHandlers.put("startActivityAsCaller", new startActivityAsCaller(context));
         hookedMethodHandlers.put("finishActivity", new finishActivity(context));
+        hookedMethodHandlers.put("overridePendingTransition", new overridePendingTransition
+                (context));
     }
 
     private static class startService extends HookedMethodHandler {
@@ -354,8 +356,8 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             int windowAnimations = activity.getWindow().getAttributes().windowAnimations;
             int[] attrs = {enterAnimFlag, exitAnimFlag};
             TypedArray ta = activity.obtainStyledAttributes(windowAnimations, attrs);
-            int enterAnimation = RCompat.getHostIdentifier(activity, ta.getResourceId(0, 0));
-            int exitAnimation = RCompat.getHostIdentifier(activity, ta.getResourceId(1, 0));
+            int enterAnimation = ta.getResourceId(0, 0);
+            int exitAnimation = ta.getResourceId(1, 0);
             ta.recycle();
             activity.overridePendingTransition(enterAnimation, exitAnimation);
         } catch (Exception e) {
@@ -374,6 +376,25 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
                 invokeResult) throws Throwable {
             overridePendingTransition(activityCloseEnterAnimation, activityCloseExitAnimation);
             super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+    private class overridePendingTransition extends HookedMethodHandler {
+        public overridePendingTransition(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
+            for (int i = 0; i < args.length; i++) {
+                Object arg = args[i];
+                if ((arg.getClass() == int.class || arg.getClass() == Integer.class)) {
+                    int anim = RCompat.getHostIdentifier(context, (int) arg);
+                    args[i] = anim;
+                }
+            }
+            return super.beforeInvoke(receiver, method, args);
         }
     }
 }
