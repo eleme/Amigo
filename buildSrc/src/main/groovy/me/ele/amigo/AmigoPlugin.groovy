@@ -25,6 +25,8 @@ class AmigoPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
 
+        AmigoExtension ext = project.extensions.create('amigo', AmigoExtension)
+
         Configuration configuration = project.rootProject.buildscript.configurations.getByName(
                 'classpath')
         configuration.allDependencies.all { Dependency dependency ->
@@ -42,7 +44,13 @@ class AmigoPlugin implements Plugin<Project> {
             }
         }
 
-        project.plugins.withId('com.android.application') {
+        project.afterEvaluate {
+
+            if (ext.disable) {
+                println 'amigo is disabled'
+                return
+            }
+
             project.android.applicationVariants.all { ApkVariant variant ->
 
                 // check instant run which conflicts with us
