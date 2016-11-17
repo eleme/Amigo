@@ -236,12 +236,10 @@ public class Amigo extends Application {
         int layoutId = 0;
         int themeId = 0;
         if (!TextUtils.isEmpty(layoutName)) {
-            layoutId = (int) readStaticField(Class.forName(getPackageName()
-                    + ".R$layout"), layoutName);
+            layoutId = getResources().getIdentifier(layoutName, "layout", getPackageName());
         }
         if (!TextUtils.isEmpty(themeName)) {
-            themeId = (int) readStaticField(Class.forName(getPackageName()
-                    + ".R$style"), themeName);
+            themeId = getResources().getIdentifier(themeName, "style", getPackageName());
         }
         Log.e(TAG, String.format("layoutName-->%s, themeName-->%s", layoutName, themeName));
         Log.e(TAG, String.format("layoutId-->%d, themeId-->%d", layoutId, themeId));

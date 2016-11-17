@@ -4,6 +4,10 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 
@@ -11,16 +15,47 @@ import dalvik.system.DexClassLoader;
 public class AmigoClassLoader extends DexClassLoader {
     private static final String TAG = AmigoClassLoader.class.getName();
 
-    public AmigoClassLoader(String dexPath, File optimizedDirectory, String libraryPath,
-                            ClassLoader parent) {
-        super(dexPath, optimizedDirectory.getAbsolutePath(), libraryPath, parent);
+    private ZipFile zipFile;
+    private File patchApk;
+
+    public AmigoClassLoader(String patchApkPath, String dexPath, String optimizedDirectory, String
+            libraryPath, ClassLoader parent) {
+        super(dexPath, optimizedDirectory, libraryPath, parent);
+        try {
+            patchApk = new File(patchApkPath);
+            zipFile = new ZipFile(patchApkPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            zipFile = null;
+        }
     }
 
     public static AmigoClassLoader newInstance(Context context, String checksum) {
-        return new AmigoClassLoader(getDexPath(context, checksum),
-                AmigoDirs.getInstance(context).dexOptDir(checksum),
+        return new AmigoClassLoader(PatchApks.getInstance(context).patchPath(checksum),
+                getDexPath(context, checksum),
+                AmigoDirs.getInstance(context).dexOptDir(checksum).getAbsolutePath(),
                 getLibraryPath(context, checksum),
                 AmigoClassLoader.class.getClassLoader().getParent());
+    }
+
+    @Override
+    protected URL findResource(String name) {
+        if ((zipFile == null) || (zipFile.getEntry(name) == null)) {
+            return null;
+        }
+
+        try {
+            /*
+             * File.toURL() is compliant with RFC 1738 in
+             * always creating absolute path names. If we
+             * construct the URL by concatenating strings, we
+             * might end up with illegal URLs for relative
+             * names.
+             */
+            return new URL("jar:" + patchApk.toURL() + "!/" + name);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override

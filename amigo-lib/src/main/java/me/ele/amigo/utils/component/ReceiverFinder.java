@@ -6,9 +6,12 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import me.ele.amigo.utils.ArrayUtil;
 
 public class ReceiverFinder extends ComponentFinder {
 
@@ -29,24 +32,49 @@ public class ReceiverFinder extends ComponentFinder {
 
     public static void registerNewReceivers(Context context, ClassLoader classLoader) {
         parsePackage(context);
+
+        ActivityInfo[] receiverInHost = getAppReceivers(context);
         try {
-            for (Activity receiver : sReceivers) {
+            for (int i = 0, size = sReceivers.size(); i < size; i++) {
+                Activity receiver = sReceivers.get(i);
                 List<IntentFilter> filters = receiver.filters;
-                if (filters == null || filters.isEmpty()) {
+                if (filters == null
+                        || filters.isEmpty()
+                        || !isNewReceiver(receiverInHost, receiver)) {
                     continue;
                 }
 
-                BroadcastReceiver receiverInstance = (BroadcastReceiver) classLoader.loadClass
-                        (receiver.activityInfo.name).newInstance();
-                for (IntentFilter filter : filters) {
-                    context.registerReceiver(receiverInstance, filter);
-                    registeredReceivers.add(receiverInstance);
-                }
+                registerOneReceiver(context, classLoader, receiver, filters);
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    private static void registerOneReceiver(Context context, ClassLoader classLoader,
+                                            Activity receiver, List<IntentFilter> filters) throws
+            InstantiationException, IllegalAccessException, ClassNotFoundException {
+        BroadcastReceiver receiverInstance = (BroadcastReceiver) classLoader.loadClass
+                (receiver.activityInfo.name).newInstance();
+        for (IntentFilter filter : filters) {
+            context.registerReceiver(receiverInstance, filter);
+            registeredReceivers.add(receiverInstance);
+        }
+        Log.d(TAG, "registerOneReceiver: " + receiver.activityInfo);
+    }
+
+    private static boolean isNewReceiver(ActivityInfo[] receiverInHost, Activity receiver) {
+        boolean isNew = true;
+        if (ArrayUtil.isNotEmpty(receiverInHost)) {
+            for (ActivityInfo activityInfo : receiverInHost) {
+                if (receiver.activityInfo.name.equals(activityInfo.name)) {
+                    isNew = false;
+                    break;
+                }
+            }
+        }
+        return isNew;
     }
 
     private static final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();
