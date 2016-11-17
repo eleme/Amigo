@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import me.ele.app.amigo.R;
 import me.ele.demo.A;
 
@@ -15,16 +13,14 @@ public class SubprocessActivity extends AppCompatActivity {
 
     public static final String TAG = SubprocessActivity.class.getSimpleName();
 
-    @BindView(R.id.process_info)
-    TextView processInfoView;
+    private TextView processInfoView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sub_process);
         setTitle("SubProcess");
-
-        ButterKnife.bind(this);
+        processInfoView = (TextView) findViewById(R.id.process_info);
 
         StringBuilder sb = new StringBuilder("Page Info")
                 .append("\n")

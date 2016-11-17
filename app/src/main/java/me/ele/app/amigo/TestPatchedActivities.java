@@ -3,9 +3,7 @@ package me.ele.app.amigo;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import android.view.View;
 
 /**
  * Created by wwm on 9/30/16.
@@ -17,11 +15,9 @@ public class TestPatchedActivities extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test_patched_activities);
-        ButterKnife.bind(this);
     }
 
-    @OnClick(R.id.start_standard_activity)
-    public void startStandard() {
+    public void startStandard(View view) {
         try {
             startActivity(new Intent().setClassName(this, "me.ele.demo.activity" +
                     ".PatchedStandardActivity"));
@@ -30,8 +26,7 @@ public class TestPatchedActivities extends BaseActivity {
         }
     }
 
-    @OnClick(R.id.start_single_top_activity)
-    public void startSingleTop() {
+    public void startSingleTop(View view) {
         try {
             startActivity(new Intent().setClassName(this, "me.ele.demo.activity" +
                     ".PatchedSingleTopActivity"));
@@ -43,8 +38,7 @@ public class TestPatchedActivities extends BaseActivity {
 
     }
 
-    @OnClick(R.id.start_single_task_activity)
-    public void startSingleTask() {
+    public void startSingleTask(View view) {
         try {
             startActivity(new Intent().setClassName(this, "me.ele.demo.activity" +
                     ".PatchedSingleTaskActivity"));
@@ -56,8 +50,7 @@ public class TestPatchedActivities extends BaseActivity {
 
     }
 
-    @OnClick(R.id.start_single_instance_activity)
-    public void startSingleInstance() {
+    public void startSingleInstance(View view) {
         try {
             startActivity(new Intent().setClassName(this, "me.ele.demo.activity" +
                     ".PatchedSingleTaskActivity"));

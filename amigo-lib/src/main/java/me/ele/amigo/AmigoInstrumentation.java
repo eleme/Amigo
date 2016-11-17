@@ -14,6 +14,7 @@ import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
 
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.stub.ActivityStub;
@@ -34,6 +35,8 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     private Method methodExecStart4;
     private Method methodExecStart5;
     private Method methodExecStart6;
+
+    private LinkedList<Activity> activities = new LinkedList<>();
 
     public AmigoInstrumentation(Instrumentation oldInstrumentation) {
         this.oldInstrumentation = oldInstrumentation;
@@ -59,7 +62,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         if (!isPatchedActivity(who, intent)) {
             return intent;
         }
-
         ComponentName componentName = intent.getComponent();
         ActivityStub.recycleActivityStub(getActivityInfo(who, componentName.getClassName()));
         Class stubClazz = getDelegateActivityName(who, componentName.getClassName());
@@ -76,6 +78,10 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         intent.putExtra(EXTRA_STUB_NAME, stubClazz);
         ActivityStub.onActivityCreated(stubClazz, null, componentName.getClassName());
         return stubIntent;
+    }
+
+    public Activity getCurrentActivity() {
+        return activities.getLast();
     }
 
     @Override
@@ -222,8 +228,9 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             if (methodExecStart6 == null)
                 methodExecStart6 = oldInstrumentation.getClass().getDeclaredMethod
                         ("execStartActivity",
-                        Context.class, IBinder.class, IBinder.class, String.class, Intent.class, int
-                                .class, Bundle.class);
+                                Context.class, IBinder.class, IBinder.class, String.class, Intent
+                                        .class, int
+                                        .class, Bundle.class);
             return (ActivityResult) methodExecStart6.invoke(oldInstrumentation, who,
                     contextThread, token,
                     target, intent, requestCode, options);
@@ -255,7 +262,17 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     @Override
+    public void callActivityOnNewIntent(Activity activity, Intent intent) {
+        super.callActivityOnNewIntent(activity, intent);
+        if (activities.contains(activity)) {
+            activities.remove(activity);
+            activities.add(activity);
+        }
+    }
+
+    @Override
     public void callActivityOnCreate(Activity activity, Bundle icicle) {
+        activities.add(activity);
         try {
             Intent targetIntent = activity.getIntent();
             if (targetIntent != null) {
@@ -292,6 +309,7 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             super.callActivityOnDestroy(activity);
         }
 
+        activities.remove(activity);
         Intent intent = activity.getIntent();
         Class stubClazz;
         if (intent != null && (stubClazz = (Class) intent.getSerializableExtra(EXTRA_STUB_NAME))

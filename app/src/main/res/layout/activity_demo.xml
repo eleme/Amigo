@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,57 +13,65 @@
             android:id="@+id/apply_patch_apk_immediately"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="applyPatchApkImmediately"
             android:text="Apply Patch Apk Immediately"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/apply_patch_apk_later"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="applyPatchApkLater"
             android:text="Apply Patch Apk Later"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/clear_patch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="clearPatchApk"
             android:text="Clear Patch"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/notification"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="testNotification"
             android:text="Notification"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/test_patched_activity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="testPatchedActivities"
             android:text="Test patched activity"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/test_patched_services"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="testPatchedServices"
             android:text="Test patched service"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/trigger_receiver_action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="triggerReceiverAction"
             android:text="trigger receiver"
-            android:textAllCaps="false" />
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/test_patched_provider"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAllCaps="false"
-            android:text="test patched provider"/>
+            android:onClick="testPatchedProvider"
+            android:text="test patched provider"
+            android:textAllCaps="false"/>
 
     </LinearLayout>
 

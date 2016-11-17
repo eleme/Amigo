@@ -7,14 +7,19 @@ import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import me.ele.amigo.reflect.MethodUtils;
+import me.ele.amigo.utils.FileUtils;
 
 public class NativeLibraryHelperCompat {
 
@@ -31,12 +36,36 @@ public class NativeLibraryHelperCompat {
     public static final int copyNativeBinaries(File apkFile, File sharedLibraryDir) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return copyNativeBinariesAfterL(apkFile, sharedLibraryDir);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            return copyNativeBinariesAfterICE(apkFile, sharedLibraryDir);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return copyNativeBinariesAfterGingerBread(apkFile, sharedLibraryDir);
         } else {
-            return copyNativeBinariesBeforeL(apkFile, sharedLibraryDir);
+            return copyNativeBinariesAfterECLAIR_MR1(apkFile, sharedLibraryDir);
         }
     }
 
-    private static int copyNativeBinariesBeforeL(File apkFile, File sharedLibraryDir) {
+    private static int copyNativeBinariesAfterGingerBread(File apkFile, File sharedLibraryDir) {
+        try {
+            Object[] args = new Object[2];
+            args[0] = apkFile;
+            args[1] = sharedLibraryDir;
+            return (int) MethodUtils.invokeStaticMethod(nativeLibraryHelperClass(),
+                    "copyNativeBinariesLI", args);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return -1;
+    }
+
+    private static int copyNativeBinariesAfterICE(File apkFile, File sharedLibraryDir) {
         try {
             Object[] args = new Object[2];
             args[0] = apkFile;
@@ -170,5 +199,45 @@ public class NativeLibraryHelperCompat {
         Application application = (Application) MethodUtils.invokeStaticMethod
                 (ActivityThreadCompat.clazz(), "currentApplication");
         return application.getApplicationInfo().sourceDir;
+    }
+
+    private static int copyNativeBinariesAfterECLAIR_MR1(File apkFile, File sharedLibraryDir) {
+        final String sharedLibraryABI = Build.CPU_ABI;
+        final String apkSharedLibraryPrefix = "lib/" + sharedLibraryABI + "/";
+        final String sharedLibrarySuffix = ".so";
+        byte[] buffer = new byte[8 * 1024];
+        try {
+            FileUtils.mkdirChecked(sharedLibraryDir);
+
+            ZipInputStream zis = new ZipInputStream(new FileInputStream(apkFile));
+            ZipEntry ze = zis.getNextEntry();
+
+            while (ze != null) {
+                String fileName = ze.getName();
+                if (!fileName.startsWith(apkSharedLibraryPrefix)
+                        || !fileName.endsWith(sharedLibrarySuffix)) {
+                    ze = zis.getNextEntry();
+                    continue;
+                }
+                File newFile = new File(sharedLibraryDir + File.separator +
+                        fileName.substring(apkSharedLibraryPrefix.length()));
+                new File(newFile.getParent()).mkdirs();
+                FileOutputStream fos = new FileOutputStream(newFile);
+
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+
+                fos.close();
+                ze = zis.getNextEntry();
+            }
+            zis.closeEntry();
+            zis.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return -1;
+        }
+        return 1;
     }
 }

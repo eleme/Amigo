@@ -7,8 +7,7 @@ Amigo
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
-   一个Android 平台的hotfix 库, 支持热更新。
-
+   一个Android 平台的hotfix 库, 支持热更新，支持热修复
 
 ## 用法
 
@@ -38,6 +37,13 @@ android {
 ```
 
    就这样轻松的集成了Amigo。
+   
+### 兼容性
+
+- 支持所有设备，从 ECLAIR `2.1` to Nougat `7.1`
+- 甚至可以支持下个Android release的版本, 不管改动是否很大。 很酷，有木有 :v:
+- 不支持Android 3.0
+
    
 ### 自定义loading界面
 
@@ -121,6 +127,10 @@ Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用
         ```
         
 - 不支持和Instant Run同时使用
+
+-  Amigo 不支持 Honeycomb `3.0`
+    * Android 3.0 是一个满是bug的版本, & 并且Google已经关闭这个版本.
+    
 - `notification` & `widget`中`RemoteViews`的自定义布局不支持修改,只支持内容修复
 
    任何使用在`RemoteViews`里面的资源id都需要进行这样的包装 ```java RCompat.getHostIdentifier(Context context, int id) ```

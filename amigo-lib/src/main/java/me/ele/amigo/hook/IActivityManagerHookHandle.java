@@ -1,11 +1,13 @@
 package me.ele.amigo.hook;
 
+import android.app.Activity;
 import android.app.IServiceConnection;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.content.res.TypedArray;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.text.TextUtils;
@@ -15,9 +17,17 @@ import java.lang.reflect.Method;
 import java.util.Random;
 
 import me.ele.amigo.AmigoInstrumentation;
+import me.ele.amigo.compat.ActivityThreadCompat;
+import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.reflect.MethodUtils;
 import me.ele.amigo.stub.ServiceStub;
 import me.ele.amigo.utils.component.ServiceFinder;
+
+import static android.R.attr.activityCloseEnterAnimation;
+import static android.R.attr.activityCloseExitAnimation;
+import static android.R.attr.activityOpenEnterAnimation;
+import static android.R.attr.activityOpenExitAnimation;
+import static me.ele.amigo.reflect.FieldUtils.readField;
 
 public class IActivityManagerHookHandle extends BaseHookHandle {
 
@@ -37,6 +47,12 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         hookedMethodHandlers.put("unbindService", new unbindService(context));
         hookedMethodHandlers.put("unbindFinished", new unbindFinished(context));
         hookedMethodHandlers.put("peekService", new peekService(context));
+        hookedMethodHandlers.put("startActivity", new startActivity(context));
+        hookedMethodHandlers.put("startActivityAsUser", new startActivityAsUser(context));
+        hookedMethodHandlers.put("startActivityAsCaller", new startActivityAsCaller(context));
+        hookedMethodHandlers.put("finishActivity", new finishActivity(context));
+        hookedMethodHandlers.put("overridePendingTransition", new overridePendingTransition
+                (context));
     }
 
     private static class startService extends HookedMethodHandler {
@@ -291,4 +307,94 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         ) != null;
     }
 
+
+    private class startActivity extends HookedMethodHandler {
+        public startActivity(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
+            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+    private class startActivityAsUser extends HookedMethodHandler {
+        public startActivityAsUser(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
+            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+    private class startActivityAsCaller extends HookedMethodHandler {
+        public startActivityAsCaller(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
+            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+
+    private void overridePendingTransition(int enterAnimFlag, int exitAnimFlag) {
+        try {
+            AmigoInstrumentation instrumentation = (AmigoInstrumentation) readField
+                    (ActivityThreadCompat.instance(), "mInstrumentation", true);
+            Activity activity = instrumentation.getCurrentActivity();
+            int windowAnimations = activity.getWindow().getAttributes().windowAnimations;
+            int[] attrs = {enterAnimFlag, exitAnimFlag};
+            TypedArray ta = activity.obtainStyledAttributes(windowAnimations, attrs);
+            int enterAnimation = ta.getResourceId(0, 0);
+            int exitAnimation = ta.getResourceId(1, 0);
+            ta.recycle();
+            activity.overridePendingTransition(enterAnimation, exitAnimation);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class finishActivity extends HookedMethodHandler {
+
+        public finishActivity(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
+            overridePendingTransition(activityCloseEnterAnimation, activityCloseExitAnimation);
+            super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+    private class overridePendingTransition extends HookedMethodHandler {
+        public overridePendingTransition(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected boolean beforeInvoke(Object receiver, Method method, Object[] args) throws
+                Throwable {
+            for (int i = 0; i < args.length; i++) {
+                Object arg = args[i];
+                if ((arg.getClass() == int.class || arg.getClass() == Integer.class)) {
+                    int anim = RCompat.getHostIdentifier(context, (int) arg);
+                    args[i] = anim;
+                }
+            }
+            return super.beforeInvoke(receiver, method, args);
+        }
+    }
 }

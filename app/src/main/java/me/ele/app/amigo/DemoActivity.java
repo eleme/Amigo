@@ -17,8 +17,6 @@ import android.widget.Toast;
 
 import java.io.File;
 
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import me.ele.amigo.Amigo;
 import me.ele.amigo.compat.RCompat;
 import me.ele.amigo.utils.CommonUtils;
@@ -33,11 +31,8 @@ public class DemoActivity extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_demo);
-
-        ButterKnife.bind(this);
     }
 
-    @OnClick(R.id.apply_patch_apk_immediately)
     public void applyPatchApkImmediately(View v) {
         File dir = Environment.getExternalStorageDirectory();
         File patchApkFile = new File(dir, APK_NAME);
@@ -62,7 +57,6 @@ public class DemoActivity extends BaseActivity {
         Amigo.work(this, patchApkFile);
     }
 
-    @OnClick(R.id.apply_patch_apk_later)
     public void applyPatchApkLater(View v) {
         File dir = Environment.getExternalStorageDirectory();
         File patchApkFile = new File(dir, APK_NAME);
@@ -93,15 +87,13 @@ public class DemoActivity extends BaseActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
-    @OnClick(R.id.clear_patch)
-    public void clearPatchApk() {
+    public void clearPatchApk(View v) {
         Amigo.clear(getApplication());
         Toast.makeText(this, "Kill this app, restart the app and check the running apk",
                 Toast.LENGTH_SHORT).show();
     }
 
-    @OnClick(R.id.notification)
-    void testNotification(View v) {
+   public void testNotification(View v) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
@@ -134,23 +126,19 @@ public class DemoActivity extends BaseActivity {
         notificationManager.notify(0, notification);
     }
 
-    @OnClick(R.id.test_patched_activity)
-    public void testPatchedActivities() {
+    public void testPatchedActivities(View v) {
         startActivity(new Intent(this, TestPatchedActivities.class));
     }
 
-    @OnClick(R.id.test_patched_services)
-    public void testPatchedServices() {
+    public void testPatchedServices(View v) {
         startActivity(new Intent(this, TestPatchedServices.class));
     }
 
-    @OnClick(R.id.trigger_receiver_action)
-    public void triggerReceiverAction() {
+    public void triggerReceiverAction(View v) {
         sendBroadcast(new Intent("me.ele.test").putExtra("DemoReceiver", "1"));
     }
 
-    @OnClick(R.id.test_patched_provider)
-    public void testPatchedProvider() {
+    public void testPatchedProvider(View v) {
         Cursor cursor = getContentResolver().query(
                 Uri.parse("content://me.ele.app.amigo.provider.student?id=0"),
                 null, null, null, null);

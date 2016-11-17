@@ -1,11 +1,14 @@
 package me.ele.amigo.utils;
 
+import android.os.Build;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class DexReleaser {
 
@@ -35,6 +38,12 @@ public class DexReleaser {
                 }
 
                 fos.close();
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                    makeDexToApk(newFile);
+                    newFile.delete();
+                }
+
                 ze = zis.getNextEntry();
             }
             zis.closeEntry();
@@ -43,5 +52,25 @@ public class DexReleaser {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    private static void makeDexToApk(File srcFile) throws IOException {
+        String dexName = srcFile.getName().replace(".dex", ".apk");
+        File destZipFile = new File(srcFile.getParentFile(), dexName);
+        FileOutputStream fileWriter = new FileOutputStream(destZipFile);
+        ZipOutputStream zip = new ZipOutputStream(fileWriter);
+
+        byte[] buf = new byte[1024];
+        int len;
+        FileInputStream in = new FileInputStream(srcFile);
+        zip.putNextEntry(new ZipEntry(srcFile.getName()));
+        while ((len = in.read(buf)) > 0) {
+            zip.write(buf, 0, len);
+        }
+
+        in.close();
+
+        zip.flush();
+        zip.close();
     }
 }

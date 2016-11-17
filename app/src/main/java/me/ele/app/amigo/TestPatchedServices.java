@@ -7,12 +7,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import java.lang.reflect.Method;
 
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import me.ele.amigo.reflect.MethodUtils;
 
 /**
@@ -26,11 +25,9 @@ public class TestPatchedServices extends BaseActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test_patched_services);
-        ButterKnife.bind(this);
     }
 
-    @OnClick(R.id.start_new_service)
-    public void startNewService() {
+    public void startNewService(View view) {
         try {
             startService(new Intent().setClassName(this, "me.ele.demo.service.StartService")
                     .putExtra("StartService", "1"));
@@ -39,8 +36,7 @@ public class TestPatchedServices extends BaseActivity {
         }
     }
 
-    @OnClick(R.id.stop_new_service)
-    public void stopNewService() {
+    public void stopNewService(View view) {
         try {
             stopService(new Intent().setClassName(this, "me.ele.demo.service.StartService"));
         } catch (Exception e) {
@@ -72,8 +68,7 @@ public class TestPatchedServices extends BaseActivity {
         }
     };
 
-    @OnClick(R.id.bind_new_service)
-    public void bindNewService() {
+    public void bindNewService(View view) {
         try {
             bindService(new Intent().setClassName(this, "me.ele.demo.service.BindService")
                     .putExtra("BindService", "1"), connection, 0);
@@ -82,8 +77,7 @@ public class TestPatchedServices extends BaseActivity {
         }
     }
 
-    @OnClick(R.id.unbind_new_service)
-    public void unbindNewService() {
+    public void unbindNewService(View view) {
         try {
             unbindService(connection);
         } catch (IllegalArgumentException e) {

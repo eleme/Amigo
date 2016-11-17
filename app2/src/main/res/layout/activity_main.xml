@@ -15,5 +15,6 @@
         android:id="@+id/test_provider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:onClick="testProvider"
         android:text="Query Student Info"/>
 </RelativeLayout>
