@@ -59,6 +59,8 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     }
 
     private Intent wrapIntent(Context who, Intent intent) {
+        Amigo.rollAmigoBack(who);
+
         if (!isPatchedActivity(who, intent)) {
             return intent;
         }
@@ -274,8 +276,14 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     public void callActivityOnCreate(Activity activity, Bundle icicle) {
         activities.add(activity);
         try {
+            boolean result = Amigo.rollAmigoBack(activity);
             Intent targetIntent = activity.getIntent();
             if (targetIntent != null) {
+
+                if (result) {
+                    targetIntent.setExtrasClassLoader(activity.getClassLoader());
+                }
+
                 ActivityInfo targetInfo = targetIntent.getParcelableExtra(EXTRA_TARGET_INFO);
                 if (targetInfo != null) {
                     activity.setRequestedOrientation(targetInfo.screenOrientation);
