@@ -64,6 +64,10 @@ dependencies {
     apt "com.jakewharton:butterknife-compiler:8.3.0"
 }
 
+amigo {
+    disable false
+}
+
 
 def getPkg() {
     return android.defaultConfig.applicationId
