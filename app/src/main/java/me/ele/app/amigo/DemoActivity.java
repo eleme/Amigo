@@ -127,7 +127,8 @@ public class DemoActivity extends BaseActivity {
     }
 
     public void testPatchedActivities(View v) {
-        startActivity(new Intent(this, TestPatchedActivities.class));
+        startActivity(new Intent(this, TestPatchedActivities.class).putExtra("test", new
+                ParcelBean("jack", 1)));
     }
 
     public void testPatchedServices(View v) {

@@ -12,6 +12,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.Map;
 
 import me.ele.amigo.exceptions.LoadPatchApkException;
@@ -55,12 +56,6 @@ public class Amigo extends Application {
             init();
             String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
             Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
-            if (PatchChecker.checkUpgrade(this)) {
-                Log.d(TAG, "Host app has upgrade");
-                PatchCleaner.clearPatchIfInMainProcess(this);
-                runOriginalApplication();
-                return;
-            }
             if (TextUtils.isEmpty(workingPatchApkChecksum)
                     || !patchApks.exists(workingPatchApkChecksum)) {
                 Log.d(TAG, "Patch apk doesn't exists");
@@ -167,7 +162,6 @@ public class Amigo extends Application {
 
         sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
         PatchCleaner.clearOldPatches(this, checksum);
-
     }
 
     private void setApkResource(String checksum) throws Exception {
@@ -192,12 +186,20 @@ public class Amigo extends Application {
     }
 
     private void setApkHandlerCallback() throws Exception {
+        originalCallback = replaceHandlerCallback(this);
+        Log.i(TAG, "hook handler success");
+    }
+
+    private static Handler.Callback replaceHandlerCallback(Context context) throws Exception {
         Handler handler = (Handler) readField(instance(), "mH", true);
         Object callback = readField(handler, "mCallback", true);
-        AmigoCallback value = new AmigoCallback(this, (Handler.Callback) callback);
+        if (callback != null && callback.getClass().getName().equals(AmigoCallback.class.getName
+                ())) {
+            return null;
+        }
+        AmigoCallback value = new AmigoCallback(context, (Handler.Callback) callback);
         writeField(handler, "mCallback", value);
-        originalCallback = callback;
-        Log.i(TAG, "hook handler success");
+        return value;
     }
 
     private void dynamicRegisterNewReceivers() {
@@ -392,6 +394,12 @@ public class Amigo extends Application {
                 PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
     }
 
+    public static String workingPatchVersionName(Context ctx) {
+        if (!hasWorked() || TextUtils.isEmpty(getWorkingPatchApkChecksum(ctx))) return "";
+        return CommonUtils.getVersionName(ctx,
+                PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
+    }
+
     public static String getWorkingPatchApkChecksum(Context ctx) {
         if (!hasWorked()) return "";
         return ctx.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
@@ -407,5 +415,54 @@ public class Amigo extends Application {
 
     public static LoadPatchError getLoadPatchError() {
         return loadPatchError;
+    }
+
+    /**
+     * this is for some extreme condition,
+     * like some safety app or malicious software replaces Amigo's hook
+     *
+     * @param context
+     * @return
+     */
+    public static boolean rollAmigoBack(Context context) {
+        return checkAndSetAmigoCallback(context) || checkAndSetAmigoClassLoader(context);
+    }
+
+    private static boolean checkAndSetAmigoCallback(Context context) {
+        try {
+            Handler handler = (Handler) readField(instance(), "mH", true);
+            Object callback = readField(handler, "mCallback", true);
+            if (callback != null) {
+                Field[] fields = callback.getClass().getDeclaredFields();
+                for (Field field : fields) {
+                    Object obj = readField(field, callback, true);
+                    if (!obj.getClass().getName().equals(AmigoCallback.class.getName())) {
+                        continue;
+                    }
+                    writeField(field, callback, null, true);
+                }
+            }
+            return replaceHandlerCallback(context.getApplicationContext()) != null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private static boolean checkAndSetAmigoClassLoader(Context context) {
+        try {
+            String clName = context.getClassLoader().getClass().getName();
+            if (clName.equals(AmigoClassLoader.class.getName())) {
+                return false;
+            }
+            Context app = context.getApplicationContext();
+            ClassLoader classLoader = app.getClass().getClassLoader();
+            writeField(getLoadedApk(), "mClassLoader", classLoader);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

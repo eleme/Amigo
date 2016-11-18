@@ -4,6 +4,7 @@ import android.content.Context;
 
 import java.lang.reflect.Method;
 
+import me.ele.amigo.Amigo;
 import me.ele.amigo.utils.Log;
 
 public class HookedMethodHandler {
@@ -21,6 +22,7 @@ public class HookedMethodHandler {
     public Object doHookInner(Object receiver, Method method, Object[] args) throws
             Throwable {
         long b = System.currentTimeMillis();
+        Amigo.rollAmigoBack(context);
         useFakedResult = false;
         fakedResult = null;
         boolean suc = beforeInvoke(receiver, method, args);

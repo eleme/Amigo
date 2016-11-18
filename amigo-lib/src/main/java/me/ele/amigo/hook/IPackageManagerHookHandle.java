@@ -2,6 +2,7 @@ package me.ele.amigo.hook;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,6 +26,7 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
     @Override
     protected void init() {
         hookedMethodHandlers.put("getApplicationInfo", new getApplicationInfo(context));
+        hookedMethodHandlers.put("getPackageInfo", new getPackageInfo(context));
     }
 
     private static class getApplicationInfo extends HookedMethodHandler {
@@ -69,6 +71,21 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
                 }
             }
             super.afterInvoke(receiver, method, args, invokeResult);
+        }
+    }
+
+    private class getPackageInfo extends HookedMethodHandler {
+        public getPackageInfo(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void afterInvoke(Object receiver, Method method, Object[] args, Object
+                invokeResult) throws Throwable {
+            super.afterInvoke(receiver, method, args, invokeResult);
+            PackageInfo result = (PackageInfo) invokeResult;
+            result.versionCode = Amigo.workingPatchVersion(context);
+            result.versionName = Amigo.workingPatchVersionName(context);
         }
     }
 }

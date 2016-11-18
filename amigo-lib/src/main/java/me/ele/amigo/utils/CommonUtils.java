@@ -33,6 +33,11 @@ public class CommonUtils {
         return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), 0).versionCode;
     }
 
+    public static String getVersionName(Context context, File patchApk) {
+        PackageManager pm = context.getPackageManager();
+        return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), 0).versionName;
+    }
+
     public static Signature getSignature(Context context) throws NameNotFoundException {
         return context.getPackageManager().getPackageInfo(
                 context.getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
