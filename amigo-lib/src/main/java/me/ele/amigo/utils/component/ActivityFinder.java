@@ -13,17 +13,42 @@ import java.util.List;
 public class ActivityFinder extends ComponentFinder {
 
     private static ComponentName newLauncherComponent;
+    private static ActivityInfo[] sHostActivities;
 
     public static ActivityInfo[] getAppActivities(Context context) {
+        if (sHostActivities != null) {
+            return sHostActivities;
+        }
+
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info =
-                    pm.getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES);
-            return info.activities;
+                    pm.getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES |
+                            PackageManager.GET_META_DATA);
+            return sHostActivities = info.activities;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static boolean isThereNewActivityInPatch(Context context) {
+        parsePackage(context);
+        ActivityInfo[] hostActivities = getAppActivities(context);
+        boolean newActivity = false;
+        out:
+        for (int i = sActivities.size() - 1; i >= 0; i--) {
+            ActivityInfo patchActivityInfo = sActivities.get(i).activityInfo;
+            for (int i1 = hostActivities.length - 1; i1 >= 0; i1--) {
+                if (hostActivities[i1].name.equals(patchActivityInfo.name)) {
+                    break out;
+                }
+            }
+            newActivity = true;
+            break;
+        }
+        // check any changes in activity's metadata ?
+        return newActivity;
     }
 
     public static ComponentName getNewLauncherComponent(Context context) {

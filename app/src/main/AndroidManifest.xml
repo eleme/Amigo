@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="me.ele.app.amigo">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="me.ele.app.amigo">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
 
     <application
         android:name=".ApplicationContext"
@@ -16,45 +16,55 @@
         android:theme="@style/AppTheme"
         tools:replace="android:icon">
         <activity
-            android:name="me.ele.app.amigo.HomeActivity"
+            android:name=".HomeActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <activity
             android:name=".DemoActivity"
             android:label="@string/demo"
-            android:screenOrientation="portrait" />
-
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".TestPatchedActivities"
-            android:screenOrientation="portrait" />
-
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".TestPatchedServices"
-            android:screenOrientation="portrait" />
-
-        <activity android:name=".dev.DevActivity" />
-
+            android:screenOrientation="portrait"/>
+        <activity android:name=".dev.DevActivity"/>
         <activity
             android:name=".dev.SubprocessActivity"
             android:exported="true"
-            android:process=".demo.subprocess" />
+            android:process=".demo.subprocess"/>
 
         <meta-data
             android:name="amigo_layout"
-            android:value="amigo_layout_demo" />
-
+            android:value="amigo_layout_demo"/>
         <meta-data
             android:name="amigo_theme"
-            android:value="amigoThemeDemo" />
+            android:value="amigoThemeDemo"/>
 
+        <provider
+            android:name=".MyContentProvider"
+            android:authorities="me.ele.app.amigo.provider.my_provider"
+            android:exported="false"/>
+
+        <receiver android:name=".MyBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_ON"/>
+                <action android:name="android.intent.action.SCREEN_OFF"/>
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".MyIntentService"
+            android:exported="false">
+        </service>
 
     </application>
 
