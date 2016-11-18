@@ -56,12 +56,6 @@ public class Amigo extends Application {
             init();
             String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
             Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
-            if (PatchChecker.checkUpgrade(this)) {
-                Log.d(TAG, "Host app has upgrade");
-                PatchCleaner.clearPatchIfInMainProcess(this);
-                runOriginalApplication();
-                return;
-            }
             if (TextUtils.isEmpty(workingPatchApkChecksum)
                     || !patchApks.exists(workingPatchApkChecksum)) {
                 Log.d(TAG, "Patch apk doesn't exists");
@@ -400,6 +394,12 @@ public class Amigo extends Application {
                 PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
     }
 
+    public static String workingPatchVersionName(Context ctx) {
+        if (!hasWorked() || TextUtils.isEmpty(getWorkingPatchApkChecksum(ctx))) return "";
+        return CommonUtils.getVersionName(ctx,
+                PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
+    }
+
     public static String getWorkingPatchApkChecksum(Context ctx) {
         if (!hasWorked()) return "";
         return ctx.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
@@ -420,6 +420,7 @@ public class Amigo extends Application {
     /**
      * this is for some extreme condition,
      * like some safety app or malicious software replaces Amigo's hook
+     *
      * @param context
      * @return
      */
