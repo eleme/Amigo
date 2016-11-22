@@ -21,8 +21,10 @@ import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.ProcessUtils;
+import me.ele.amigo.utils.component.ActivityFinder;
 import me.ele.amigo.utils.component.ContentProviderFinder;
 import me.ele.amigo.utils.component.ReceiverFinder;
+import me.ele.amigo.utils.component.ServiceFinder;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
@@ -148,12 +150,24 @@ public class Amigo extends Application {
         setAPKClassLoader(classLoader);
         revertBitFlag |= 1;
         setApkResource(checksum);
-        setApkInstrumentation();
-        revertBitFlag |= 1 << 1;
-        setApkHandlerCallback();
-        revertBitFlag |= 1 << 2;
 
-        installHookFactory();
+        boolean gotNewActivity = ActivityFinder.newActivityExistsInPatch(this);
+        if (gotNewActivity) {
+            setApkInstrumentation();
+            revertBitFlag |= 1 << 1;
+            setApkHandlerCallback();
+            revertBitFlag |= 1 << 2;
+        } else {
+            Log.d(TAG, "installAndHook: there is no any new activity, skip hooking " +
+                    "instrumentation & mH's callback");
+        }
+
+        if (gotNewActivity || ServiceFinder.newServiceExistsInPatch(this)) {
+            installHookFactory();
+        } else {
+            Log.d(TAG, "installAndHook: and there is no any new service, skip hooking " +
+                    "ActivityManager & PackageManager");
+        }
 
         runPatchedApplication(checksum);
 
@@ -204,7 +218,7 @@ public class Amigo extends Application {
 
     private void dynamicRegisterNewReceivers() {
         ReceiverFinder.registerNewReceivers(getApplicationContext(), getClassLoader());
-        Log.i(TAG, "dynamic register new receivers success");
+        Log.i(TAG, "dynamic register new receivers done");
     }
 
     private void installHookFactory() {
@@ -214,7 +228,7 @@ public class Amigo extends Application {
 
     private void installPatchContentProviders() {
         ContentProviderFinder.installPatchContentProviders(getApplicationContext());
-        Log.i(TAG, "installPatchContentProviders success");
+        Log.i(TAG, "installPatchContentProviders done");
     }
 
 

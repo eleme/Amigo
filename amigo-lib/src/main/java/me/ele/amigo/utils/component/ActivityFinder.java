@@ -13,41 +13,76 @@ import java.util.List;
 public class ActivityFinder extends ComponentFinder {
 
     private static ComponentName newLauncherComponent;
+    private static ActivityInfo[] sHostActivities;
 
     public static ActivityInfo[] getAppActivities(Context context) {
+        if (sHostActivities != null) {
+            return sHostActivities;
+        }
+
         try {
             PackageManager pm = context.getPackageManager();
             PackageInfo info =
-                    pm.getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES);
-            return info.activities;
+                    pm.getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES |
+                            PackageManager.GET_META_DATA);
+            return sHostActivities = info.activities;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
         return null;
     }
 
+    public static boolean newActivityExistsInPatch(Context context) {
+        parsePackage(context);
+        getAppActivities(context);
+        for (int i = sActivities.size() - 1; i >= 0; i--) {
+            ActivityInfo patchActivityInfo = sActivities.get(i).activityInfo;
+            if (isNew(patchActivityInfo)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isNew(ActivityInfo patchActivityInfo) {
+        // check any changes in activity's metadata ?
+        for (int i1 = sHostActivities.length - 1; i1 >= 0; i1--) {
+            if (sHostActivities[i1].name.equals(patchActivityInfo.name)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static ComponentName getNewLauncherComponent(Context context) {
         if (newLauncherComponent != null) {
             return newLauncherComponent;
         }
+
         parsePackage(context);
         for (Activity activity : sActivities) {
-            List<IntentFilter> intents = activity.filters;
-            if (intents == null || intents.isEmpty()) {
-                continue;
-            }
-
-            for (IntentFilter intentFilter : intents) {
-                if (intentFilter.hasAction(Intent.ACTION_MAIN)
-                        && intentFilter.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-                    ActivityInfo info = activity.activityInfo;
-                    newLauncherComponent = new ComponentName(context.getPackageName(),
-                            info.targetActivity != null ? info.targetActivity : info.name);
-                    return newLauncherComponent;
-                }
+            if (isNewLauncherActivity(activity)) {
+                ActivityInfo info = activity.activityInfo;
+                return newLauncherComponent = new ComponentName(context.getPackageName(),
+                        info.targetActivity != null ? info.targetActivity : info.name);
             }
         }
         return newLauncherComponent;
+    }
+
+    private static boolean isNewLauncherActivity(Activity activity) {
+        List<IntentFilter> intents = activity.filters;
+        if (intents == null || intents.isEmpty()) {
+            return false;
+        }
+
+        for (IntentFilter intentFilter : intents) {
+            if (intentFilter.hasAction(Intent.ACTION_MAIN)
+                    && intentFilter.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static ComponentName getLauncherComponent(Context context) {
