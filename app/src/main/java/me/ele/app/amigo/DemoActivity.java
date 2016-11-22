@@ -68,7 +68,12 @@ public class DemoActivity extends BaseActivity {
         }
         boolean patchWorked = Amigo.hasWorked();
         if (!patchWorked) {
-            Amigo.workLater(this, patchApkFile);
+            Amigo.workLater(this, patchApkFile, new Amigo.WorkLaterCallback() {
+                @Override
+                public void onPatchApkReleased() {
+                    Toast.makeText(DemoActivity.this, "dex opt done!", Toast.LENGTH_SHORT).show();
+                }
+            });
             Toast.makeText(this,
                     "waiting for seconds, and kill this app and relaunch the app to check result",
                     Toast.LENGTH_SHORT).show();
@@ -81,7 +86,12 @@ public class DemoActivity extends BaseActivity {
                     .show();
             return;
         }
-        Amigo.workLater(this, patchApkFile);
+        Amigo.workLater(this, patchApkFile, new Amigo.WorkLaterCallback() {
+            @Override
+            public void onPatchApkReleased() {
+                Toast.makeText(DemoActivity.this, "dex opt done!", Toast.LENGTH_SHORT).show();
+            }
+        });
         Toast.makeText(this,
                 "waiting for seconds, and kill this app and relaunch the app to check result",
                 Toast.LENGTH_SHORT).show();
@@ -93,7 +103,7 @@ public class DemoActivity extends BaseActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
-   public void testNotification(View v) {
+    public void testNotification(View v) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
