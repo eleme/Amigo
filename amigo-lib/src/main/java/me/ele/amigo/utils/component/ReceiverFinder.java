@@ -32,8 +32,8 @@ public class ReceiverFinder extends ComponentFinder {
 
     public static void registerNewReceivers(Context context, ClassLoader classLoader) {
         parsePackage(context);
-
         ActivityInfo[] receiverInHost = getAppReceivers(context);
+        boolean findNew = false;
         try {
             for (int i = 0, size = sReceivers.size(); i < size; i++) {
                 Activity receiver = sReceivers.get(i);
@@ -45,6 +45,11 @@ public class ReceiverFinder extends ComponentFinder {
                 }
 
                 registerOneReceiver(context, classLoader, receiver, filters);
+                findNew = true;
+            }
+
+            if (!findNew) {
+                Log.d(TAG, "registerNewReceivers: there is no any new receiver");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -64,17 +69,15 @@ public class ReceiverFinder extends ComponentFinder {
         Log.d(TAG, "registerOneReceiver: " + receiver.activityInfo);
     }
 
-    private static boolean isNewReceiver(ActivityInfo[] receiverInHost, Activity receiver) {
-        boolean isNew = true;
+    private static boolean isNewReceiver(ActivityInfo[] receiverInHost, Activity patchReceiver) {
         if (ArrayUtil.isNotEmpty(receiverInHost)) {
             for (ActivityInfo activityInfo : receiverInHost) {
-                if (receiver.activityInfo.name.equals(activityInfo.name)) {
-                    isNew = false;
-                    break;
+                if (patchReceiver.activityInfo.name.equals(activityInfo.name)) {
+                    return false;
                 }
             }
         }
-        return isNew;
+        return true;
     }
 
     private static final List<BroadcastReceiver> registeredReceivers = new ArrayList<>();

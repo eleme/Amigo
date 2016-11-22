@@ -38,24 +38,15 @@ public class ServiceFinder extends ComponentFinder {
         return sHostServices;
     }
 
-    public static boolean isThereNewServiceInPatch(Context context) {
+    public static boolean newServiceExistsInPatch(Context context) {
         parsePackage(context);
-        ServiceInfo[] hostServices = getAppServices(context);
-        boolean newService = false;
-        out:
+        getAppServices(context);
         for (int i = sServices.size() - 1; i >= 0; i--) {
-            ServiceInfo patchServiceInfo = sServices.get(i).serviceInfo;
-            for (int i1 = hostServices.length - 1; i1 >= 0; i1--) {
-                if (hostServices[i1].name.equals(patchServiceInfo.name)) {
-                    continue out;
-                }
+            if (isNew(sServices.get(i).serviceInfo)) {
+                return true;
             }
-            Log.d(TAG, "isThereNewServiceInPatch: find new service " + patchServiceInfo);
-            newService = true;
-            break;
         }
-        // diff each activity's metadata ??
-        return newService;
+        return false;
     }
 
     public static ServiceInfo resolveNewServiceInfo(Context context, Intent intent) {
@@ -88,6 +79,7 @@ public class ServiceFinder extends ComponentFinder {
     }
 
     private static boolean isNew(ServiceInfo serviceInfo) {
+        // diff metadata ??
         for (int i = ArrayUtil.length(sHostServices) - 1; i >= 0; i--) {
             if (serviceInfo.name.equals(sHostServices[i].name)) {
                 return false;

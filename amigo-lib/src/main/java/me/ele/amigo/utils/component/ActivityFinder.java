@@ -32,47 +32,57 @@ public class ActivityFinder extends ComponentFinder {
         return null;
     }
 
-    public static boolean isThereNewActivityInPatch(Context context) {
+    public static boolean newActivityExistsInPatch(Context context) {
         parsePackage(context);
-        ActivityInfo[] hostActivities = getAppActivities(context);
-        boolean newActivity = false;
-        out:
+        getAppActivities(context);
         for (int i = sActivities.size() - 1; i >= 0; i--) {
             ActivityInfo patchActivityInfo = sActivities.get(i).activityInfo;
-            for (int i1 = hostActivities.length - 1; i1 >= 0; i1--) {
-                if (hostActivities[i1].name.equals(patchActivityInfo.name)) {
-                    break out;
-                }
+            if (isNew(patchActivityInfo)) {
+                return true;
             }
-            newActivity = true;
-            break;
         }
+        return false;
+    }
+
+    private static boolean isNew(ActivityInfo patchActivityInfo) {
         // check any changes in activity's metadata ?
-        return newActivity;
+        for (int i1 = sHostActivities.length - 1; i1 >= 0; i1--) {
+            if (sHostActivities[i1].name.equals(patchActivityInfo.name)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static ComponentName getNewLauncherComponent(Context context) {
         if (newLauncherComponent != null) {
             return newLauncherComponent;
         }
+
         parsePackage(context);
         for (Activity activity : sActivities) {
-            List<IntentFilter> intents = activity.filters;
-            if (intents == null || intents.isEmpty()) {
-                continue;
-            }
-
-            for (IntentFilter intentFilter : intents) {
-                if (intentFilter.hasAction(Intent.ACTION_MAIN)
-                        && intentFilter.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-                    ActivityInfo info = activity.activityInfo;
-                    newLauncherComponent = new ComponentName(context.getPackageName(),
-                            info.targetActivity != null ? info.targetActivity : info.name);
-                    return newLauncherComponent;
-                }
+            if (isNewLauncherActivity(activity)) {
+                ActivityInfo info = activity.activityInfo;
+                return newLauncherComponent = new ComponentName(context.getPackageName(),
+                        info.targetActivity != null ? info.targetActivity : info.name);
             }
         }
         return newLauncherComponent;
+    }
+
+    private static boolean isNewLauncherActivity(Activity activity) {
+        List<IntentFilter> intents = activity.filters;
+        if (intents == null || intents.isEmpty()) {
+            return false;
+        }
+
+        for (IntentFilter intentFilter : intents) {
+            if (intentFilter.hasAction(Intent.ACTION_MAIN)
+                    && intentFilter.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static ComponentName getLauncherComponent(Context context) {

@@ -156,7 +156,7 @@ public class Amigo extends Application {
         revertBitFlag |= 1;
         setApkResource(checksum);
 
-        boolean gotNewActivity = ActivityFinder.isThereNewActivityInPatch(this);
+        boolean gotNewActivity = ActivityFinder.newActivityExistsInPatch(this);
         if (gotNewActivity) {
             setApkInstrumentation();
             revertBitFlag |= 1 << 1;
@@ -167,7 +167,7 @@ public class Amigo extends Application {
                     "instrumentation & mH's callback");
         }
 
-        if (gotNewActivity || ServiceFinder.isThereNewServiceInPatch(this)) {
+        if (gotNewActivity || ServiceFinder.newServiceExistsInPatch(this)) {
             installHookFactory();
         } else {
             Log.d(TAG, "installAndHook: and there is no any new service, skip hooking " +
@@ -215,7 +215,7 @@ public class Amigo extends Application {
 
     private void dynamicRegisterNewReceivers() {
         ReceiverFinder.registerNewReceivers(getApplicationContext(), getClassLoader());
-        Log.i(TAG, "dynamic register new receivers success");
+        Log.i(TAG, "dynamic register new receivers done");
     }
 
     private void installHookFactory() {
@@ -225,7 +225,7 @@ public class Amigo extends Application {
 
     private void installPatchContentProviders() {
         ContentProviderFinder.installPatchContentProviders(getApplicationContext());
-        Log.i(TAG, "installPatchContentProviders success");
+        Log.i(TAG, "installPatchContentProviders done");
     }
 
 
