@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.os.Handler;
-import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -18,7 +17,7 @@ import java.util.Map;
 import me.ele.amigo.exceptions.LoadPatchApkException;
 import me.ele.amigo.hook.HookFactory;
 import me.ele.amigo.reflect.FieldUtils;
-import me.ele.amigo.release.ApkReleaser;
+import me.ele.amigo.release.ApkReleaseActivity;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.ProcessUtils;
 import me.ele.amigo.utils.component.ActivityFinder;
@@ -260,8 +259,37 @@ public class Amigo extends Application {
         Log.e(TAG, String.format("layoutName-->%s, themeName-->%s", layoutName, themeName));
         Log.e(TAG, String.format("layoutId-->%d, themeId-->%d", layoutId, themeId));
 
-        ApkReleaser.getInstance(this).work(checksum, layoutId, themeId);
+        releaseDex(checksum, layoutId, themeId);
         Log.e(TAG, "release apk once");
+    }
+
+    private static final int SLEEP_DURATION = 200;
+
+    private boolean isDexOptDone(String checksum) {
+        return getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
+                .getBoolean(checksum, false);
+    }
+
+    /**
+     * start a new process to release and optimize dex files
+     */
+    private void waitDexOptDone(String checksum, int layoutId, int themeId) {
+        ApkReleaseActivity.launch(this, checksum, layoutId, themeId);
+        while (!isDexOptDone(checksum)) {
+            try {
+                Thread.sleep(SLEEP_DURATION);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void releaseDex(String checksum, int layoutId, int themeId) {
+        if (!ProcessUtils.isLoadDexProcess(this)) {
+            if (!isDexOptDone(checksum)) {
+                waitDexOptDone(checksum, layoutId, themeId);
+            }
+        }
     }
 
     private boolean isPatchApkFirstRun(String checksum) {
@@ -370,26 +398,39 @@ public class Amigo extends Application {
                 .edit()
                 .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, patchChecksum)
                 .commit();
-        AmigoService.start(context, patchChecksum, false);
-        System.exit(0);
-        Process.killProcess(Process.myPid());
+        AmigoService.restartMainProcess(context);
     }
 
     public static void workLater(Context context, File patchFile) {
-        workLater(context, patchFile, true);
+        workLater(context, patchFile, true, null);
+    }
+
+    public static void workLater(Context context, File patchFile, WorkLaterCallback callback) {
+        workLater(context, patchFile, true, callback);
     }
 
     public static void workLaterWithoutCheckingSignature(Context context, File patchFile) {
-        workLater(context, patchFile, false);
+        workLater(context, patchFile, false, null);
     }
 
-    private static void workLater(Context context, File patchFile, boolean checkSignature) {
+    public interface WorkLaterCallback {
+        void onPatchApkReleased();
+    }
+
+    private static void workLater(Context context, File patchFile, boolean checkSignature,
+                                  WorkLaterCallback callback) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
-        if (patchChecksum != null) {
-            AmigoService.start(context, patchChecksum, true);
+        if (patchChecksum == null) {
+            Log.e(TAG, "workLater: empty checksum");
+            return;
+        }
+
+        if (callback != null) {
+            AmigoService.startReleaseDex(context, patchChecksum, callback);
+        } else {
+            AmigoService.startReleaseDex(context, patchChecksum);
         }
     }
-
 
     public static boolean hasWorked() {
         ClassLoader classLoader = null;

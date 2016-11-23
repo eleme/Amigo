@@ -33,6 +33,7 @@ class PatchCleaner {
                 .commit();
     }
 
+    //todo refactor this shit
     static void clearWithoutPatchApk(Context context, String checksum) {
         Log.e(TAG, "clear without patch");
         AmigoDirs amigoDirs = AmigoDirs.getInstance(context);
