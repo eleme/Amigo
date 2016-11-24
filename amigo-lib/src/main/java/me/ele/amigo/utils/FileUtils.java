@@ -1,6 +1,7 @@
 package me.ele.amigo.utils;
 
 import android.os.Build;
+import android.util.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,6 +55,33 @@ public class FileUtils {
 
     public static void removeFile(File file) {
         removeFile(file, true);
+    }
+
+    public static void removeFile(File file, File excludeSubFile) {
+        if (file == null || !file.exists() || file.equals(excludeSubFile)) {
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            file.setWritable(true);
+        }
+
+        if (file.isFile()) {
+            file.delete();
+            return;
+        }
+
+        if (!file.isDirectory()) {
+            return;
+        }
+
+        File[] listFiles = file.listFiles();
+        if (listFiles != null && listFiles.length > 0) {
+            for (File f : listFiles) {
+                removeFile(f, excludeSubFile);
+            }
+        }
+        file.delete();
     }
 
     public static void removeFile(File file, boolean isDirRemovable) {

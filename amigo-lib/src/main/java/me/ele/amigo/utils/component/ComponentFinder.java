@@ -15,12 +15,9 @@ import java.util.List;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.PatchApks;
+import me.ele.amigo.PatchInfoUtil;
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.reflect.MethodUtils;
-
-import static android.content.Context.MODE_MULTI_PROCESS;
-import static me.ele.amigo.Amigo.SP_NAME;
-import static me.ele.amigo.Amigo.WORKING_PATCH_APK_CHECKSUM;
 
 class ComponentFinder {
 
@@ -31,8 +28,7 @@ class ComponentFinder {
     private static boolean hasParsePackage = false;
 
     static File getHotFixApk(Context context) {
-        String workingPatchApkChecksum = context.getSharedPreferences(SP_NAME,
-                MODE_MULTI_PROCESS).getString(WORKING_PATCH_APK_CHECKSUM, "");
+        String workingPatchApkChecksum = PatchInfoUtil.getWorkingChecksum(context);
         return PatchApks.getInstance(context).patchFile(workingPatchApkChecksum);
     }
 

@@ -76,9 +76,7 @@ public class CommonUtils {
             // This is most likely a mock context, so just return without patching.
             return null;
         }
-        ApplicationInfo applicationInfo =
-                pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
-        return applicationInfo;
+        return pm.getApplicationInfo(packageName, 0);
     }
 
 

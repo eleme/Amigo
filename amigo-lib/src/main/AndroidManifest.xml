@@ -13,8 +13,8 @@
             android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
             android:launchMode="singleTop"
-            android:process=":amigo"
             android:noHistory="true"
+            android:process=":amigo"
             android:screenOrientation="portrait"/>
 
         <activity
@@ -105,9 +105,14 @@
             />
 
         <provider
+            android:name=".PatchInfoProvider"
+            android:authorities="${applicationId}.amigo_patch_info_provider"
+            android:exported="false"/>
+
+        <provider
+            android:name=".stub.ProviderStub"
             android:authorities="${applicationId}.provider"
-            android:exported="true"
-            android:name=".stub.ProviderStub"/>
+            android:exported="true"/>
 
     </application>
 

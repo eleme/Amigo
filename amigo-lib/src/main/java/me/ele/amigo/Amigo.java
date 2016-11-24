@@ -3,7 +3,6 @@ package me.ele.amigo;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.os.Handler;
@@ -35,14 +34,8 @@ import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 public class Amigo extends Application {
     private static final String TAG = Amigo.class.getSimpleName();
 
-    public static final String SP_NAME = "Amigo";
-    public static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
-    public static final String VERSION_CODE = "version_code";
-    public static final String VERSION_NAME = "version_name";
-
     private static LoadPatchError loadPatchError;
 
-    private SharedPreferences sharedPref;
 
     private Instrumentation originalInstrumentation = null;
     private Object originalCallback = null;
@@ -56,17 +49,18 @@ public class Amigo extends Application {
         super.onCreate();
         try {
             init();
-            String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
-            Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
+            String workingChecksum = PatchInfoUtil.getWorkingChecksum(this);
+            Log.e(TAG, "#onCreate working checksum: " + workingChecksum);
             if (PatchChecker.checkUpgrade(this)) {
                 Log.d(TAG, "Host app has upgrade");
                 PatchCleaner.clearPatchIfInMainProcess(this);
                 runOriginalApplication();
                 return;
             }
-            if (TextUtils.isEmpty(workingPatchApkChecksum)
-                    || !patchApks.exists(workingPatchApkChecksum)) {
-                Log.d(TAG, "Patch apk doesn't exists");
+
+            if (TextUtils.isEmpty(workingChecksum)
+                    || !patchApks.exists(workingChecksum)) {
+                Log.d(TAG, "#onCreate Patch apk doesn't exists");
                 PatchCleaner.clearPatchIfInMainProcess(this);
                 runOriginalApplication();
                 return;
@@ -74,19 +68,19 @@ public class Amigo extends Application {
 
             // ensure load dex process always run host apk not patch apk
             if (ProcessUtils.isLoadDexProcess(this)) {
-                Log.e(TAG, "load dex process");
+                Log.e(TAG, "#onCreate load dex process");
                 runOriginalApplication();
                 return;
             }
 
-            if (!ProcessUtils.isMainProcess(this) && isPatchApkFirstRun(workingPatchApkChecksum)) {
-                Log.e(TAG, "None main process and patch apk is not released yet");
+            if (!ProcessUtils.isMainProcess(this) && isPatchApkFirstRun(workingChecksum)) {
+                Log.e(TAG, "#onCreate None main process and patch apk is not released yet");
                 runOriginalApplication();
                 return;
             }
 
             // only release loaded apk in the main process
-            runPatchApk(workingPatchApkChecksum);
+            runPatchApk(workingChecksum);
         } catch (LoadPatchApkException e) {
             e.printStackTrace();
             loadPatchError = LoadPatchError.record(LoadPatchError.LOAD_ERR, e);
@@ -104,7 +98,6 @@ public class Amigo extends Application {
      * WARNING: do not modify this method's name, used for hotfix itself
      */
     private void init() {
-        sharedPref = getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
         amigoDirs = AmigoDirs.getInstance(this);
         patchApks = PatchApks.getInstance(this);
     }
@@ -112,8 +105,7 @@ public class Amigo extends Application {
     private void runPatchApk(String checksum) throws LoadPatchApkException {
         try {
             if (isPatchApkFirstRun(checksum) || !isOptedDexExists(checksum)) {
-                // TODO This is workaround for now, refactor in future.
-                sharedPref.edit().remove(checksum).commit();
+                PatchInfoUtil.updateDexFileOptStatus(this, checksum, false);
                 releasePatchApk(checksum);
             } else {
                 PatchChecker.checkDexAndSo(this, checksum);
@@ -175,7 +167,7 @@ public class Amigo extends Application {
         dynamicRegisterNewReceivers();
         installPatchContentProviders();
 
-        sharedPref.edit().putString(WORKING_PATCH_APK_CHECKSUM, checksum).commit();
+        PatchInfoUtil.setWorkingChecksum(this, checksum); // not necessary
         PatchCleaner.clearOldPatches(this, checksum);
     }
 
@@ -232,7 +224,6 @@ public class Amigo extends Application {
         Log.i(TAG, "installPatchContentProviders done");
     }
 
-
     private void rollbackApkHandlerCallback() {
         try {
             Handler handler = (Handler) readField(instance(), "mH", true);
@@ -268,8 +259,7 @@ public class Amigo extends Application {
     private static final int SLEEP_DURATION = 200;
 
     private boolean isDexOptDone(String checksum) {
-        return getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
-                .getBoolean(checksum, false);
+        return PatchInfoUtil.isDexFileOptimized(this, checksum);
     }
 
     /**
@@ -295,7 +285,7 @@ public class Amigo extends Application {
     }
 
     private boolean isPatchApkFirstRun(String checksum) {
-        return !sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "").equals(checksum);
+        return !PatchInfoUtil.getWorkingChecksum(this).equals(checksum);
     }
 
     private boolean isOptedDexExists(String checksum) {
@@ -396,11 +386,9 @@ public class Amigo extends Application {
 
     private static void work(Context context, File patchFile, boolean checkSignature) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
-        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
-                .edit()
-                .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, patchChecksum)
-                .commit();
-        AmigoService.restartMainProcess(context);
+        if (PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) {
+            AmigoService.restartMainProcess(context);
+        }
     }
 
     public static void workLater(Context context, File patchFile) {
@@ -452,15 +440,11 @@ public class Amigo extends Application {
 
     public static String getWorkingPatchApkChecksum(Context ctx) {
         if (!hasWorked()) return "";
-        return ctx.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
-                .getString(WORKING_PATCH_APK_CHECKSUM, "");
+        return PatchInfoUtil.getWorkingChecksum(ctx);
     }
 
     public static void clear(Context context) {
-        context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS)
-                .edit()
-                .putString(WORKING_PATCH_APK_CHECKSUM, "")
-                .commit();
+        PatchInfoUtil.setWorkingChecksum(context, "");
     }
 
     public static LoadPatchError getLoadPatchError() {
@@ -486,7 +470,7 @@ public class Amigo extends Application {
                 Field[] fields = callback.getClass().getDeclaredFields();
                 for (Field field : fields) {
                     Object obj = readField(field, callback, true);
-                    if (!obj.getClass().getName().equals(AmigoCallback.class.getName())) {
+                    if (obj == null || !obj.getClass().getName().equals(AmigoCallback.class.getName())) {
                         continue;
                     }
                     writeField(field, callback, null, true);
@@ -501,8 +485,8 @@ public class Amigo extends Application {
 
     private static boolean checkAndSetAmigoClassLoader(Context context) {
         try {
-            String clName = context.getClassLoader().getClass().getName();
-            if (clName.equals(AmigoClassLoader.class.getName())) {
+            String classloaderName = context.getClassLoader().getClass().getName();
+            if (classloaderName.equals(AmigoClassLoader.class.getName())) {
                 return false;
             }
             Context app = context.getApplicationContext();
