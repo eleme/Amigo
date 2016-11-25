@@ -38,6 +38,7 @@ public class Amigo extends Application {
     public static final String SP_NAME = "Amigo";
     public static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
     public static final String VERSION_CODE = "version_code";
+    public static final String VERSION_NAME = "version_name";
 
     private static LoadPatchError loadPatchError;
 
@@ -57,6 +58,12 @@ public class Amigo extends Application {
             init();
             String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
             Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
+            if (PatchChecker.checkUpgrade(this)) {
+                Log.d(TAG, "Host app has upgrade");
+                PatchCleaner.clearPatchIfInMainProcess(this);
+                runOriginalApplication();
+                return;
+            }
             if (TextUtils.isEmpty(workingPatchApkChecksum)
                     || !patchApks.exists(workingPatchApkChecksum)) {
                 Log.d(TAG, "Patch apk doesn't exists");

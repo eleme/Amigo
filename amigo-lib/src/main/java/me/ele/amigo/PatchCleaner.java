@@ -11,6 +11,7 @@ import me.ele.amigo.utils.ProcessUtils;
 import static android.content.Context.MODE_MULTI_PROCESS;
 import static me.ele.amigo.Amigo.SP_NAME;
 import static me.ele.amigo.Amigo.VERSION_CODE;
+import static me.ele.amigo.Amigo.VERSION_NAME;
 import static me.ele.amigo.utils.FileUtils.removeFile;
 
 class PatchCleaner {
@@ -30,6 +31,7 @@ class PatchCleaner {
                 .edit()
                 .clear()
                 .putInt(VERSION_CODE, CommonUtils.getVersionCode(context))
+                .putString(VERSION_NAME, CommonUtils.getVersionName(context))
                 .commit();
     }
 

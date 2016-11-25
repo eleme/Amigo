@@ -28,6 +28,16 @@ public class CommonUtils {
         }
     }
 
+    public static String getVersionName(Context context) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            return pm.getPackageInfo(context.getPackageName(), 0).versionName;
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
     public static PackageInfo getPackageInfo(Context context, File patchApk, int flags) {
         PackageManager pm = context.getPackageManager();
         return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), flags);
