@@ -1,13 +1,10 @@
 package me.ele.amigo;
 
 import android.content.Context;
-import android.content.pm.Signature;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
-import me.ele.amigo.utils.CommonUtils;
 
 public final class PatchApks {
     private static final String PATCH_APK_FILE_NAME = "patch.apk";
@@ -56,13 +53,5 @@ public final class PatchApks {
     public boolean exists(String checksum) {
         ensureDir(checksum);
         return apkFiles.containsKey(checksum) && apkFiles.get(checksum).exists();
-    }
-
-    public Signature signature(String checksum) {
-        return CommonUtils.getSignature(context, patchFile(checksum));
-    }
-
-    public int versionCode(String checksum) {
-        return CommonUtils.getVersionCode(context, patchFile(checksum));
     }
 }

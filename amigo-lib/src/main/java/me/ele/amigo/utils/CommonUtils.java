@@ -28,14 +28,9 @@ public class CommonUtils {
         }
     }
 
-    public static int getVersionCode(Context context, File patchApk) {
+    public static PackageInfo getPackageInfo(Context context, File patchApk, int flags) {
         PackageManager pm = context.getPackageManager();
-        return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), 0).versionCode;
-    }
-
-    public static String getVersionName(Context context, File patchApk) {
-        PackageManager pm = context.getPackageManager();
-        return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), 0).versionName;
+        return pm.getPackageArchiveInfo(patchApk.getAbsolutePath(), flags);
     }
 
     public static Signature getSignature(Context context) throws NameNotFoundException {

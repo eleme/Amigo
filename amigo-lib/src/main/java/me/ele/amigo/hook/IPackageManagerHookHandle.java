@@ -7,11 +7,14 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.PatchApks;
 import me.ele.amigo.utils.CommonUtils;
+
+import static me.ele.amigo.Amigo.getWorkingPatchApkChecksum;
 
 public class IPackageManagerHookHandle extends BaseHookHandle {
 
@@ -84,8 +87,11 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
                 invokeResult) throws Throwable {
             super.afterInvoke(receiver, method, args, invokeResult);
             PackageInfo result = (PackageInfo) invokeResult;
-            result.versionCode = Amigo.workingPatchVersion(context);
-            result.versionName = Amigo.workingPatchVersionName(context);
+            String checksum = getWorkingPatchApkChecksum(context);
+            File patchFile = PatchApks.getInstance(context).patchFile(checksum);
+            PackageInfo workingPatchInfo = CommonUtils.getPackageInfo(context, patchFile, 0);
+            result.versionCode = workingPatchInfo.versionCode;
+            result.versionName = workingPatchInfo.versionName;
         }
     }
 }
