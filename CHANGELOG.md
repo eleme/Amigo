@@ -1,3 +1,12 @@
+## Version [0.6.0-beta](https://github.com/eleme/Amigo/releases/tag/v0.6.0-beta)
+_2016-11-25
+* smaller diff file, compat with [zippatch](https://github.com/eleme/bspatch#usage)
+* support disable amigo
+* compat with all android versions, even Android 2.1
+* support workLater **callback**
+* fix android windowAnimation bug
+* refactor some code & some small bugfix
+
 ## Version [0.5.0](https://github.com/eleme/Amigo/releases/tag/v0.5.0)
 _2016-11-03
 * support Amigo hotfix itself :v:

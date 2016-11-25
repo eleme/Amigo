@@ -5,6 +5,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Log;
@@ -23,7 +24,6 @@ import me.ele.amigo.utils.ProcessUtils;
 import me.ele.amigo.utils.component.ActivityFinder;
 import me.ele.amigo.utils.component.ContentProviderFinder;
 import me.ele.amigo.utils.component.ReceiverFinder;
-import me.ele.amigo.utils.component.ServiceFinder;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static me.ele.amigo.compat.ActivityThreadCompat.instance;
@@ -38,6 +38,7 @@ public class Amigo extends Application {
     public static final String SP_NAME = "Amigo";
     public static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
     public static final String VERSION_CODE = "version_code";
+    public static final String VERSION_NAME = "version_name";
 
     private static LoadPatchError loadPatchError;
 
@@ -57,6 +58,12 @@ public class Amigo extends Application {
             init();
             String workingPatchApkChecksum = sharedPref.getString(WORKING_PATCH_APK_CHECKSUM, "");
             Log.e(TAG, "working checksum: " + workingPatchApkChecksum);
+            if (PatchChecker.checkUpgrade(this)) {
+                Log.d(TAG, "Host app has upgrade");
+                PatchCleaner.clearPatchIfInMainProcess(this);
+                runOriginalApplication();
+                return;
+            }
             if (TextUtils.isEmpty(workingPatchApkChecksum)
                     || !patchApks.exists(workingPatchApkChecksum)) {
                 Log.d(TAG, "Patch apk doesn't exists");
@@ -161,12 +168,7 @@ public class Amigo extends Application {
                     "instrumentation & mH's callback");
         }
 
-        if (gotNewActivity || ServiceFinder.newServiceExistsInPatch(this)) {
-            installHookFactory();
-        } else {
-            Log.d(TAG, "installAndHook: and there is no any new service, skip hooking " +
-                    "ActivityManager & PackageManager");
-        }
+        installHookFactory();
 
         runPatchedApplication(checksum);
 
@@ -443,16 +445,9 @@ public class Amigo extends Application {
                 && classLoader.getClass().getName().equals(AmigoClassLoader.class.getName());
     }
 
-    public static int workingPatchVersion(Context ctx) {
-        if (!hasWorked() || TextUtils.isEmpty(getWorkingPatchApkChecksum(ctx))) return -1;
-        return CommonUtils.getVersionCode(ctx,
-                PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
-    }
-
-    public static String workingPatchVersionName(Context ctx) {
-        if (!hasWorked() || TextUtils.isEmpty(getWorkingPatchApkChecksum(ctx))) return "";
-        return CommonUtils.getVersionName(ctx,
-                PatchApks.getInstance(ctx).patchFile(getWorkingPatchApkChecksum(ctx)));
+    public static PackageInfo getHostPackageInfo(Context context, int flags) {
+        String hostApkPath = context.getApplicationInfo().sourceDir;
+        return CommonUtils.getPackageInfo(context, new File(hostApkPath), flags);
     }
 
     public static String getWorkingPatchApkChecksum(Context ctx) {
@@ -499,7 +494,7 @@ public class Amigo extends Application {
             }
             return replaceHandlerCallback(context.getApplicationContext()) != null;
         } catch (Exception e) {
-            e.printStackTrace();
+            //ignore
         }
         return false;
     }

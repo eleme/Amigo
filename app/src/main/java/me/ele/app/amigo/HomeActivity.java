@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import me.ele.amigo.Amigo;
 import me.ele.app.amigo.dev.DevActivity;
 import me.ele.demo.A;
 
@@ -28,6 +29,7 @@ public class HomeActivity extends BaseActivity {
         metaDataView = (TextView) findViewById(R.id.meta_data);
         Log.e(TAG, "onCreate");
         Log.e(TAG, "getApplication from HomeActivity-->" + getApplication());
+        Log.e(TAG, "version code from host-->" + Amigo.getHostPackageInfo(this, 0).versionCode);
 
         infoView.setText(A.getDes());
 

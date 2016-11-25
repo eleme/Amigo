@@ -14,7 +14,6 @@ import android.util.Log;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.LinkedList;
 
 import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.stub.ActivityStub;
@@ -35,8 +34,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     private Method methodExecStart4;
     private Method methodExecStart5;
     private Method methodExecStart6;
-
-    private LinkedList<Activity> activities = new LinkedList<>();
 
     public AmigoInstrumentation(Instrumentation oldInstrumentation) {
         this.oldInstrumentation = oldInstrumentation;
@@ -80,10 +77,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         intent.putExtra(EXTRA_STUB_NAME, stubClazz);
         ActivityStub.onActivityCreated(stubClazz, null, componentName.getClassName());
         return stubIntent;
-    }
-
-    public Activity getCurrentActivity() {
-        return activities.getLast();
     }
 
     @Override
@@ -266,15 +259,10 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
     @Override
     public void callActivityOnNewIntent(Activity activity, Intent intent) {
         super.callActivityOnNewIntent(activity, intent);
-        if (activities.contains(activity)) {
-            activities.remove(activity);
-            activities.add(activity);
-        }
     }
 
     @Override
     public void callActivityOnCreate(Activity activity, Bundle icicle) {
-        activities.add(activity);
         try {
             boolean result = Amigo.rollAmigoBack(activity);
             Intent targetIntent = activity.getIntent();
@@ -317,7 +305,6 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
             super.callActivityOnDestroy(activity);
         }
 
-        activities.remove(activity);
         Intent intent = activity.getIntent();
         Class stubClazz;
         if (intent != null && (stubClazz = (Class) intent.getSerializableExtra(EXTRA_STUB_NAME))

@@ -13,6 +13,8 @@ import me.ele.amigo.utils.PermissionChecker;
 
 import static android.content.Context.MODE_MULTI_PROCESS;
 import static me.ele.amigo.Amigo.SP_NAME;
+import static me.ele.amigo.Amigo.VERSION_CODE;
+import static me.ele.amigo.Amigo.VERSION_NAME;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 
@@ -100,5 +102,23 @@ class PatchChecker {
                 }
             }
         }
+    }
+
+    static boolean checkUpgrade(Context context) {
+        boolean result = false;
+        SharedPreferences sharedPref = context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
+        int recordVersion = sharedPref.getInt(VERSION_CODE, 0);
+        int currentVersion = CommonUtils.getVersionCode(context);
+        if (currentVersion > recordVersion) {
+            result = true;
+        }
+        String recordVersionName = sharedPref.getString(VERSION_NAME, "");
+        String currentVersionName = CommonUtils.getVersionName(context);
+        if (!recordVersionName.equals(currentVersionName)) {
+            result = true;
+        }
+        sharedPref.edit().putInt(VERSION_CODE, currentVersion).commit();
+        sharedPref.edit().putString(VERSION_NAME, currentVersionName).commit();
+        return result;
     }
 }

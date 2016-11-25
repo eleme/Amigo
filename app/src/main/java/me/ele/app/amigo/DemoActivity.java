@@ -19,7 +19,6 @@ import java.io.File;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.compat.RCompat;
-import me.ele.amigo.utils.CommonUtils;
 
 public class DemoActivity extends BaseActivity {
 
@@ -47,13 +46,6 @@ public class DemoActivity extends BaseActivity {
             Amigo.work(this, patchApkFile);
             return;
         }
-        int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
-        if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
-            Toast.makeText(this, patchApkFile.getAbsolutePath()
-                    + " version must be newer than current working patch", Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
         Amigo.work(this, patchApkFile);
     }
 
@@ -77,13 +69,6 @@ public class DemoActivity extends BaseActivity {
             Toast.makeText(this,
                     "waiting for seconds, and kill this app and relaunch the app to check result",
                     Toast.LENGTH_SHORT).show();
-            return;
-        }
-        int workingPatchVersion = Amigo.workingPatchVersion(getApplication());
-        if (workingPatchVersion >= CommonUtils.getVersionCode(getApplication(), patchApkFile)) {
-            Toast.makeText(this, patchApkFile.getAbsolutePath()
-                    + " version must be newer than current working patch", Toast.LENGTH_SHORT)
-                    .show();
             return;
         }
         Amigo.workLater(this, patchApkFile, new Amigo.WorkLaterCallback() {
