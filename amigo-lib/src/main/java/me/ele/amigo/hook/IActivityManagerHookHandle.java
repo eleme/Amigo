@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Random;
 
 import me.ele.amigo.AmigoInstrumentation;
@@ -322,7 +323,7 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         @Override
         protected void afterInvoke(Object receiver, Method method, Object[] args, Object
                 invokeResult) throws Throwable {
-            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            overridePendingTransition(args, activityOpenEnterAnimation, activityOpenExitAnimation);
             super.afterInvoke(receiver, method, args, invokeResult);
         }
     }
@@ -335,7 +336,7 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         @Override
         protected void afterInvoke(Object receiver, Method method, Object[] args, Object
                 invokeResult) throws Throwable {
-            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            overridePendingTransition(args, activityOpenEnterAnimation, activityOpenExitAnimation);
             super.afterInvoke(receiver, method, args, invokeResult);
         }
     }
@@ -348,17 +349,20 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         @Override
         protected void afterInvoke(Object receiver, Method method, Object[] args, Object
                 invokeResult) throws Throwable {
-            overridePendingTransition(activityOpenEnterAnimation, activityOpenExitAnimation);
+            overridePendingTransition(args, activityOpenEnterAnimation, activityOpenExitAnimation);
             super.afterInvoke(receiver, method, args, invokeResult);
         }
     }
 
 
-    private void overridePendingTransition(int enterAnimFlag, int exitAnimFlag) {
+    private void overridePendingTransition(Object[] args, int enterAnimFlag, int exitAnimFlag) {
         try {
-            AmigoInstrumentation instrumentation = (AmigoInstrumentation) readField
-                    (ActivityThreadCompat.instance(), "mInstrumentation", true);
-            Activity activity = instrumentation.getCurrentActivity();
+            IBinder token = getIBinderToken(args);
+            if (token == null) {
+                return;
+            }
+            Activity activity = (Activity) MethodUtils.invokeMethod(ActivityThreadCompat.instance
+                    (), "getActivity", token);
             int windowAnimations = activity.getWindow().getAttributes().windowAnimations;
             int[] attrs = {enterAnimFlag, exitAnimFlag};
             TypedArray ta = activity.obtainStyledAttributes(windowAnimations, attrs);
@@ -367,8 +371,19 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
             ta.recycle();
             activity.overridePendingTransition(enterAnimation, exitAnimation);
         } catch (Exception e) {
-            e.printStackTrace();
+            //ignore
         }
+    }
+
+    public IBinder getIBinderToken(Object[] args) {
+        if (args != null && args.length > 0) {
+            for (Object arg : args) {
+                if (arg != null && arg instanceof IBinder) {
+                    return (IBinder) arg;
+                }
+            }
+        }
+        return null;
     }
 
     private class finishActivity extends HookedMethodHandler {
@@ -380,7 +395,17 @@ public class IActivityManagerHookHandle extends BaseHookHandle {
         @Override
         protected void afterInvoke(Object receiver, Method method, Object[] args, Object
                 invokeResult) throws Throwable {
-            overridePendingTransition(activityCloseEnterAnimation, activityCloseExitAnimation);
+            try {
+                Map mActivities = (Map) readField(ActivityThreadCompat.instance(), "mActivities",
+                        true);
+                if (mActivities != null && mActivities.size() == 1) {
+                    return;
+                }
+            } catch (Exception e) {
+                //ignore
+            }
+            overridePendingTransition(args, activityCloseEnterAnimation,
+                    activityCloseExitAnimation);
             super.afterInvoke(receiver, method, args, invokeResult);
         }
     }

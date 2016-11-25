@@ -19,7 +19,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'me.ele:amigo:0.5.0'
+        classpath 'me.ele:amigo:0.6.0-beta'
     }
 }
 ```
@@ -32,7 +32,14 @@ apply plugin: 'me.ele.amigo'
 android {
 ...
 }
+
+//if you don't want use amigo in dev
+amigo {
+    disable true //default false
+}
+
 ```
+
 
 ### Compatibility
 
@@ -58,11 +65,10 @@ There are two ways to make hotfix work.
 
 * if you don't need hotfix work immediately
  
-    you just need to download new apk file to /data/data/{your pkg}/files/amigo/demo.apk,
-	when app restarts next time, hotfix apk will be loaded as fresh as new.
+  you just need to download new apk file, hotfix apk will be loaded as fresh as new when app restarts next time
 	
 	```java
-    Amigo.workLater(context, patchApkFile);
+    Amigo.workLater(context, patchApkFile, callback);
     ```
     
 * work immediately, App will restart immediately

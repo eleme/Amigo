@@ -21,7 +21,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'me.ele:amigo:0.5.0'
+        classpath 'me.ele:amigo:0.6.0-beta'
     }
 }
 ```
@@ -34,6 +34,12 @@ apply plugin: 'me.ele.amigo'
 android {
  ...
 }
+
+//开发过程中你可以不想开启Amigo
+amigo {
+    disable true //默认 false
+}
+
 ```
 
    就这样轻松的集成了Amigo。
@@ -67,7 +73,7 @@ android {
      如果不想立即生效而是用户第二次打开App 时才打入补丁包，可以通过这个方法：
      
     ```java
-    Amigo.workLater(context, apkFile);
+    Amigo.workLater(context, apkFile, callback);
     ```
     
 *    立即生效
