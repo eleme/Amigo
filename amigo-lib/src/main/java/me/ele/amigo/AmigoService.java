@@ -7,15 +7,20 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.util.Log;
+import android.util.SparseArray;
 
+import me.ele.amigo.release.ApkReleaseActivity;
 import me.ele.amigo.release.ApkReleaser;
+import me.ele.amigo.utils.ProcessUtils;
 
 import static me.ele.amigo.utils.ProcessUtils.isMainProcessRunning;
 
@@ -33,14 +38,19 @@ public class AmigoService extends Service {
     private Handler handler = null;
     private int retryCount = 0;
 
-    private Messenger messenger; // don't support multiple client
-    private int outMsg;
+    private SparseArray<IBinder> clients = new SparseArray<>();
 
     private IAmigoService iAmigoService = new IAmigoService.Stub() {
         @Override
         public void join(IBinder token, int msg) throws RemoteException {
-            messenger = new Messenger(token);
-            outMsg = msg;
+            clients.put(msg, token);
+        }
+
+        @Override
+        public void leave(IBinder token, int msg) throws RemoteException {
+            if (clients.get(msg) == token) {
+                clients.remove(msg);
+            }
         }
     };
     private ApkReleaser apkRelease;
@@ -125,18 +135,21 @@ public class AmigoService extends Service {
                 }
                 return true;
             case MSG_ID_DEX_OPT_FINISHED:
-                Log.d(TAG, "handleMsg: send message out to " + messenger);
-                if (messenger != null) {
+                for (int i = 0; i < clients.size(); i++) {
+                    int code = clients.keyAt(i);
+                    // get the object by the key.
+                    IBinder client = clients.get(code);
+                    Messenger messenger = new Messenger(client);
+                    Log.d(TAG, "handleMsg: send message out to client[" + code + "]");
                     try {
                         Message dexDoneMsg = Message.obtain();
-                        dexDoneMsg.what = outMsg;
+                        dexDoneMsg.what = code;
                         messenger.send(dexDoneMsg);
-                        messenger = null;
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
                 }
-
+                clients.clear();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -168,6 +181,7 @@ public class AmigoService extends Service {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy: ");
+        clients.clear();
         super.onDestroy();
     }
 

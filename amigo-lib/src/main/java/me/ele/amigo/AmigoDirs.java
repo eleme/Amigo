@@ -2,8 +2,10 @@ package me.ele.amigo;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.util.Log;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,8 +15,7 @@ import me.ele.amigo.utils.FileUtils;
 public final class AmigoDirs {
     private static final String TAG = AmigoDirs.class.getSimpleName();
 
-    private static final String CODE_CACHE_NAME = "code_cache";
-    private static final String CODE_CACHE_AMIGO_DEX_FOLDER_NAME = "amigo-dexes";
+    private static final String CODE_CACHE_NAME = "code_cache/amigo_odex";
     private static final String AMIGO_FOLDER_NAME = "amigo";
     private static final String AMIGO_DEX_FOLDER_NAME = "dexes";
     private static final String AMIGO_LIB_FOLDER_NAME = "libs";
@@ -37,7 +38,7 @@ public final class AmigoDirs {
     /**
      * System manages
      */
-    private File cacheDir;
+    private File odexDir;
 
     /**
      * /data/data/{package_name}/code_cache/{checksum}/amigo-dexes
@@ -80,7 +81,7 @@ public final class AmigoDirs {
     }
 
     private void ensureAmigoDir() throws RuntimeException {
-        if (amigoDir != null && amigoDir.exists() && cacheDir != null && cacheDir.exists()) return;
+        if (amigoDir != null && amigoDir.exists() && odexDir != null && odexDir.exists()) return;
         try {
             ApplicationInfo applicationInfo = CommonUtils.getApplicationInfo(context);
             if (applicationInfo == null) {
@@ -90,10 +91,11 @@ public final class AmigoDirs {
 
             // data dir's real path
             amigoDir = new File(context.getFilesDir().getCanonicalPath(), AMIGO_FOLDER_NAME);
-            FileUtils.mkdirChecked(amigoDir);
+            amigoDir.mkdirs();
 
-            cacheDir = new File(new File(applicationInfo.dataDir).getCanonicalPath(), CODE_CACHE_NAME);
-            FileUtils.mkdirChecked(cacheDir);
+            odexDir = new File(new File(applicationInfo.dataDir).getCanonicalPath(),
+                    CODE_CACHE_NAME);
+            odexDir.mkdirs();
         } catch (Exception e) {
             throw new RuntimeException("Initiate amigo files failed (" + e.getMessage() + ").");
         }
@@ -119,15 +121,11 @@ public final class AmigoDirs {
             }
             libDirs.put(checksum, libDir);
 
-            File patchCacheDir = new File(cacheDir, checksum);
+            File patchCacheDir = new File(odexDir, checksum);
             if (!patchCacheDir.exists()) {
-                FileUtils.mkdirChecked(patchCacheDir);
+                patchCacheDir.mkdirs();
             }
-            File optDir = new File(patchCacheDir, CODE_CACHE_AMIGO_DEX_FOLDER_NAME);
-            if (!optDir.exists()) {
-                FileUtils.mkdirChecked(optDir);
-            }
-            optDirs.put(checksum, optDir);
+            optDirs.put(checksum, patchCacheDir);
         } catch (Exception e) {
             throw new RuntimeException("Initiate amigo files for patch apk: " + checksum + " " +
                     "failed (" + e.getMessage() + ").");
@@ -139,11 +137,22 @@ public final class AmigoDirs {
                 && dexOptDir(checksum).listFiles().length > 0;
     }
 
-    public void delete() {
+    // delete dex, odex, so files of a patch and also clear unused patches
+    public void deletePatchExceptApk(String checksum) {
+        FileUtils.removeFile(odexDir);
+        FileUtils.removeFile(amigoDir(), PatchApks.getInstance(context).patchFile(checksum));
+        Log.d(TAG, "deletePatchExceptApk: " + checksum);
+    }
+
+    public void clear() {
         FileUtils.removeFile(amigoDir);
-        FileUtils.removeFile(cacheDir);
-        for (File dir : optDirs.values()) {
-            FileUtils.removeFile(dir);
-        }
+        FileUtils.removeFile(odexDir);
+        Log.d(TAG, "clear:");
+    }
+
+    public void deleteAllPatches(String excludeFile) {
+        FileUtils.removeFile(amigoDir, new File(amigoDir, excludeFile));
+        FileUtils.removeFile(odexDir, new File(odexDir, excludeFile));
+        Log.d(TAG, "deleteAllPatches: " + excludeFile);
     }
 }

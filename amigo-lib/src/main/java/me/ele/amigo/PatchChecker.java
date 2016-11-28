@@ -1,20 +1,18 @@
 package me.ele.amigo;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.Signature;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.File;
+import java.util.Map;
 
+import me.ele.amigo.utils.ArrayUtil;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.CrcUtils;
 import me.ele.amigo.utils.PermissionChecker;
 
-import static android.content.Context.MODE_MULTI_PROCESS;
-import static me.ele.amigo.Amigo.SP_NAME;
-import static me.ele.amigo.Amigo.VERSION_CODE;
-import static me.ele.amigo.Amigo.VERSION_NAME;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 import static me.ele.amigo.utils.FileUtils.copyFile;
 
@@ -65,60 +63,46 @@ class PatchChecker {
     }
 
     static void checkDexAndSo(Context context, String apkChecksum) throws Exception {
-        SharedPreferences sp = context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
+        Map<String, String> checksumMap = PatchInfoUtil.getPatchFileChecksum(context, apkChecksum);
         AmigoDirs amigoDirs = AmigoDirs.getInstance(context);
-        File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
 
-        for (File dexFile : dexFiles) {
-            String savedChecksum = sp.getString(dexFile.getAbsolutePath(), "");
-            String checksum = getCrc(dexFile);
-            Log.e(TAG, "dexFile-->" + dexFile);
-            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
-            if (!savedChecksum.equals(checksum)) {
-                throw new IllegalStateException("wrong dex check sum");
-            }
-        }
+        File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
+        assertChecksum(checksumMap, dexFiles, "dex");
 
         File[] dexOptFiles = amigoDirs.dexOptDir(apkChecksum).listFiles();
-        for (File dexOptFile : dexOptFiles) {
-            String savedChecksum = sp.getString(dexOptFile.getAbsolutePath(), "");
-            String checksum = getCrc(dexOptFile);
-            Log.e(TAG, "opt dexFile-->" + dexOptFile);
-            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
-            if (!savedChecksum.equals(checksum)) {
-                throw new IllegalStateException("wrong opt dex check sum");
-            }
-        }
+        assertChecksum(checksumMap, dexOptFiles, "opt dex");
 
         File[] nativeFiles = amigoDirs.libDir(apkChecksum).listFiles();
-        if (nativeFiles != null && nativeFiles.length > 0) {
-            for (File nativeFile : nativeFiles) {
-                String savedChecksum = sp.getString(nativeFile.getAbsolutePath(), "");
-                String checksum = getCrc(nativeFile);
-                Log.e(TAG, "native lib -->" + nativeFile);
-                Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
-                if (!savedChecksum.equals(checksum)) {
-                    throw new IllegalStateException("wrong native lib check sum");
-                }
+        assertChecksum(checksumMap, nativeFiles, "native lib");
+    }
+
+    private static void assertChecksum(Map<String, String> checksumMap, File[] files,
+                                       String type) {
+        if (ArrayUtil.isEmpty(files)) {
+            return;
+        }
+
+        for (File nativeFile : files) {
+            String savedChecksum = checksumMap.get(nativeFile.getAbsolutePath());
+            String checksum = getCrc(nativeFile);
+            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
+            if (!checksum.equals(savedChecksum)) {
+                throw new IllegalStateException("wrong " + type + "  check sum");
             }
         }
     }
 
     static boolean checkUpgrade(Context context) {
         boolean result = false;
-        SharedPreferences sharedPref = context.getSharedPreferences(SP_NAME, MODE_MULTI_PROCESS);
-        int recordVersion = sharedPref.getInt(VERSION_CODE, 0);
+        Pair<String, Integer> versionInfo = PatchInfoUtil.getHostVersionOnPatchApplied(context);
         int currentVersion = CommonUtils.getVersionCode(context);
-        if (currentVersion > recordVersion) {
+        if (currentVersion > versionInfo.second) {
             result = true;
         }
-        String recordVersionName = sharedPref.getString(VERSION_NAME, "");
         String currentVersionName = CommonUtils.getVersionName(context);
-        if (!recordVersionName.equals(currentVersionName)) {
+        if (!versionInfo.first.equals(currentVersionName)) {
             result = true;
         }
-        sharedPref.edit().putInt(VERSION_CODE, currentVersion).commit();
-        sharedPref.edit().putString(VERSION_NAME, currentVersionName).commit();
         return result;
     }
 }

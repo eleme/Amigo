@@ -67,9 +67,9 @@ public class ProviderStub extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        Log.d(TAG, "#delete: received query uri [" + uri + "]");
+        Log.d(TAG, "#clear: received query uri [" + uri + "]");
         uri = mapUri(uri);
-        Log.d(TAG, "#delete: dispatching mapped query uri [" + uri + "]");
+        Log.d(TAG, "#clear: dispatching mapped query uri [" + uri + "]");
         if (uri == null) {
             return 0;
         }
