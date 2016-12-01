@@ -96,7 +96,7 @@ class AmigoPlugin implements Plugin<Project> {
 
                         Node hackAppNode = new Node(appNode, "activity")
                         hackAppNode.attributes().put("android:name", applicationName)
-                        manifestFile.text = XmlUtil.serialize(node)
+                        manifestFile.bytes = XmlUtil.serialize(node).getBytes("UTF-8");
 
                         generateCodeTask = project.tasks.create(
                                 name: "generate${variant.name.capitalize()}ApplicationInfo",
