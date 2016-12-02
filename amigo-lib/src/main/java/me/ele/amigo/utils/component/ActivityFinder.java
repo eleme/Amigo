@@ -22,6 +22,11 @@ public class ActivityFinder extends ComponentFinder {
 
         try {
             PackageManager pm = context.getPackageManager();
+            /*
+             * Notice :
+             * will not return the activity-info of a component which is declared disabled in
+             * manifest and has never been set to enabled state dynamically.
+            */
             PackageInfo info =
                     pm.getPackageInfo(context.getPackageName(), PackageManager.GET_ACTIVITIES |
                             PackageManager.GET_META_DATA);

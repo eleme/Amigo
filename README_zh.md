@@ -36,6 +36,7 @@ android {
 }
 
 //开发过程中你可以不想开启Amigo
+//你可以把这个定义在mybuild.gradle，以区分debug & release打包
 amigo {
     disable true //默认 false
 }

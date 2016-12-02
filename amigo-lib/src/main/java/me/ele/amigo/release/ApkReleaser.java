@@ -1,29 +1,28 @@
 package me.ele.amigo.release;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Process;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import dalvik.system.DexFile;
-import me.ele.amigo.Amigo;
 import me.ele.amigo.AmigoDirs;
 import me.ele.amigo.AmigoService;
 import me.ele.amigo.PatchApks;
+import me.ele.amigo.PatchInfoUtil;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
 import me.ele.amigo.utils.DexReleaser;
 
-import static me.ele.amigo.Amigo.SP_NAME;
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 
 public class ApkReleaser {
@@ -56,12 +55,9 @@ public class ApkReleaser {
             case MSG_ID_DEX_OPT_DONE:
                 isReleasing = false;
                 String checksum = (String) msg.obj;
-                doneDexOpt(checksum);
                 saveDexAndSoChecksum(checksum);
-                context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
-                        .edit()
-                        .putString(Amigo.WORKING_PATCH_APK_CHECKSUM, checksum)
-                        .commit();
+                PatchInfoUtil.updateDexFileOptStatus(context, checksum, true);
+                PatchInfoUtil.setWorkingChecksum(context, checksum);
                 if (msgHandler != null)
                     msgHandler.sendEmptyMessage(AmigoService.MSG_ID_DEX_OPT_FINISHED);
                 return true;
@@ -82,6 +78,10 @@ public class ApkReleaser {
             @Override
             public void run() {
                 isReleasing = true;
+
+
+                SystemClock.sleep(6000);
+
                 DexReleaser.releaseDexes(patchApks.patchFile(checksum), amigoDirs.dexDir(checksum));
                 NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
                         amigoDirs.libDir(checksum));
@@ -159,32 +159,27 @@ public class ApkReleaser {
     }
 
     private void saveDexAndSoChecksum(String apkChecksum) {
-        SharedPreferences sp = context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS);
+        HashMap<String, String> checksumMap = new HashMap<>();
         File[] dexFiles = amigoDirs.dexDir(apkChecksum).listFiles();
         for (File dexFile : dexFiles) {
             String checksum = getCrc(dexFile);
-            sp.edit().putString(dexFile.getAbsolutePath(), checksum).commit();
+            checksumMap.put(dexFile.getAbsolutePath(), checksum);
         }
 
         File[] dexOptFiles = amigoDirs.dexOptDir(apkChecksum).listFiles();
         for (File dexOptFile : dexOptFiles) {
             String checksum = getCrc(dexOptFile);
-            sp.edit().putString(dexOptFile.getAbsolutePath(), checksum).commit();
+            checksumMap.put(dexOptFile.getAbsolutePath(), checksum);
         }
 
         File[] nativeFiles = amigoDirs.libDir(apkChecksum).listFiles();
         if (nativeFiles != null && nativeFiles.length > 0) {
             for (File nativeFile : nativeFiles) {
                 String checksum = getCrc(nativeFile);
-                sp.edit().putString(nativeFile.getAbsolutePath(), checksum).commit();
+                checksumMap.put(nativeFile.getAbsolutePath(), checksum);
             }
         }
+        PatchInfoUtil.updatePatchFileChecksum(context, apkChecksum, checksumMap);
     }
 
-    private void doneDexOpt(String checksum) {
-        context.getSharedPreferences(SP_NAME, Context.MODE_MULTI_PROCESS)
-                .edit()
-                .putBoolean(checksum, true)
-                .commit();
-    }
 }

@@ -34,6 +34,7 @@ android {
 }
 
 //if you don't want use amigo in dev
+//you can define this extension in your mybuild.gradle as to distinguish debug & release build
 amigo {
     disable true //default false
 }
