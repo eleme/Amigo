@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.File;
@@ -78,10 +77,6 @@ public class ApkReleaser {
             @Override
             public void run() {
                 isReleasing = true;
-
-
-                SystemClock.sleep(6000);
-
                 DexReleaser.releaseDexes(patchApks.patchFile(checksum), amigoDirs.dexDir(checksum));
                 NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
                         amigoDirs.libDir(checksum));

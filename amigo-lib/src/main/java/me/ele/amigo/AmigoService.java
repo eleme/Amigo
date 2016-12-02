@@ -1,42 +1,32 @@
 package me.ele.amigo;
 
 import android.app.IAmigoService;
-import android.app.IntentService;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.util.Log;
 import android.util.SparseArray;
 
-import me.ele.amigo.release.ApkReleaseActivity;
 import me.ele.amigo.release.ApkReleaser;
-import me.ele.amigo.utils.ProcessUtils;
-
-import static me.ele.amigo.utils.ProcessUtils.isMainProcessRunning;
 
 
 public class AmigoService extends Service {
 
     public static final int MSG_ID_PULL_UP_MAIN_PROCESS = 0;
     public static final int MSG_ID_DEX_OPT_FINISHED = 1;
-    public static final int DELAY = 200;
-    public static final int MAX_RETRY_TIMES = 10;
     private static final String TAG = AmigoService.class.getSimpleName();
     private static final String ACTION_RELEASE_DEX = "release_dex";
     private static final String ACTION_RESTART_MANI_PROCESS = "restart_main_process";
     private static final String EXTRA_APK_CHECKSUM = "apk_checksum";
     private Handler handler = null;
-    private int retryCount = 0;
 
     private SparseArray<IBinder> clients = new SparseArray<>();
 
@@ -58,7 +48,6 @@ public class AmigoService extends Service {
     public static void restartMainProcess(Context context) {
         context.startService(new Intent(context, AmigoService.class)
                 .setAction(ACTION_RESTART_MANI_PROCESS));
-        System.exit(0);
         Process.killProcess(Process.myPid());
     }
 
@@ -124,15 +113,7 @@ public class AmigoService extends Service {
     private boolean handleMsg(Message msg) {
         switch (msg.what) {
             case MSG_ID_PULL_UP_MAIN_PROCESS:
-                Context context = AmigoService.this;
-                if (!isMainProcessRunning(context)) {
-                    pullUpMainProcess(context);
-                    return true;
-                }
-
-                if (retryCount++ < MAX_RETRY_TIMES) {
-                    handler.sendMessageDelayed(Message.obtain(msg), DELAY);
-                }
+                pullUpMainProcess(this);
                 return true;
             case MSG_ID_DEX_OPT_FINISHED:
                 for (int i = 0; i < clients.size(); i++) {
@@ -154,7 +135,6 @@ public class AmigoService extends Service {
                     @Override
                     public void run() {
                         stopSelf();
-                        System.exit(0);
                         Process.killProcess(Process.myPid());
                     }
                 }, 1000);
@@ -221,7 +201,6 @@ public class AmigoService extends Service {
         context.startActivity(launchIntent);
         Log.d(TAG, "start launchIntent");
         stopSelf();
-        System.exit(0);
         Process.killProcess(Process.myPid());
     }
 }
