@@ -1,9 +1,10 @@
 package me.ele.amigo;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.content.pm.Signature;
+import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
 
 import java.io.File;
 import java.util.Map;
@@ -94,13 +95,20 @@ class PatchChecker {
 
     static boolean checkUpgrade(Context context) {
         boolean result = false;
-        Pair<String, Integer> versionInfo = PatchInfoUtil.getHostVersionOnPatchApplied(context);
-        int currentVersion = CommonUtils.getVersionCode(context);
-        if (currentVersion > versionInfo.second) {
+
+        String workingChecksum = PatchInfoUtil.getWorkingChecksum(context);
+        if (TextUtils.isEmpty(workingChecksum)) {
+            return true;
+        }
+        String patchPath = PatchApks.getInstance(context).patchPath(workingChecksum);
+        PackageInfo patchInfo = context.getPackageManager().getPackageArchiveInfo(patchPath, 0);
+        int patchVersion = patchInfo.versionCode;
+        int hostVersion = CommonUtils.getVersionCode(context);
+        if (hostVersion > patchVersion) {
             result = true;
         }
         String currentVersionName = CommonUtils.getVersionName(context);
-        if (!versionInfo.first.equals(currentVersionName)) {
+        if (!patchInfo.versionName.equals(currentVersionName)) {
             result = true;
         }
         return result;
