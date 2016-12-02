@@ -51,12 +51,6 @@ public class Amigo extends Application {
             init();
             String workingChecksum = PatchInfoUtil.getWorkingChecksum(this);
             Log.e(TAG, "#onCreate working checksum: " + workingChecksum);
-            if (PatchChecker.checkUpgrade(this)) {
-                Log.d(TAG, "Host app has upgrade");
-                PatchCleaner.clearPatchIfInMainProcess(this);
-                runOriginalApplication();
-                return;
-            }
 
             if (TextUtils.isEmpty(workingChecksum)
                     || !patchApks.exists(workingChecksum)) {
@@ -65,6 +59,14 @@ public class Amigo extends Application {
                 runOriginalApplication();
                 return;
             }
+
+            if (PatchChecker.checkUpgrade(this)) {
+                Log.d(TAG, "Host app has upgrade");
+                PatchCleaner.clearPatchIfInMainProcess(this);
+                runOriginalApplication();
+                return;
+            }
+
 
             // ensure load dex process always run host apk not patch apk
             if (ProcessUtils.isLoadDexProcess(this)) {

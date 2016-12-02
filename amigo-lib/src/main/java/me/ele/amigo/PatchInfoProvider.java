@@ -14,18 +14,14 @@ import java.net.URLDecoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import me.ele.amigo.utils.CommonUtils;
-
 /**
  * Created by wwm on 11/23/16.
  */
 
 public class PatchInfoProvider extends ContentProvider {
 
-    public static final String SP_NAME = "Amigo";
-    public static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
-    public static final String WORKING_CURRENT_VERSION_CODE = "current_version_code";
-    public static final String WORKING_CURRENT_VERSION_NAME = "current_version_name";
+    private static final String SP_NAME = "Amigo";
+    private static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
 
     SharedPreferences sharedPreferences = null;
 
@@ -47,14 +43,6 @@ public class PatchInfoProvider extends ContentProvider {
             String result = queryWorkingChecksum();
             MatrixCursor matrixCursor = new MatrixCursor(new String[]{PARAM_KEY_CHECKSUM}, 1);
             matrixCursor.addRow(new Object[]{result});
-            return matrixCursor;
-        }
-
-        if ("query_host_version_when_patch_applied".equals(path)) {
-            MatrixCursor matrixCursor = new MatrixCursor(new String[]{"version_name",
-                    "version_code"}, 1);
-            matrixCursor.addRow(new Object[]{getHostVersionNameWhenPatchApplied(),
-                    getHostVersionCodeWhenPatchApplied()});
             return matrixCursor;
         }
 
@@ -121,24 +109,9 @@ public class PatchInfoProvider extends ContentProvider {
     }
 
     private boolean updateWorkingChecksum(String newChecksum) {
-        if (TextUtils.isEmpty(newChecksum))
-            return false;
-
         sharedPreferences.edit()
-                .putInt(WORKING_CURRENT_VERSION_CODE, CommonUtils.getVersionCode
-                        (getContext()))
-                .putString(WORKING_CURRENT_VERSION_NAME, CommonUtils
-                        .getVersionName(getContext()))
                 .putString(WORKING_PATCH_APK_CHECKSUM, newChecksum).commit();
         return true;
-    }
-
-    private int getHostVersionCodeWhenPatchApplied() {
-        return sharedPreferences.getInt(WORKING_CURRENT_VERSION_CODE, -1);
-    }
-
-    private String getHostVersionNameWhenPatchApplied() {
-        return sharedPreferences.getString(WORKING_CURRENT_VERSION_NAME, "");
     }
 
     private String queryWorkingChecksum() {

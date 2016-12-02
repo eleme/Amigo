@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.util.Pair;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -81,22 +80,6 @@ public class PatchInfoUtil {
                         (URI_PREFIX + "update_patch_file_checksum_map?checksum=" + checksum +
                                 "&map=" + toJson(checksumMap)),
                 new ContentValues(0), null, null);
-    }
-
-    public static Pair<String, Integer> getHostVersionOnPatchApplied(Context context) {
-        ensureProviderAuthroties(context);
-        Cursor cursor = context.getContentResolver().query(Uri.parse(URI_PREFIX +
-                        "query_host_version_when_patch_applied"),
-                null, null, null, null);
-        Pair<String, Integer> pair = null;
-        if (cursor != null && cursor.moveToFirst()) {
-            pair = new Pair<>(cursor.getString(0), cursor.getInt(1));
-            cursor.close();
-        } else {
-            new Pair<>("", -1);
-        }
-
-        return pair;
     }
 
     public static void clear(Context context) {
