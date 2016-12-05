@@ -1,3 +1,10 @@
+## Version [0.6.0-beta2](https://github.com/eleme/Amigo/releases/tag/v0.6.0-beta2)
+_2016-12-05
+* use ContentProvider instead of SharedPreferences in multi-process communication
+* fix clear issue
+* fix cannot pull up main process issue
+* fix Chinese issue in AndroidManifest, thanks to [wkt](https://github.com/wkt)'s contribution
+
 ## Version [0.6.0-beta](https://github.com/eleme/Amigo/releases/tag/v0.6.0-beta)
 _2016-11-25
 * smaller diff file, compat with [zippatch](https://github.com/eleme/bspatch#usage)
