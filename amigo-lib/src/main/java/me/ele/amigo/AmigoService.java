@@ -16,6 +16,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import me.ele.amigo.release.ApkReleaser;
+import me.ele.amigo.utils.ProcessUtils;
 
 
 public class AmigoService extends Service {
@@ -193,6 +194,9 @@ public class AmigoService extends Service {
     }
 
     private void pullUpMainProcess(Context context) {
+        if (ProcessUtils.isMainProcessRunning(context)) {
+            return;
+        }
         Intent launchIntent = context.getPackageManager()
                 .getLaunchIntentForPackage(context.getPackageName());
         launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -200,7 +204,5 @@ public class AmigoService extends Service {
                 | Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(launchIntent);
         Log.d(TAG, "start launchIntent");
-        stopSelf();
-        Process.killProcess(Process.myPid());
     }
 }
