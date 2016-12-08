@@ -1,9 +1,9 @@
 
-Amigo
-
 [wiki](https://github.com/eleme/Amigo/wiki)
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
+
+[Amigo平台](https://amigo.ele.me) (Amigo后端管理服务上线啦 :v:)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
