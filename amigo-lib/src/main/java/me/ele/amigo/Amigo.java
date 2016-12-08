@@ -241,8 +241,14 @@ public class Amigo extends Application {
         //start a new process to handle time-tense operation
         ApplicationInfo appInfo =
                 getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
-        String layoutName = appInfo.metaData.getString("amigo_layout");
-        String themeName = appInfo.metaData.getString("amigo_theme");
+        String layoutName = null;
+        String themeName = null;
+        try {
+            layoutName = appInfo.metaData.getString("amigo_layout");
+            themeName = appInfo.metaData.getString("amigo_theme");
+        } catch (Exception e) {
+            //ignore
+        }
         int layoutId = 0;
         int themeId = 0;
         if (!TextUtils.isEmpty(layoutName)) {
