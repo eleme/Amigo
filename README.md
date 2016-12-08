@@ -1,8 +1,11 @@
+
 [中文版](https://github.com/eleme/Amigo/blob/master/README_zh.md#amigo)
 
 [wiki](https://github.com/eleme/Amigo/wiki)
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
+
+[Amigo Service Platform](https://amigo.ele.me) (Amigo backend service is online finally :v:)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
