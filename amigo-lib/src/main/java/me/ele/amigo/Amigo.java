@@ -282,6 +282,7 @@ public class Amigo extends Application {
                 e.printStackTrace();
             }
         }
+        ProcessUtils.startLauncherIntent(this);
     }
 
     private void releaseDex(String checksum, int layoutId, int themeId) {

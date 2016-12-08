@@ -197,12 +197,6 @@ public class AmigoService extends Service {
         if (ProcessUtils.isMainProcessRunning(context)) {
             return;
         }
-        Intent launchIntent = context.getPackageManager()
-                .getLaunchIntentForPackage(context.getPackageName());
-        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(launchIntent);
-        Log.d(TAG, "start launchIntent");
+        ProcessUtils.startLauncherIntent(context);
     }
 }
