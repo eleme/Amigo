@@ -242,11 +242,9 @@ public class Amigo extends Application {
                 getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
         String layoutName = null;
         String themeName = null;
-        try {
+        if (appInfo.metaData != null) {
             layoutName = appInfo.metaData.getString("amigo_layout");
             themeName = appInfo.metaData.getString("amigo_theme");
-        } catch (Exception e) {
-            //ignore
         }
         int layoutId = 0;
         int themeId = 0;
@@ -395,9 +393,8 @@ public class Amigo extends Application {
     private static void work(Context context, File patchFile, boolean checkSignature) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
         if (checkWithWorkingPatch(context, patchChecksum)) return;
-        if (PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) {
-            AmigoService.restartMainProcess(context);
-        }
+        if (!PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) return;
+        KillSelfActivity.start(context);
     }
 
     private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {

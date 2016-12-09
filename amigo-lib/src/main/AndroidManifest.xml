@@ -10,6 +10,10 @@
             android:process=":amigo"/>
 
         <activity
+            android:name=".KillSelfActivity"
+            android:theme="@style/transparent_theme"/>
+
+        <activity
             android:name=".release.ApkReleaseActivity"
             android:alwaysRetainTaskState="false"
             android:launchMode="singleTop"

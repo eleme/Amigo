@@ -8,7 +8,6 @@ import android.content.Intent;
 import java.util.List;
 
 import static android.content.Context.ACTIVITY_SERVICE;
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class ProcessUtils {
@@ -38,7 +37,8 @@ public class ProcessUtils {
     }
 
     public static boolean isMainProcessRunning(Context context) {
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
+        ActivityManager activityManager = (ActivityManager) context.getSystemService
+                (ACTIVITY_SERVICE);
         List<RunningAppProcessInfo> processes = activityManager.getRunningAppProcesses();
         for (int i = 0; i < processes.size(); i++) {
             if (processes.get(i).processName.equals(context.getPackageName())) {
@@ -58,7 +58,7 @@ public class ProcessUtils {
     public static void startLauncherIntent(Context context) {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context
                 .getPackageName());
-        launchIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        launchIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(launchIntent);
     }
 
