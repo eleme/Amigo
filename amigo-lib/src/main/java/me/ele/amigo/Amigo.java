@@ -67,7 +67,6 @@ public class Amigo extends Application {
                 return;
             }
 
-
             // ensure load dex process always run host apk not patch apk
             if (ProcessUtils.isLoadDexProcess(this)) {
                 Log.e(TAG, "#onCreate load dex process");
@@ -241,8 +240,12 @@ public class Amigo extends Application {
         //start a new process to handle time-tense operation
         ApplicationInfo appInfo =
                 getPackageManager().getApplicationInfo(getPackageName(), GET_META_DATA);
-        String layoutName = appInfo.metaData.getString("amigo_layout");
-        String themeName = appInfo.metaData.getString("amigo_theme");
+        String layoutName = null;
+        String themeName = null;
+        if (appInfo.metaData != null) {
+            layoutName = appInfo.metaData.getString("amigo_layout");
+            themeName = appInfo.metaData.getString("amigo_theme");
+        }
         int layoutId = 0;
         int themeId = 0;
         if (!TextUtils.isEmpty(layoutName)) {
@@ -276,6 +279,7 @@ public class Amigo extends Application {
                 e.printStackTrace();
             }
         }
+        ProcessUtils.startLauncherIntent(this);
     }
 
     private void releaseDex(String checksum, int layoutId, int themeId) {
@@ -388,9 +392,17 @@ public class Amigo extends Application {
 
     private static void work(Context context, File patchFile, boolean checkSignature) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
-        if (PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) {
-            AmigoService.restartMainProcess(context);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
+        if (!PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) return;
+        KillSelfActivity.start(context);
+    }
+
+    private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {
+        if (Amigo.hasWorked() && PatchInfoUtil.getWorkingChecksum(context).equals(patchChecksum)) {
+            Log.e(TAG, "cannot apply the same patch twice");
+            return true;
         }
+        return false;
     }
 
     public static void workLater(Context context, File patchFile) {
@@ -412,6 +424,7 @@ public class Amigo extends Application {
     private static void workLater(Context context, File patchFile, boolean checkSignature,
                                   WorkLaterCallback callback) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
         if (patchChecksum == null) {
             Log.e(TAG, "workLater: empty checksum");
             return;

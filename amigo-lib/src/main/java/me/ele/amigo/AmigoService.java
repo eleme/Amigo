@@ -1,5 +1,6 @@
 package me.ele.amigo;
 
+import android.app.Activity;
 import android.app.IAmigoService;
 import android.app.Service;
 import android.content.ComponentName;
@@ -15,8 +16,13 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.util.SparseArray;
 
+import java.util.Map;
+
 import me.ele.amigo.release.ApkReleaser;
 import me.ele.amigo.utils.ProcessUtils;
+
+import static me.ele.amigo.compat.ActivityThreadCompat.instance;
+import static me.ele.amigo.reflect.FieldUtils.readField;
 
 
 public class AmigoService extends Service {
@@ -49,6 +55,16 @@ public class AmigoService extends Service {
     public static void restartMainProcess(Context context) {
         context.startService(new Intent(context, AmigoService.class)
                 .setAction(ACTION_RESTART_MANI_PROCESS));
+        try {
+            Map<Object, Object> mActivities = (Map<Object, Object>) readField(instance(),
+                    "mActivities");
+            for (Map.Entry entry : mActivities.entrySet()) {
+                Activity activity = (Activity) readField(entry.getValue(), "activity");
+                activity.finish();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Process.killProcess(Process.myPid());
     }
 
@@ -197,12 +213,6 @@ public class AmigoService extends Service {
         if (ProcessUtils.isMainProcessRunning(context)) {
             return;
         }
-        Intent launchIntent = context.getPackageManager()
-                .getLaunchIntentForPackage(context.getPackageName());
-        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(launchIntent);
-        Log.d(TAG, "start launchIntent");
+        ProcessUtils.startLauncherIntent(context);
     }
 }

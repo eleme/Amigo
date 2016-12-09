@@ -94,8 +94,6 @@ class PatchChecker {
     }
 
     static boolean checkUpgrade(Context context) {
-        boolean result = false;
-
         String workingChecksum = PatchInfoUtil.getWorkingChecksum(context);
         if (TextUtils.isEmpty(workingChecksum)) {
             return true;
@@ -104,13 +102,6 @@ class PatchChecker {
         PackageInfo patchInfo = context.getPackageManager().getPackageArchiveInfo(patchPath, 0);
         int patchVersion = patchInfo.versionCode;
         int hostVersion = CommonUtils.getVersionCode(context);
-        if (hostVersion > patchVersion) {
-            result = true;
-        }
-        String currentVersionName = CommonUtils.getVersionName(context);
-        if (!patchInfo.versionName.equals(currentVersionName)) {
-            result = true;
-        }
-        return result;
+        return hostVersion > patchVersion;
     }
 }
