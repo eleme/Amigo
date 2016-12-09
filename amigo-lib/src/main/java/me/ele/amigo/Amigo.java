@@ -67,7 +67,6 @@ public class Amigo extends Application {
                 return;
             }
 
-
             // ensure load dex process always run host apk not patch apk
             if (ProcessUtils.isLoadDexProcess(this)) {
                 Log.e(TAG, "#onCreate load dex process");
@@ -395,9 +394,18 @@ public class Amigo extends Application {
 
     private static void work(Context context, File patchFile, boolean checkSignature) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
         if (PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) {
             AmigoService.restartMainProcess(context);
         }
+    }
+
+    private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {
+        if (Amigo.hasWorked() && PatchInfoUtil.getWorkingChecksum(context).equals(patchChecksum)) {
+            Log.e(TAG, "cannot apply the same patch twice");
+            return true;
+        }
+        return false;
     }
 
     public static void workLater(Context context, File patchFile) {
@@ -419,6 +427,7 @@ public class Amigo extends Application {
     private static void workLater(Context context, File patchFile, boolean checkSignature,
                                   WorkLaterCallback callback) {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
         if (patchChecksum == null) {
             Log.e(TAG, "workLater: empty checksum");
             return;
