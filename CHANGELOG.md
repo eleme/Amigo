@@ -1,12 +1,17 @@
+## Version [0.6.1](https://github.com/eleme/Amigo/releases/tag/v0.6.1)
+_2016-12-09_
+* refactor app restart self logic
+* only compare version for upgrade
+
 ## Version [0.6.0-beta2](https://github.com/eleme/Amigo/releases/tag/v0.6.0-beta2)
-_2016-12-05
+_2016-12-05_
 * use ContentProvider instead of SharedPreferences in multi-process communication
 * fix clear issue
 * fix cannot pull up main process issue
 * fix Chinese issue in AndroidManifest, thanks to [wkt](https://github.com/wkt)'s contribution
 
 ## Version [0.6.0-beta](https://github.com/eleme/Amigo/releases/tag/v0.6.0-beta)
-_2016-11-25
+_2016-11-25_
 * smaller diff file, compat with [zippatch](https://github.com/eleme/bspatch#usage)
 * support disable amigo
 * compat with all android versions, even Android 2.1
@@ -15,7 +20,7 @@ _2016-11-25
 * refactor some code & some small bugfix
 
 ## Version [0.5.0](https://github.com/eleme/Amigo/releases/tag/v0.5.0)
-_2016-11-03
+_2016-11-03_
 * support Amigo hotfix itself :v:
 * support **ContentProvider** :+1:
 * **metaData** retrieved from patch.apk is support :+1:
@@ -24,7 +29,7 @@ _2016-11-03
 * fix Activity's **label** or **theme** not found
 
 ## Version [0.4.4](https://github.com/eleme/Amigo/releases/tag/v0.4.4)
-_2016-10-19
+_2016-10-19_
 * fix delete directory bug
 
 ## Version [0.4.3](https://github.com/eleme/Amigo/releases/tag/v0.4.3)
