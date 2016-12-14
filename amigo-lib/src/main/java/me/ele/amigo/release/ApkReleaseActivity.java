@@ -3,11 +3,14 @@ package me.ele.amigo.release;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 
 import me.ele.amigo.Amigo;
 import me.ele.amigo.AmigoService;
+import me.ele.amigo.utils.OrientationUtil;
 
 public class ApkReleaseActivity extends Activity {
 
@@ -22,6 +25,7 @@ public class ApkReleaseActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(OrientationUtil.getReleaseActivityOrientation(this));
         layoutId = getIntent().getIntExtra(LAYOUT_ID, 0);
         themeId = getIntent().getIntExtra(THEME_ID, 0);
         checksum = getIntent().getStringExtra(PATCH_CHECKSUM);

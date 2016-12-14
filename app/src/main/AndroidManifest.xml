@@ -42,13 +42,6 @@
             android:exported="true"
             android:process=".demo.subprocess"/>
 
-        <meta-data
-            android:name="amigo_layout"
-            android:value="amigo_layout_demo"/>
-        <meta-data
-            android:name="amigo_theme"
-            android:value="amigoThemeDemo"/>
-
         <provider
             android:name=".MyContentProvider"
             android:authorities="me.ele.app.amigo.provider.my_provider"
@@ -65,6 +58,19 @@
             android:name=".MyIntentService"
             android:exported="false">
         </service>
+
+        <!--set ApkReleaseActivity's orientation to portrait-->
+        <meta-data
+            android:name="amigo_orientation"
+            android:value="portrait"/>
+        <!--set ApkReleaseActivity's layout-->
+        <meta-data
+            android:name="amigo_layout"
+            android:value="amigo_layout_demo"/>
+        <!--set ApkReleaseActivity's theme-->
+        <meta-data
+            android:name="amigo_theme"
+            android:value="amigoThemeDemo"/>
 
     </application>
 
