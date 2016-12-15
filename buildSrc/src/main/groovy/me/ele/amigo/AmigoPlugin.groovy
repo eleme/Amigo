@@ -5,6 +5,8 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.io.FileType
 import groovy.xml.QName
 import groovy.xml.XmlUtil
+import org.apache.tools.ant.types.RegularExpression
+import org.apache.tools.ant.util.regexp.RegexpUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -13,6 +15,7 @@ import org.gradle.api.artifacts.Dependency
 
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
+import java.util.regex.Pattern
 
 class AmigoPlugin implements Plugin<Project> {
 
@@ -98,14 +101,26 @@ class AmigoPlugin implements Plugin<Project> {
                         hackAppNode.attributes().put("android:name", applicationName)
                         manifestFile.bytes = XmlUtil.serialize(node).getBytes("UTF-8")
 
+                        //process${variantData.variantConfiguration.fullName.capitalize()}Manifest
+                        String processManifestTaskName = output.processManifest.name;
+                        String taskName = "";
+                        String pattern = '^process(.+)Manifest$';
+                        if (Pattern.matches(pattern, processManifestTaskName)) {
+                            taskName = processManifestTaskName.replace("process", "generate")
+                                    .replace("Manifest", "ApplicationInfo");
+                        } else {
+                            taskName = "generate${variant.name.capitalize()}ApplicationInfo"
+                        }
+
                         generateCodeTask = project.tasks.create(
-                                name: "generate${variant.name.capitalize()}ApplicationInfo",
+                                name: taskName,
                                 type: GenerateCodeTask) {
                             variantDirName variant.dirName
                             appName applicationName
                         }
                         generateCodeTask.execute()
-                        println "generateCodeTask execute"
+
+                        println "generateCodeTask: ${generateCodeTask.name} execute"
                     }
 
                     variant.javaCompile.doFirst {
