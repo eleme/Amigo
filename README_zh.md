@@ -52,7 +52,7 @@ amigo {
 - 不支持Android 3.0
 
    
-### 自定义loading界面
+### 自定义loading界面（可选）
 
 在热修复的过程中会进行一些耗时(dex优化)的操作，这些操作会在一个新的进程中的Activity 中执行，所以你可以在Manifest文件中增加下面的两个配置来自定义这个Activity，美化loading界面。
 
@@ -64,9 +64,16 @@ amigo {
 <meta-data
    android:name="amigo_theme"
    android:value="{your-theme-name}" />
+   
+<meta-data
+    android:name="amigo_orientation"
+    android:value="{your-custom-orientation}"/>
 ```
 
-**提示**: 这两个`meta-data`信息请写在你自己的app module下的`AndroidManifest.xml`
+**提示**: 
+
+- 这三个`meta-data`信息请写在你自己的app module下的`AndroidManifest.xml`
+- orientation value值必须在[screenOrientation](https://developer.android.com/guide/topics/manifest/activity-element.html#screen)之内
 
 ### 运行patch apk
    补丁包生效方式有两种可以选择：

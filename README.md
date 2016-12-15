@@ -51,7 +51,7 @@ amigo {
 - Even support next Android version, no matter small or big change. So Cool, Aha :v:
 - Android 3.0 isn't supported
 
-### Customize loading page
+### Customize loading page(optional)
 Some time-consuming tasks are handled in a separate process to avoid ANR, you can customize the loading activity by add the follow code into your AndroidManifest.xml:
 
 ```xml
@@ -62,9 +62,16 @@ Some time-consuming tasks are handled in a separate process to avoid ANR, you ca
 <meta-data
     android:name="amigo_theme"
     android:value="{your-theme-name}" />
+ 
+<meta-data
+    android:name="amigo_orientation"
+    android:value="{your-custom-orientation}"/>
 ```
 
-**Note**: These two `meta-data` is defined in your personal `AndroidManifest.xml` of app module if necessary
+**Note**: 
+
+- These three `meta-data` is defined in your personal `AndroidManifest.xml` of app module if necessary
+- orientation's value must be in [screenOrientation](https://developer.android.com/guide/topics/manifest/activity-element.html#screen)
 
 ### Make hotfix work
 There are two ways to make hotfix work.
