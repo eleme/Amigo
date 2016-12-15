@@ -36,10 +36,10 @@ android {
 ...
 }
 
-//if you don't want use amigo in dev
+//if you don't want use amigo in dev, set this value to true
 //you can define this extension in your mybuild.gradle as to distinguish debug & release build
 amigo {
-    disable true //default false
+    disable false //default false
 }
 
 ```
@@ -63,6 +63,8 @@ Some time-consuming tasks are handled in a separate process to avoid ANR, you ca
     android:name="amigo_theme"
     android:value="{your-theme-name}" />
 ```
+
+**Note**: These two `meta-data` is defined in your personal `AndroidManifest.xml` of app module if necessary
 
 ### Make hotfix work
 There are two ways to make hotfix work.

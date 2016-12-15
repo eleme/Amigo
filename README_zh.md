@@ -35,10 +35,10 @@ android {
  ...
 }
 
-//开发过程中你可以不想开启Amigo
+//开发过程中你可以不想开启Amigo，可以把这个值设置为true
 //你可以把这个定义在mybuild.gradle，以区分debug & release打包
 amigo {
-    disable true //默认 false
+    disable false //默认 false
 }
 
 ```
@@ -65,6 +65,8 @@ amigo {
    android:name="amigo_theme"
    android:value="{your-theme-name}" />
 ```
+
+**提示**: 这两个`meta-data`信息请写在你自己的app module下的`AndroidManifest.xml`
 
 ### 运行patch apk
    补丁包生效方式有两种可以选择：
