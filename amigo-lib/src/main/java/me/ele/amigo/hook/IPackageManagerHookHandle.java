@@ -78,6 +78,9 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
     }
 
     private class getPackageInfo extends HookedMethodHandler {
+        private int patchVersionCode = 0;
+        private String patchVersionName = "0.0.0";
+
         public getPackageInfo(Context context) {
             super(context);
         }
@@ -87,11 +90,21 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
                 invokeResult) throws Throwable {
             super.afterInvoke(receiver, method, args, invokeResult);
             PackageInfo result = (PackageInfo) invokeResult;
-            String checksum = getWorkingPatchApkChecksum(context);
-            File patchFile = PatchApks.getInstance(context).patchFile(checksum);
-            PackageInfo workingPatchInfo = CommonUtils.getPackageInfo(context, patchFile, 0);
-            result.versionCode = workingPatchInfo.versionCode;
-            result.versionName = workingPatchInfo.versionName;
+
+            if (!context.getPackageName().equals(result.packageName)) {
+                return;
+            }
+
+            if ("0.0.0".equals(patchVersionName)) {
+                String checksum = getWorkingPatchApkChecksum(context);
+                File patchFile = PatchApks.getInstance(context).patchFile(checksum);
+                PackageInfo workingPatchInfo = CommonUtils.getPackageInfo(context, patchFile, 0);
+                patchVersionCode = workingPatchInfo.versionCode;
+                patchVersionName = workingPatchInfo.versionName;
+            }
+
+            result.versionCode = patchVersionCode;
+            result.versionName = patchVersionName;
         }
     }
 }

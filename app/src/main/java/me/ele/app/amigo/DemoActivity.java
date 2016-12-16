@@ -155,4 +155,8 @@ public class DemoActivity extends BaseActivity {
             cursor.close();
         }
     }
+
+    public void openWebActivity(View view) {
+        startActivity(new Intent(this, WebActivity.class));
+    }
 }
