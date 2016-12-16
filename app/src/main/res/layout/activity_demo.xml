@@ -62,7 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="triggerReceiverAction"
-            android:text="trigger receiver"
+            android:text="Trigger receiver"
             android:textAllCaps="false"/>
 
         <Button
@@ -70,8 +70,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="testPatchedProvider"
-            android:text="test patched provider"
+            android:text="Test patched provider"
             android:textAllCaps="false"/>
+
+        <Button
+            android:layout_width="match_parent"
+            android:text="Open web page"
+            android:onClick="openWebActivity"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 
