@@ -1,3 +1,8 @@
+## Version [0.6.2](https://github.com/eleme/Amigo/releases/tag/v0.6.2)
+_2016-12-17_
+* support custom `ApkReleaseActivity`'s  orientation
+* fix `getPackageInfo` issue
+
 ## Version [0.6.1](https://github.com/eleme/Amigo/releases/tag/v0.6.1)
 _2016-12-09_
 * refactor app restart self logic

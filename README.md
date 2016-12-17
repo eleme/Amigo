@@ -22,7 +22,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'me.ele:amigo:0.6.1'
+        classpath 'me.ele:amigo:0.6.2'
     }
 }
 ```
