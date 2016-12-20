@@ -11,18 +11,18 @@
 
 Amigo is a hotfix library which can fix everything for your Android app
 
-## How to use 
+## How to use
 ### Download
 In your project's `build.gradle`
 
 ```groovy
-buildscript { 
+buildscript {
     repositories {
         mavenCentral()
     }
-    
+
     dependencies {
-        classpath 'me.ele:amigo:0.6.2'
+        classpath 'me.ele:amigo:0.6.3'
     }
 }
 ```
@@ -62,13 +62,13 @@ Some time-consuming tasks are handled in a separate process to avoid ANR, you ca
 <meta-data
     android:name="amigo_theme"
     android:value="{your-theme-name}" />
- 
+
 <meta-data
     android:name="amigo_orientation"
     android:value="{your-custom-orientation}"/>
 ```
 
-**Note**: 
+**Note**:
 
 - These three `meta-data` is defined in your personal `AndroidManifest.xml` of app module if necessary
 - orientation's value must be in [screenOrientation](https://developer.android.com/guide/topics/manifest/activity-element.html#screen)
@@ -77,25 +77,25 @@ Some time-consuming tasks are handled in a separate process to avoid ANR, you ca
 There are two ways to make hotfix work.
 
 * if you don't need hotfix work immediately
- 
+
   you just need to download new apk file, hotfix apk will be loaded as fresh as new when app restarts next time
-	
+
 	```java
     Amigo.workLater(context, patchApkFile, callback);
     ```
-    
+
 * work immediately, App will restart immediately
-	
+
 	```java
 	Amigo.work(context, patchApkFile);
 	```
-	
+
 ### Remove patch
 
 ```java
 Amigo.clear(context);
 ```
-    
+
 **note**：All patch files would be deleted on the next start up.
 
 ## Demo
@@ -120,27 +120,27 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
 ## Limits
  - have to change the way using a content provider
     * declare a new provider: the authorities string must start with "**${youPackageName}.provider**"
-    
+
         ```xml
         <provider
             android:name="me.ele.demo.provider.StudentProvider"
             android:authorities="${youPackageName}.provider.student" />
         ```
-        
+
     * change the uri used to do the query, insert, delete operations:
-     
+
         ```java
         // 1. inside your app process, no modifications need:
         Cursor cursor = getContentResolver().query(Uri.parse("content://" + getPackageName() + ".provider.student?id=0"), null, null, null, null);
-        // 2. in another process, have to change the authorities uri like the following : 
+        // 2. in another process, have to change the authorities uri like the following :
         Cursor cursor = getContentResolver().query(Uri.parse("content://" + targetPackageName + ".provider/student?id=0"), null, null, null, null);
         ```
-        
+
  -  Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
- 
+
  -  Amigo doesn't support Honeycomb `3.0`
     * Android 3.0 is a version with full of bugs, & Google has closed Android 3.0 Honeycomb.
-    
+
  - `RemoteViews`'s layout change in `notification` & `widget`is not support   
     * any resource id in here should be used with ```java RCompat.getHostIdentifier(Context context, int id) ```
 
@@ -150,7 +150,7 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
 
 - to save the internet traffic, you may just want to download a diff file
   [bspatch](https://github.com/eleme/bspatch) (`support whole apk diff & fine-grained diff in apk`)is an option for you
-  
+
 
 ## Inspired by
 
