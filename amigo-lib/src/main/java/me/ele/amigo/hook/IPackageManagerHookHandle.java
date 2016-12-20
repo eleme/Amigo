@@ -91,7 +91,7 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
             super.afterInvoke(receiver, method, args, invokeResult);
             PackageInfo result = (PackageInfo) invokeResult;
 
-            if (!context.getPackageName().equals(result.packageName)) {
+            if (result == null || !context.getPackageName().equals(result.packageName)) {
                 return;
             }
 
