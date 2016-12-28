@@ -71,8 +71,21 @@ class AmigoPlugin implements Plugin<Project> {
 
                 variant.outputs.each { BaseVariantOutput output ->
 
-                    def applicationName = null
-                    def generateCodeTask;
+                    //process${variantData.variantConfiguration.fullName.capitalize()}Manifest
+                    String processManifestTaskName = output.processManifest.name;
+                    String taskName = "";
+                    String pattern = '^process(.+)Manifest$';
+                    if (Pattern.matches(pattern, processManifestTaskName)) {
+                        taskName = processManifestTaskName.replace("process", "generate")
+                                .replace("Manifest", "AmigoApplicationInfo");
+                    } else {
+                        taskName = "generate${variant.name.capitalize()}AmigoApplicationInfo"
+                    }
+
+                    def generateCodeTask = project.tasks.create(taskName, GenerateCodeTask);
+                    generateCodeTask.variantDirName = variant.dirName
+                    generateCodeTask.dependsOn  output.processManifest
+
                     File manifestFile = output.processManifest.manifestOutputFile
                     if (manifestFile.exists()) {
                         manifestFile.delete()
@@ -93,7 +106,7 @@ class AmigoPlugin implements Plugin<Project> {
 
                         QName nameAttr = new QName("http://schemas.android.com/apk/res/android",
                                 'name', 'android');
-                        applicationName = appNode.attribute(nameAttr)
+                        def applicationName = appNode.attribute(nameAttr)
                         if (applicationName == null || applicationName.isEmpty()) {
                             applicationName = "android.app.Application"
                         }
@@ -103,34 +116,17 @@ class AmigoPlugin implements Plugin<Project> {
                         hackAppNode.attributes().put("android:name", applicationName)
                         manifestFile.bytes = XmlUtil.serialize(node).getBytes("UTF-8")
 
-                        //process${variantData.variantConfiguration.fullName.capitalize()}Manifest
-                        String processManifestTaskName = output.processManifest.name;
-                        String taskName = "";
-                        String pattern = '^process(.+)Manifest$';
-                        if (Pattern.matches(pattern, processManifestTaskName)) {
-                            taskName = processManifestTaskName.replace("process", "generate")
-                                    .replace("Manifest", "ApplicationInfo");
-                        } else {
-                            taskName = "generate${variant.name.capitalize()}ApplicationInfo"
-                        }
-
-                        generateCodeTask = project.tasks.create(
-                                name: taskName,
-                                type: GenerateCodeTask) {
-                            variantDirName variant.dirName
-                            appName applicationName
-                        }
-                        generateCodeTask.execute()
-
-                        println "generateCodeTask: ${generateCodeTask.name} execute"
+                        generateCodeTask.appName = applicationName
                     }
 
-                    variant.javaCompile.doFirst {
-                        variant.javaCompile.source generateCodeTask.outputDir()
-                    }
+                    variant.registerJavaGeneratingTask(generateCodeTask, generateCodeTask
+                            .outputDir())
 
                     def task_1 = !variant.obfuscation ? variant.javaCompiler : variant.obfuscation
 
+                    // TODO
+                    // new jack & jill toolchain still have some problems in splitting
+                    // the main dex
                     if (hasMultiDex(project, variant)) {
                         task_1.doLast {
                             collectMainDexInfo(project, variant)

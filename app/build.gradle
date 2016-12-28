@@ -12,8 +12,10 @@ android {
         versionCode 11
         versionName "1.0"
         multiDexEnabled true
+        multiDexKeepProguard file("${project.projectDir}/main-dex.pro")
+        multiDexKeepFile file("${project.projectDir}/main-dex.keep")
         jackOptions {
-            enabled = false
+            enabled = true
         }
     }
     signingConfigs {
@@ -81,8 +83,8 @@ dependencies {
     compile 'com.android.support:multidex:1.0.1'
 
 //    // test multidex
-//    compile group: 'com.google.guava', name: 'guava', version: '19.0'
-//    compile "org.scala-lang:scala-library:2.11.7"
+    compile group: 'com.google.guava', name: 'guava', version: '19.0'
+    compile "org.scala-lang:scala-library:2.11.7"
 }
 
 amigo {
