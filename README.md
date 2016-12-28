@@ -18,7 +18,7 @@ In your project's `build.gradle`
 ```groovy
 buildscript {
     repositories {
-        mavenCentral()
+        jcenter()
     }
 
     dependencies {
