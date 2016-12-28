@@ -8,11 +8,11 @@ import org.gradle.api.tasks.TaskAction
 
 class GenerateCodeTask extends DefaultTask {
 
-    @Input
-    String appName
 
-    @Input
-    String variantDirName
+    public String appName
+
+
+    public String variantDirName
 
     @OutputDirectory
     File outputDir() {

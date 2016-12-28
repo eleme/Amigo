@@ -5,8 +5,6 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.io.FileType
 import groovy.xml.QName
 import groovy.xml.XmlUtil
-import org.apache.tools.ant.types.RegularExpression
-import org.apache.tools.ant.util.regexp.RegexpUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -57,21 +55,37 @@ class AmigoPlugin implements Plugin<Project> {
             project.android.applicationVariants.all { ApkVariant variant ->
 
                 // check instant run which conflicts with us
-                println 'check instant run'
-                Task instantRunTask = project.tasks.findByName("transformClassesWithInstantRunVerifierFor${variant.name.capitalize()}")
+                println 'check instant run for variant : ' + variant.name
+                Task instantRunTask = project.tasks.findByName(
+                        "transformClassesWithInstantRunVerifierFor${variant.name.capitalize()}")
                 if (instantRunTask) {
-                    throw RuntimeException("Sorry, instant run conflicts with Amigo, so please disable Instant Run")
+                    throw RuntimeException("Sorry, instant run conflicts with Amigo, so please " +
+                            "disable Instant Run")
                 }
 
-                Task prepareDependencyTask = project.tasks.findByName("prepare${variant.name.capitalize()}Dependencies")
+                Task prepareDependencyTask = project.tasks.findByName(
+                        "prepare${variant.name.capitalize()}Dependencies")
                 prepareDependencyTask.doFirst {
                     clearAmigoDependency(project)
                 }
 
                 variant.outputs.each { BaseVariantOutput output ->
 
-                    def applicationName = null
-                    def generateCodeTask;
+                    //process${variantData.variantConfiguration.fullName.capitalize()}Manifest
+                    String processManifestTaskName = output.processManifest.name;
+                    String taskName = "";
+                    String pattern = '^process(.+)Manifest$';
+                    if (Pattern.matches(pattern, processManifestTaskName)) {
+                        taskName = processManifestTaskName.replace("process", "generate")
+                                .replace("Manifest", "AmigoApplicationInfo");
+                    } else {
+                        taskName = "generate${variant.name.capitalize()}AmigoApplicationInfo"
+                    }
+
+                    def generateCodeTask = project.tasks.create(taskName, GenerateCodeTask);
+                    generateCodeTask.variantDirName = variant.dirName
+                    generateCodeTask.dependsOn  output.processManifest
+
                     File manifestFile = output.processManifest.manifestOutputFile
                     if (manifestFile.exists()) {
                         manifestFile.delete()
@@ -90,8 +104,9 @@ class AmigoPlugin implements Plugin<Project> {
                             }
                         }
 
-                        QName nameAttr = new QName("http://schemas.android.com/apk/res/android", 'name', 'android');
-                        applicationName = appNode.attribute(nameAttr)
+                        QName nameAttr = new QName("http://schemas.android.com/apk/res/android",
+                                'name', 'android');
+                        def applicationName = appNode.attribute(nameAttr)
                         if (applicationName == null || applicationName.isEmpty()) {
                             applicationName = "android.app.Application"
                         }
@@ -101,61 +116,38 @@ class AmigoPlugin implements Plugin<Project> {
                         hackAppNode.attributes().put("android:name", applicationName)
                         manifestFile.bytes = XmlUtil.serialize(node).getBytes("UTF-8")
 
-                        //process${variantData.variantConfiguration.fullName.capitalize()}Manifest
-                        String processManifestTaskName = output.processManifest.name;
-                        String taskName = "";
-                        String pattern = '^process(.+)Manifest$';
-                        if (Pattern.matches(pattern, processManifestTaskName)) {
-                            taskName = processManifestTaskName.replace("process", "generate")
-                                    .replace("Manifest", "ApplicationInfo");
-                        } else {
-                            taskName = "generate${variant.name.capitalize()}ApplicationInfo"
-                        }
-
-                        generateCodeTask = project.tasks.create(
-                                name: taskName,
-                                type: GenerateCodeTask) {
-                            variantDirName variant.dirName
-                            appName applicationName
-                        }
-                        generateCodeTask.execute()
-
-                        println "generateCodeTask: ${generateCodeTask.name} execute"
+                        generateCodeTask.appName = applicationName
                     }
 
-                    variant.javaCompile.doFirst {
-                        variant.javaCompile.source generateCodeTask.outputDir()
+                    variant.registerJavaGeneratingTask(generateCodeTask, generateCodeTask
+                            .outputDir())
+
+                    def task_1 = !variant.obfuscation ? variant.javaCompiler : variant.obfuscation
+
+                    // TODO
+                    // new jack & jill toolchain still have some problems in splitting
+                    // the main dex
+                    if (hasMultiDex(project, variant)) {
+                        task_1.doLast {
+                            collectMainDexInfo(project, variant)
+                            updateMainDexKeepList(project, variant)
+                        }
                     }
 
-                    if (!hasProguard(project, variant)) {
-                        variant.javaCompile.doLast {
-                            if (hasMultiDex(project, variant)) {
-                                collectMultiDexInfo(project, variant)
-                                generateKeepFiles(project, variant)
-                            }
-                        }
-                    } else {
-                        getProguardTask(project, variant).doLast {
-                            if (hasMultiDex(project, variant)) {
-                                collectMultiDexInfo(project, variant)
-                                generateKeepFiles(project, variant)
-                            }
-                        }
-                    }
                 }
             }
         }
     }
 
-    void clearAmigoDependency(Project project) {
+    static void clearAmigoDependency(Project project) {
         File jarPath = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
         if (jarPath.exists()) {
             jarPath.delete()
         }
     }
 
-    void collectMultiDexInfo(Project project, ApkVariant variant) {
-        if (!hasProguard(project, variant)) {
+    void collectMainDexInfo(Project project, ApkVariant variant) {
+        if (!variant.obfuscation) {
             File dir = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
             JarFile jarFile
             if (dir.exists()) {
@@ -182,7 +174,9 @@ class AmigoPlugin implements Plugin<Project> {
                 String[] keyValue = line.split("->");
                 String key = keyValue[0].trim()
                 String value = keyValue[1].subSequence(0, keyValue[1].length() - 1).trim()
-                if (key.startsWith("me.ele.amigo") || key.endsWith('R$layout') || key.endsWith('R$style')) {
+                if (key.startsWith("me.ele.amigo")
+                        || key.endsWith('R$layout')
+                        || key.endsWith('R$style')) {
                     content += "\n"
                     content += "${value.replace(".", "/")}.class"
                 }
@@ -193,32 +187,24 @@ class AmigoPlugin implements Plugin<Project> {
         content += "me/ele/amigo/acd.class"
     }
 
-    void generateKeepFiles(Project project, ApkVariant variant) {
+    void updateMainDexKeepList(Project project, ApkVariant variant) {
         if (!hasMultiDex(project, variant)) {
             return
         }
-        def task = project.tasks.getByName("transformClassesWithMultidexlistFor${variant.name.capitalize()}")
-        File mainDexList = new File("${project.buildDir}/intermediates/multi-dex/${variant.dirName}/maindexlist.txt")
+        def task = getMultiDexTask(project, variant)
+        File mainDexList = new File(
+                "${project.buildDir}/intermediates/multi-dex/${variant.dirName}/maindexlist.txt")
         task.doLast {
             mainDexList << content
         }
     }
 
-    Task getMultiDexTask(Project project, ApkVariant variant) {
+    static Task getMultiDexTask(Project project, ApkVariant variant) {
         String multiDexTaskName = "transformClassesWithMultidexlistFor${variant.name.capitalize()}"
         return project.tasks.findByName(multiDexTaskName);
     }
 
-    Task getProguardTask(Project project, ApkVariant variant) {
-        String proguardTaskName = "transformClassesAndResourcesWithProguardFor${variant.name.capitalize()}"
-        return project.tasks.findByName(proguardTaskName)
-    }
-
-    boolean hasProguard(Project project, ApkVariant variant) {
-        return getProguardTask(project, variant) != null
-    }
-
-    boolean hasMultiDex(Project project, ApkVariant variant) {
+    static boolean hasMultiDex(Project project, ApkVariant variant) {
         return getMultiDexTask(project, variant) != null
     }
 
