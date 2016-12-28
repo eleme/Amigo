@@ -2,16 +2,19 @@ apply plugin: 'com.android.application'
 apply plugin: 'me.ele.amigo'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion globalCompileSdkVersion
+    buildToolsVersion globalBuildToolsVersion
 
     defaultConfig {
         applicationId "me.ele.app.amigo"
-        minSdkVersion 7
+        minSdkVersion 9
         targetSdkVersion 22
         versionCode 11
         versionName "1.0"
         multiDexEnabled true
+        jackOptions {
+            enabled = false
+        }
     }
     signingConfigs {
         release {
@@ -73,8 +76,8 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
+    compile "com.android.support:appcompat-v7:${globalSupportLibVersion}"
+    compile "com.android.support:design:${globalSupportLibVersion}"
     compile 'com.android.support:multidex:1.0.1'
 
 //    // test multidex
@@ -131,14 +134,20 @@ def deletePatchApk() {
     runCmd("adb shell rm -rf /sdcard/${getPatchApkName()}")
 }
 
-task runHost(dependsOn: assembleHost) << {
-    deletePatchApk()
-    runCmd("adb uninstall ${getPkg()}")
-    runCmd("adb install -r ${getHostApk()}")
-    launch()
+task runHost() {
+    dependsOn 'assembleHost'
+    doLast {
+        deletePatchApk()
+        runCmd("adb uninstall ${getPkg()}")
+        runCmd("adb install -r ${getHostApk()}")
+        launch()
+    }
 }
 
-task preparePatch(dependsOn: assemblePatch) << {
-    deletePatchApk()
-    runCmd("adb push ${getPatchApk()} /sdcard/${getPatchApkName()}")
+task preparePatch() {
+    dependsOn 'assemblePatch'
+    doLast {
+        deletePatchApk()
+        runCmd("adb push ${getPatchApk()} /sdcard/${getPatchApkName()}")
+    }
 }
