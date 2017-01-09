@@ -39,6 +39,7 @@ android {
 //你可以把这个定义在mybuild.gradle，以区分debug & release打包
 amigo {
     disable false //默认 false
+    autoDisableInInstantRunMode true // 默认 true
 }
 
 ```
@@ -142,7 +143,7 @@ Gradle插件会自动选择正确的库版本,在开发过程中,我们会使用
         Cursor cursor = getContentResolver().query(Uri.parse("content://" + targetPackageName + ".provider/student?id=0"), null, null, null, null);
         ```
 
-- 不支持和Instant Run同时使用
+- 不支持和Instant Run同时使用（或者使用`autoDisableInInstantRunMode`来自动停止使用amigo）
 
 -  Amigo 不支持 Honeycomb `3.0`
     * Android 3.0 是一个满是bug的版本, & 并且Google已经关闭这个版本.
