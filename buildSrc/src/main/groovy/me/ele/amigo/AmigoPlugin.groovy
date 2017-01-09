@@ -5,8 +5,6 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.io.FileType
 import groovy.xml.QName
 import groovy.xml.XmlUtil
-import org.apache.tools.ant.types.RegularExpression
-import org.apache.tools.ant.util.regexp.RegexpUtil
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -60,7 +58,12 @@ class AmigoPlugin implements Plugin<Project> {
                 println 'check instant run'
                 Task instantRunTask = project.tasks.findByName("transformClassesWithInstantRunVerifierFor${variant.name.capitalize()}")
                 if (instantRunTask) {
-                    throw RuntimeException("Sorry, instant run conflicts with Amigo, so please disable Instant Run")
+                    if (ext.autoDisableInInstantRunMode) {
+                        println 'amigo is auto disable in instant run mode.'
+                        return
+                    } else {
+                        throw RuntimeException("Sorry, instant run conflicts with Amigo, so please disable Instant Run")
+                    }
                 }
 
                 Task prepareDependencyTask = project.tasks.findByName("prepare${variant.name.capitalize()}Dependencies")

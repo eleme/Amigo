@@ -84,6 +84,7 @@ dependencies {
 
 amigo {
     disable false
+    autoDisableInInstantRunMode true
 }
 
 
