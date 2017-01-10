@@ -1,3 +1,7 @@
+## Version 0.6.3
+_2017-01-10_
+* add `autoDisableInInstantRunMode` for amigo extension
+
 ## Version [0.6.2](https://github.com/eleme/Amigo/releases/tag/v0.6.2)
 _2016-12-17_
 * support custom `ApkReleaseActivity`'s  orientation
