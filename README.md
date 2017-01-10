@@ -40,6 +40,7 @@ android {
 //you can define this extension in your mybuild.gradle as to distinguish debug & release build
 amigo {
     disable false //default false
+    autoDisableInInstantRunMode true // default false
 }
 
 ```
@@ -136,7 +137,7 @@ There are two gradle tasks provided in the app/build.gradle, `:app:runHost`, `:a
         Cursor cursor = getContentResolver().query(Uri.parse("content://" + targetPackageName + ".provider/student?id=0"), null, null, null, null);
         ```
 
- -  Instant Run conflicts with Amigo, so disable Instant Run when used with amigo
+ -  Instant Run conflicts with Amigo, so disable Instant Run when used with amigo(Or use `autoDisableInInstantRunMode` to auto disable amigo in instant run mode)
 
  -  Amigo doesn't support Honeycomb `3.0`
     * Android 3.0 is a version with full of bugs, & Google has closed Android 3.0 Honeycomb.
