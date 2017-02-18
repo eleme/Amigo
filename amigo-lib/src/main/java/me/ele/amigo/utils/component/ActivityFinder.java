@@ -11,6 +11,11 @@ import android.text.TextUtils;
 
 import java.util.List;
 
+import static android.content.IntentFilter.NO_MATCH_ACTION;
+import static android.content.IntentFilter.NO_MATCH_CATEGORY;
+import static android.content.IntentFilter.NO_MATCH_DATA;
+import static android.content.IntentFilter.NO_MATCH_TYPE;
+
 public class ActivityFinder extends ComponentFinder {
 
     private static ComponentName newLauncherComponent;
@@ -110,5 +115,35 @@ public class ActivityFinder extends ComponentFinder {
             }
         }
         return null;
+    }
+
+    public static ActivityInfo getActivityInfoInNewApp(Context context, Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+        if (intent.getComponent() != null) {
+            return getActivityInfoInNewApp(context, intent.getComponent().getClassName());
+        }
+
+        parsePackage(context);
+        if (sActivities.isEmpty()) {
+            return null;
+        }
+
+        for (Activity activity : sActivities) {
+            List<IntentFilter> filters = activity.filters;
+            if (filters == null || filters.size() == 0) {
+                continue;
+            }
+            for (IntentFilter filter : filters) {
+                int match = filter.match(null, intent, false, "filter_match_tag");
+                if (match != NO_MATCH_TYPE && match != NO_MATCH_DATA
+                        && match != NO_MATCH_ACTION && match != NO_MATCH_CATEGORY) {
+                    return getActivityInfoInNewApp(context, activity.activityInfo.name);
+                }
+            }
+        }
+        return null;
+
     }
 }

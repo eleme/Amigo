@@ -10,7 +10,9 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.UserHandle;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -41,29 +43,17 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         this.oldInstrumentation = oldInstrumentation;
     }
 
-    private boolean isPatchedActivity(Context who, Intent intent) {
-        ComponentName componentName = intent.getComponent();
-        if (componentName == null) {
-            return false;
-        }
-
-        ActivityInfo[] activityInfos = ActivityFinder.getAppActivities(who);
-        for (ActivityInfo activityInfo : activityInfos) {
-            if (activityInfo.name.equals(componentName.getClassName())) {
-                return false;
-            }
-        }
-
-        return getActivityInfoInNewApp(who, componentName.getClassName()) != null;
-    }
-
     private Intent wrapIntent(Context who, Intent intent) {
         Amigo.rollAmigoBack(who);
 
-        if (!isPatchedActivity(who, intent)) {
+        Pair<Boolean, Intent> result = getRealIntent(who, intent);
+        if (result == null) {
+            return null;
+        }
+        if (result.first) {
             return intent;
         }
-        intent = getRealIntent(who, intent);
+
         ComponentName componentName = intent.getComponent();
         ActivityStub.recycleActivityStub(getActivityInfo(who, componentName.getClassName()));
         Class stubClazz = getDelegateActivityName(who, componentName.getClassName());
@@ -81,14 +71,39 @@ public class AmigoInstrumentation extends Instrumentation implements IInstrument
         return stubIntent;
     }
 
-    private Intent getRealIntent(Context who, Intent intent) {
-        ActivityInfo info = ActivityFinder.getActivityInfoInNewApp(who, intent.getComponent().getClassName());
-        if (info == null) {
-            return intent;
+    private Pair<Boolean, Intent> getRealIntent(Context who, Intent intent) {
+        if (intent == null) {
+            return null;
         }
-        ComponentName componentName = new ComponentName(intent.getComponent().getPackageName(), info.name);
-        intent.setComponent(componentName);
-        return intent;
+        ComponentName componentName = intent.getComponent();
+        if (componentName == null) {
+            componentName = intent.resolveActivity(who.getPackageManager());
+            intent.setComponent(componentName);
+        }
+
+        if (componentName != null) {
+            //search from host
+            ActivityInfo[] activityInfos = ActivityFinder.getAppActivities(who);
+            for (ActivityInfo activityInfo : activityInfos) {
+                if (activityInfo.name.equals(componentName.getClassName())) {
+                    boolean isAlias = !TextUtils.isEmpty(activityInfo.targetActivity);
+                    if (!isAlias) {
+                        return new Pair<>(true, intent);
+                    } else {
+                        intent.setComponent(new ComponentName(componentName.getPackageName(), activityInfo.targetActivity));
+                        return getRealIntent(who, intent);
+                    }
+                }
+            }
+        }
+
+        //search from patch
+        ActivityInfo info = getActivityInfoInNewApp(who, intent);
+        if (info == null) {
+            return new Pair<>(true, intent);
+        }
+        intent.setComponent(new ComponentName(who.getPackageName(), info.name));
+        return new Pair<>(false, intent);
     }
 
     @Override
