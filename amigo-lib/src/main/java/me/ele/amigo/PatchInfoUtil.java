@@ -4,14 +4,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.text.TextUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by wwm on 11/25/16.
@@ -19,28 +18,21 @@ import java.util.Map;
 
 public class PatchInfoUtil {
 
-    private static String URI_PREFIX = "";
-
     public static boolean setWorkingChecksum(Context context, String checksum) {
-        ensureProviderAuthroties(context);
-
-        return context.getContentResolver().update(Uri.parse(URI_PREFIX +
-                        "set_working_checksum?checksum=" + checksum),
-                new ContentValues(0), null, null) > 0;
+        return getProvider(context).update(
+                Uri.parse(
+                        "content://patch_info_provider/set_working_checksum?checksum=" + checksum),
+                null) > 0;
     }
 
-    private static void ensureProviderAuthroties(Context context) {
-        if (TextUtils.isEmpty(URI_PREFIX)) {
-            URI_PREFIX = String.format("content://%s.amigo_patch_info_provider/",
-                    context.getPackageName());
-        }
+    private static PatchInfoProvider getProvider(Context context) {
+        return new PatchInfoProvider(context);
     }
 
     public static String getWorkingChecksum(Context context) {
-        ensureProviderAuthroties(context);
-        Cursor cursor = context.getContentResolver().query(Uri.parse
-                        (URI_PREFIX + "query_working_checksum"), null,
-                null, null, "");
+        Cursor cursor =
+                getProvider(context).query(
+                        Uri.parse("amigo://patch_info_provider/query_working_checksum"));
 
         String checksum = "";
         if (cursor != null && cursor.moveToFirst()) {
@@ -52,10 +44,8 @@ public class PatchInfoUtil {
     }
 
     public static boolean isDexFileOptimized(Context context, String checksum) {
-        ensureProviderAuthroties(context);
-        Cursor cursor = context.getContentResolver().query(Uri.parse
-                        (URI_PREFIX + "is_dex_optimized?checksum=" + checksum), null,
-                null, null, "");
+        Cursor cursor = getProvider(context).query(Uri.parse
+                ("amigo://patch_info_provider/is_dex_optimized?checksum=" + checksum));
         boolean optimized = false;
         if (cursor != null && cursor.moveToFirst()) {
             optimized = cursor.getInt(0) == 1;
@@ -66,34 +56,33 @@ public class PatchInfoUtil {
     }
 
     public static int updateDexFileOptStatus(Context context, String checksum, boolean optimized) {
-        ensureProviderAuthroties(context);
-        return context.getContentResolver().update(Uri.parse(URI_PREFIX +
-                        "set_dex_optimized?checksum=" + checksum + "&optimized=" + optimized),
-                new ContentValues(0),
-                null, null);
+        return getProvider(context).update(Uri.parse(
+                "amigo://patch_info_provider/set_dex_optimized?checksum="
+                        + checksum
+                        + "&optimized="
+                        + optimized),
+                new ContentValues(0));
     }
 
     public static int updatePatchFileChecksum(Context context, String checksum, Map<String,
             String> checksumMap) {
-        ensureProviderAuthroties(context);
-        return context.getContentResolver().update(Uri.parse
-                        (URI_PREFIX + "update_patch_file_checksum_map?checksum=" + checksum +
-                                "&map=" + toJson(checksumMap)),
-                new ContentValues(0), null, null);
+        final ContentValues contentValues = new ContentValues(0);
+        contentValues.put("checkSumMap", toJson(checksumMap));
+        return getProvider(context)
+                .update(Uri.parse(
+                        "amigo://patch_info_provider/update_patch_file_checksum_map?checksum="
+                                + checksum),
+                        contentValues);
     }
 
     public static void clear(Context context) {
-        ensureProviderAuthroties(context);
-        context.getContentResolver().update(Uri.parse
-                        (URI_PREFIX + "clear_all"), new ContentValues(0), null,
-                null);
+        getProvider(context).update(Uri.parse("amigo://patch_info_provider/clear_all"), null);
     }
 
     public static Map<String, String> getPatchFileChecksum(Context context, String checksum) {
-        ensureProviderAuthroties(context);
-        Cursor cursor = context.getContentResolver().query(Uri.parse
-                        (URI_PREFIX + "query_patch_file_checksum_map?checksum=" + checksum),
-                null, null, null, null);
+        Cursor cursor = getProvider(context).query(
+                Uri.parse("amigo://patch_info_provider/query_patch_file_checksum_map?checksum="
+                        + checksum));
 
         if (cursor == null || !cursor.moveToFirst()) {
             return new HashMap<>(0);

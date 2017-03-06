@@ -109,11 +109,6 @@
             />
 
         <provider
-            android:name=".PatchInfoProvider"
-            android:authorities="${applicationId}.amigo_patch_info_provider"
-            android:exported="false"/>
-
-        <provider
             android:name=".stub.ProviderStub"
             android:authorities="${applicationId}.provider"
             android:exported="true"/>
