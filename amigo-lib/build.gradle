@@ -12,7 +12,23 @@ android {
         versionCode 1
         versionName "1.0"
         consumerProguardFiles 'proguard-rules.txt'
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11"
+            }
+        }
     }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
 }
 
 dependencies {

@@ -2,14 +2,11 @@ package me.ele.amigo;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.os.Build;
 import android.util.Log;
-
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.FileUtils;
 
@@ -141,7 +138,29 @@ public final class AmigoDirs {
 
     public boolean isOptedDexExists(String checksum) {
         File[] odexes = dexOptDir(checksum).listFiles();
-        return odexes != null && odexes.length > 0;
+        int odexFilesLength;
+        if (odexes == null
+                || (odexFilesLength = odexes.length) == 0) {
+            return false;
+        }
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            return odexFilesLength == 1 && odexes[0].exists();
+        }
+
+        File[] dexFiles = dexDir(checksum).listFiles();
+        int dexFilesLength;
+        if (dexFiles == null || (dexFilesLength = dexFiles.length) != odexFilesLength) {
+            return false;
+        }
+
+        for (int i = 0; i < dexFilesLength; i++) {
+            if (!dexFiles[i].exists() || !odexes[i].exists()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // delete dex, odex, so files of a patch and also clear unused patches
@@ -170,6 +189,7 @@ public final class AmigoDirs {
             return;
         }
 
+        //always keep amigo.json
         File patchInfoFile = patchInfoFile();
         for (File subFile : subFiles) {
             if (!subFile.equals(patchInfoFile) && !subFile.equals(excludeFile)) {

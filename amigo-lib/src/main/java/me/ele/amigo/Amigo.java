@@ -6,15 +6,12 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
-
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Map;
-
 import me.ele.amigo.exceptions.LoadPatchApkException;
 import me.ele.amigo.hook.HookFactory;
 import me.ele.amigo.reflect.FieldUtils;
@@ -399,7 +396,7 @@ public class Amigo extends Application {
     }
 
     public interface WorkLaterCallback {
-        void onPatchApkReleased();
+        void onPatchApkReleased(boolean success);
     }
 
     private static void workLater(Context context, File patchFile, boolean checkSignature,

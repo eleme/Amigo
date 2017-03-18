@@ -1,6 +1,7 @@
 package me.ele.amigo;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
@@ -10,7 +11,6 @@ import java.net.URL;
 import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
-
 
 public class AmigoClassLoader extends DexClassLoader {
     private static final String TAG = AmigoClassLoader.class.getName();
@@ -36,6 +36,33 @@ public class AmigoClassLoader extends DexClassLoader {
                 AmigoDirs.getInstance(context).dexOptDir(checksum).getAbsolutePath(),
                 getLibraryPath(context, checksum),
                 AmigoClassLoader.class.getClassLoader().getParent());
+    }
+
+    private static String getLibraryPath(Context context, String checksum) {
+        return AmigoDirs.getInstance(context).libDir(checksum).getAbsolutePath();
+    }
+
+    private static String joinPath(File folder) {
+        StringBuilder path = new StringBuilder();
+        File[] libFiles = folder.listFiles();
+        if (libFiles == null || libFiles.length == 0) {
+            return null;
+        }
+
+        for (File libFile : libFiles) {
+            path.append(File.pathSeparatorChar);
+            path.append(libFile.getAbsolutePath());
+        }
+        return path.toString();
+    }
+
+    private static String getDexPath(Context context, String checksum) {
+        if (Build.VERSION.SDK_INT >= 21) {
+            return PatchApks.getInstance(context).patchPath(checksum);
+        }
+
+        String dexPath = joinPath(AmigoDirs.getInstance(context).dexDir(checksum));
+        return dexPath != null ? dexPath : PatchApks.getInstance(context).patchPath(checksum);
     }
 
     @Override
@@ -71,32 +98,4 @@ public class AmigoClassLoader extends DexClassLoader {
             return AmigoClassLoader.class.getClassLoader().loadClass(name);
         }
     }
-
-    private static String getLibraryPath(Context context, String checksum) {
-        return AmigoDirs.getInstance(context).libDir(checksum).getAbsolutePath();
-    }
-
-    private static String joinPath(File folder) {
-        StringBuilder path = new StringBuilder();
-        File[] libFiles = folder.listFiles();
-        if (libFiles == null || libFiles.length == 0) {
-            return null;
-        }
-
-        for (File libFile : libFiles) {
-            path.append(File.pathSeparatorChar);
-            path.append(libFile.getAbsolutePath());
-        }
-        return path.toString();
-    }
-
-    private static String getDexPath(Context context, String checksum) {
-        String dexPath = joinPath(AmigoDirs.getInstance(context).dexDir(checksum));
-        if (dexPath == null) {
-            throw new RuntimeException("Amigo: no patch dex available for checksum[" + checksum +
-                    "]");
-        }
-        return dexPath;
-    }
-
 }
