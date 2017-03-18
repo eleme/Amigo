@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.ele:amigo:0.6.5'
+        classpath 'me.ele:amigo:0.6.6'
     }
 }
 ```
@@ -34,6 +34,11 @@ apply plugin: 'me.ele.amigo'
 
 android {
 ...
+}
+
+dependencies {
+    ...
+    compile 'me.ele:amigo-lib:0.6.6'
 }
 
 //if you don't want use amigo in dev, set this value to true
