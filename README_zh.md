@@ -21,7 +21,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.ele:amigo:0.6.5'
+        classpath 'me.ele:amigo:0.6.6'
     }
 }
 ```
@@ -33,6 +33,11 @@ apply plugin: 'me.ele.amigo'
 
 android {
  ...
+}
+
+dependencies {
+    ...
+    compile 'me.ele:amigo-lib:0.6.6'
 }
 
 //开发过程中你可以不想开启Amigo，可以把这个值设置为true

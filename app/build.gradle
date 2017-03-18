@@ -72,6 +72,7 @@ android {
 }
 
 dependencies {
+    compile project(":amigo-lib")
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:design:23.4.0'
@@ -132,14 +133,14 @@ def deletePatchApk() {
     runCmd("adb shell rm -rf /sdcard/${getPatchApkName()}")
 }
 
-task runHost(dependsOn: assembleHost) << {
+task runHost(dependsOn: "assembleHost") << {
     deletePatchApk()
     runCmd("adb uninstall ${getPkg()}")
     runCmd("adb install -r ${getHostApk()}")
     launch()
 }
 
-task preparePatch(dependsOn: assemblePatch) << {
+task preparePatch(dependsOn: "assemblePatch") << {
     deletePatchApk()
     runCmd("adb push ${getPatchApk()} /sdcard/${getPatchApkName()}")
 }

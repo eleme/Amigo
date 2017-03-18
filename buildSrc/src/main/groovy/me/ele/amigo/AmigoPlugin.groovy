@@ -17,33 +17,13 @@ import java.util.regex.Pattern
 
 class AmigoPlugin implements Plugin<Project> {
 
-    static final String GROUP = 'me.ele'
-    static final String NAME = 'amigo'
 
     String content = ""
-    String version = ""
 
     @Override
     void apply(Project project) {
 
         AmigoExtension ext = project.extensions.create('amigo', AmigoExtension)
-
-        Configuration configuration = project.rootProject.buildscript.configurations.getByName(
-                'classpath')
-        configuration.allDependencies.all { Dependency dependency ->
-            if (dependency.group == GROUP && dependency.name == NAME) {
-                version = dependency.version
-            }
-        }
-        println 'amigo plugin version: ' + version
-
-        project.dependencies {
-            if (Util.containsProject(project, 'amigo-lib')) {
-                compile project.project(':amigo-lib')
-            } else {
-                compile "me.ele:amigo-lib:${version}"
-            }
-        }
 
         project.afterEvaluate {
 
