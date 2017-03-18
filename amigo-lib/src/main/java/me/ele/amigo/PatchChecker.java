@@ -19,8 +19,6 @@ import static me.ele.amigo.utils.FileUtils.copyFile;
 
 class PatchChecker {
 
-    private static final String TAG = PatchChecker.class.getName();
-
     static String checkPatchAndCopy(Context context, File patchFile, boolean checkSignature) {
         PatchChecker.checkPatchApk(context, patchFile, checkSignature);
         String patchChecksum = CrcUtils.getCrc(patchFile);
@@ -83,12 +81,12 @@ class PatchChecker {
             return;
         }
 
-        for (File nativeFile : files) {
-            String savedChecksum = checksumMap.get(nativeFile.getAbsolutePath());
-            String checksum = getCrc(nativeFile);
-            Log.e(TAG, "savedChecksum-->" + savedChecksum + ", checksum--->" + checksum);
+        for (File file : files) {
+            String savedChecksum = checksumMap.get(file.getAbsolutePath());
+            String checksum = getCrc(file);
             if (!checksum.equals(savedChecksum)) {
-                throw new IllegalStateException("wrong " + type + "  check sum");
+                throw new IllegalStateException("wrong " + type + " checksum, expected is "
+                        + savedChecksum + ", actual is " + checksum);
             }
         }
     }

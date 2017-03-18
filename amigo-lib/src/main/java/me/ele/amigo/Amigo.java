@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -32,61 +33,83 @@ import static me.ele.amigo.reflect.FieldUtils.writeField;
 import static me.ele.amigo.reflect.MethodUtils.invokeMethod;
 
 public class Amigo extends Application {
-    private static final String TAG = Amigo.class.getSimpleName();
 
+    private static final String TAG = Amigo.class.getSimpleName();
+    private static final int SLEEP_DURATION = 200;
     private static LoadPatchError loadPatchError;
 
-
+    private int revertBitFlag = 0;
+    private Application realApplication;
     private Instrumentation originalInstrumentation = null;
     private Object originalCallback = null;
+    private boolean shouldHookAmAndPm;
 
-    private AmigoDirs amigoDirs;
-    private PatchApks patchApks;
-    private int revertBitFlag = 0;
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        attachApplication();
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        if(shouldHookAmAndPm) {
+            try {
+                installAndHook();
+            } catch (Exception e) {
+                try {
+                    clear(this);
+                    attachOriginalApplication();
+                } catch (Exception e1) {
+                    throw new RuntimeException(e1);
+                }
+            }
+        }
+        realApplication.onCreate();
+    }
+
+    public void attachApplication() {
         try {
-            init();
             String workingChecksum = PatchInfoUtil.getWorkingChecksum(this);
-            Log.e(TAG, "#onCreate working checksum: " + workingChecksum);
+            Log.e(TAG, "#attachApplication: working checksum = " + workingChecksum);
 
             if (TextUtils.isEmpty(workingChecksum)
-                    || !patchApks.exists(workingChecksum)) {
-                Log.d(TAG, "#onCreate Patch apk doesn't exists");
+                    || !PatchApks.getInstance(this).exists(workingChecksum)) {
+                Log.d(TAG, "#attachApplication: Patch apk doesn't exists");
                 PatchCleaner.clearPatchIfInMainProcess(this);
-                runOriginalApplication();
+                attachOriginalApplication();
                 return;
             }
 
             if (PatchChecker.checkUpgrade(this)) {
-                Log.d(TAG, "Host app has upgrade");
+                Log.d(TAG, "#attachApplication: Host app has upgrade");
                 PatchCleaner.clearPatchIfInMainProcess(this);
-                runOriginalApplication();
+                attachOriginalApplication();
                 return;
             }
 
             // ensure load dex process always run host apk not patch apk
             if (ProcessUtils.isLoadDexProcess(this)) {
-                Log.e(TAG, "#onCreate load dex process");
-                runOriginalApplication();
+                Log.e(TAG, "#attachApplication: load dex process");
+                attachOriginalApplication();
                 return;
             }
 
             if (!ProcessUtils.isMainProcess(this) && isPatchApkFirstRun(workingChecksum)) {
-                Log.e(TAG, "#onCreate None main process and patch apk is not released yet");
-                runOriginalApplication();
+                Log.e(TAG,
+                        "#attachApplication: None main process and patch apk is not released yet");
+                attachOriginalApplication();
                 return;
             }
 
             // only release loaded apk in the main process
-            runPatchApk(workingChecksum);
+            attachPatchApk(workingChecksum);
         } catch (LoadPatchApkException e) {
             e.printStackTrace();
             loadPatchError = LoadPatchError.record(LoadPatchError.LOAD_ERR, e);
+            //if patch apk fails to run, Amigo will clear working dir with app's next startup
+            clear(this);
             try {
-                runOriginalApplication();
+                attachOriginalApplication();
             } catch (Throwable e2) {
                 throw new RuntimeException(e2);
             }
@@ -95,61 +118,29 @@ public class Amigo extends Application {
         }
     }
 
-    /**
-     * WARNING: do not modify this method's name, used for hotfix itself
-     */
-    private void init() {
-        amigoDirs = AmigoDirs.getInstance(this);
-        patchApks = PatchApks.getInstance(this);
-    }
-
-    private void runPatchApk(String checksum) throws LoadPatchApkException {
+    private void attachPatchApk(String checksum) throws LoadPatchApkException {
         try {
-            if (isPatchApkFirstRun(checksum) || !isOptedDexExists(checksum)) {
+            if (isPatchApkFirstRun(checksum)
+                    || !AmigoDirs.getInstance(this).isOptedDexExists(checksum)) {
                 PatchInfoUtil.updateDexFileOptStatus(this, checksum, false);
                 releasePatchApk(checksum);
             } else {
                 PatchChecker.checkDexAndSo(this, checksum);
             }
 
-            AmigoClassLoader classLoader = AmigoClassLoader.newInstance(this, checksum);
-            Object newAmigoInstance = null;
-            try {
-                Class<?> clazz = classLoader.loadClass(Amigo.class.getName());
-                newAmigoInstance = clazz.newInstance();
-                invokeMethod(newAmigoInstance, "attach", getBaseContext());
-                invokeMethod(newAmigoInstance, "init");
-                invokeMethod(newAmigoInstance, "installAndHook", checksum, classLoader);
-                Log.i(TAG, "installAndHook successfully with patch");
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.e(TAG, String.format("installAndHook fails with patch %s", e));
-                if (newAmigoInstance != null) {
-                    try {
-                        invokeMethod(newAmigoInstance, "revertAll");
-                        Log.i(TAG, "revertAll newAmigoInstance successfully");
-                    } catch (Exception ee) {
-                        ee.printStackTrace();
-                        Log.i(TAG, "revertAll newAmigoInstance fails");
-                    }
-                }
-                installAndHook(checksum, classLoader);
-                Log.i(TAG, "installAndHook successfully with host");
-            }
+            setAPKClassLoader(AmigoClassLoader.newInstance(this, checksum));
+            setApkResource(checksum);
+            revertBitFlag |= getClassLoader() instanceof AmigoClassLoader ? 1 : 0;
+            attachPatchedApplication(checksum);
+            PatchCleaner.clearOldPatches(this, checksum);
+            shouldHookAmAndPm = true;
+            Log.i(TAG, "#attachPatchApk: success");
         } catch (Exception e) {
             throw new LoadPatchApkException(e);
         }
     }
 
-    /**
-     * WARNING: do not modify this method's name, used for hotfix itself
-     * WARNING: all new extra operation should be done here
-     */
-    private void installAndHook(String checksum, ClassLoader classLoader) throws Exception {
-        setAPKClassLoader(classLoader);
-        revertBitFlag |= 1;
-        setApkResource(checksum);
-
+    private void installAndHook() throws Exception {
         boolean gotNewActivity = ActivityFinder.newActivityExistsInPatch(this);
         if (gotNewActivity) {
             setApkInstrumentation();
@@ -160,16 +151,9 @@ public class Amigo extends Application {
             Log.d(TAG, "installAndHook: there is no any new activity, skip hooking " +
                     "instrumentation & mH's callback");
         }
-
         installHookFactory();
-
-        runPatchedApplication(checksum);
-
         dynamicRegisterNewReceivers();
         installPatchContentProviders();
-
-        PatchInfoUtil.setWorkingChecksum(this, checksum); // not necessary
-        PatchCleaner.clearOldPatches(this, checksum);
     }
 
     private void setApkResource(String checksum) throws Exception {
@@ -258,10 +242,8 @@ public class Amigo extends Application {
         Log.e(TAG, String.format("layoutId-->%d, themeId-->%d", layoutId, themeId));
 
         releaseDex(checksum, layoutId, themeId);
-        Log.e(TAG, "release apk once");
+        Log.e(TAG, "release apk done");
     }
-
-    private static final int SLEEP_DURATION = 200;
 
     private boolean isDexOptDone(String checksum) {
         return PatchInfoUtil.isDexFileOptimized(this, checksum);
@@ -294,25 +276,16 @@ public class Amigo extends Application {
         return !PatchInfoUtil.getWorkingChecksum(this).equals(checksum);
     }
 
-    private boolean isOptedDexExists(String checksum) {
-        return amigoDirs.dexOptDir(checksum).listFiles() != null
-                && amigoDirs.dexOptDir(checksum).listFiles().length > 0;
-    }
-
-    private void runOriginalApplication() throws Exception {
+    private void attachOriginalApplication() throws Exception {
         revertAll();
         Class acd = getClassLoader().loadClass("me.ele.amigo.acd");
         String applicationName = (String) readStaticField(acd, "n");
-        Application application =
+        realApplication =
                 (Application) getClassLoader().loadClass(applicationName).newInstance();
-        invokeMethod(application, "attach", getBaseContext());
-        setAPKApplication(application);
-        application.onCreate();
+        invokeMethod(realApplication, "attach", getBaseContext());
+        setAPKApplication(realApplication);
     }
 
-    /**
-     * WARNING: do not modify this method's name, used for hotfix itself
-     */
     private void revertAll() throws Exception {
         if ((revertBitFlag & 1) != 0) {
             setAPKClassLoader(Amigo.class.getClassLoader());
@@ -329,13 +302,12 @@ public class Amigo extends Application {
         // TODO unregister providers
     }
 
-    private void runPatchedApplication(String patchApkCheckSum) throws Exception {
+    private void attachPatchedApplication(String patchApkCheckSum) throws Exception {
         String appName = getPatchApplicationName(patchApkCheckSum);
-        Application application = (Application) getClassLoader().loadClass(appName).newInstance();
-        FieldUtils.writeField(getBaseContext(), "mOuterContext", application);
-        invokeMethod(application, "attach", getBaseContext());
-        setAPKApplication(application);
-        application.onCreate();
+        realApplication = (Application) getClassLoader().loadClass(appName).newInstance();
+        FieldUtils.writeField(getBaseContext(), "mOuterContext", realApplication);
+        invokeMethod(realApplication, "attach", getBaseContext());
+        setAPKApplication(realApplication);
     }
 
     private String getPatchApplicationName(String patchApkCheckSum) throws Exception {
@@ -346,17 +318,25 @@ public class Amigo extends Application {
                 applicationName = (String) readStaticField(acd, "n");
             }
         } catch (ClassNotFoundException classNotFoundExp) {
-            Log.d(TAG, "runPatchedApplication: " + classNotFoundExp);
+            Log.d(TAG, "getPatchApplicationName: " + classNotFoundExp);
         }
+        // patch apk may not include amigo-lib as a dependency
         if (applicationName == null) {
             applicationName = getPackageManager().getPackageArchiveInfo(
                     PatchApks.getInstance(this).patchPath(patchApkCheckSum), 0).applicationInfo
                     .className;
         }
+
         if (applicationName == null) {
-            throw new RuntimeException(
-                    "Amigo#runPatchedApplication : can't resolve original application name");
+            throw new RuntimeException("can't resolve original application name");
         }
+
+        if(Amigo.class.getName().equals(applicationName)){
+            // this shouldn't happen, we just throw a exception to avoid
+            // infinite #attachBaseContext recursion
+            throw new RuntimeException("can't resolve original application name");
+        }
+
         return applicationName;
     }
 
@@ -371,6 +351,7 @@ public class Amigo extends Application {
     }
 
     private static Object getLoadedApk() throws Exception {
+        @SuppressWarnings("unchecked")
         Map<String, WeakReference<Object>> mPackages =
                 (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
         for (String s : mPackages.keySet()) {
@@ -399,7 +380,7 @@ public class Amigo extends Application {
 
     private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {
         if (Amigo.hasWorked() && PatchInfoUtil.getWorkingChecksum(context).equals(patchChecksum)) {
-            Log.e(TAG, "cannot apply the same patch twice");
+            Log.e(TAG, "#checkWithWorking : cannot apply the same patch twice");
             return true;
         }
         return false;
@@ -426,7 +407,7 @@ public class Amigo extends Application {
         String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
         if (checkWithWorkingPatch(context, patchChecksum)) return;
         if (patchChecksum == null) {
-            Log.e(TAG, "workLater: empty checksum");
+            Log.e(TAG, "#workLater: empty checksum");
             return;
         }
 
@@ -479,6 +460,7 @@ public class Amigo extends Application {
 
     private static boolean checkAndSetAmigoCallback(Context context) {
         try {
+            //revert current handler callback to null
             Handler handler = (Handler) readField(instance(), "mH", true);
             Object callback = readField(handler, "mCallback", true);
             if (callback != null) {

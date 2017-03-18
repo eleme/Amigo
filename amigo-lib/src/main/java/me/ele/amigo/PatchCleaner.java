@@ -18,7 +18,6 @@ class PatchCleaner {
         }
 
         AmigoDirs.getInstance(context).clear();
-        PatchInfoUtil.clear(context);
     }
 
     static void clearWithoutPatchApk(Context context, String checksum) {

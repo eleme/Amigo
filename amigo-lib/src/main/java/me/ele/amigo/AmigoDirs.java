@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import me.ele.amigo.reflect.FieldUtils;
 import me.ele.amigo.utils.CommonUtils;
 import me.ele.amigo.utils.FileUtils;
 
@@ -19,37 +20,26 @@ public final class AmigoDirs {
     private static final String AMIGO_FOLDER_NAME = "amigo";
     private static final String AMIGO_DEX_FOLDER_NAME = "dexes";
     private static final String AMIGO_LIB_FOLDER_NAME = "libs";
+    private static final String PATCH_INFO_FILE_NAME = "amigo.json";
 
     private static AmigoDirs sInstance;
-
-    public synchronized static AmigoDirs getInstance(Context context) {
-        if (sInstance == null) {
-            sInstance = new AmigoDirs(context);
-        }
-        return sInstance;
-    }
-
     private Context context;
     /**
      * /data/data/{package_name}/files/amigo
      */
     private File amigoDir;
-
     /**
      * System manages
      */
     private File odexDir;
-
     /**
      * /data/data/{package_name}/code_cache/{checksum}/amigo-dexes
      */
     private Map<String, File> optDirs = new HashMap<>();
-
     /**
      * /data/data/{package_name}/files/amigo/{checksum}/dexes
      */
     private Map<String, File> dexDirs = new HashMap<>();
-
     /**
      * /data/data/{package_name}/files/amigo/{checksum}/libs
      */
@@ -58,6 +48,13 @@ public final class AmigoDirs {
     private AmigoDirs(Context context) {
         this.context = context;
         ensureAmigoDir();
+    }
+
+    public synchronized static AmigoDirs getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new AmigoDirs(context);
+        }
+        return sInstance;
     }
 
     public File amigoDir() {
@@ -73,6 +70,11 @@ public final class AmigoDirs {
     public File dexDir(String checksum) {
         ensurePatchDirs(checksum);
         return dexDirs.get(checksum);
+    }
+
+    public File patchInfoFile() {
+        ensureAmigoDir();
+        return new File(amigoDir, PATCH_INFO_FILE_NAME);
     }
 
     public File libDir(String checksum) {
@@ -95,7 +97,12 @@ public final class AmigoDirs {
 
             odexDir = new File(new File(applicationInfo.dataDir).getCanonicalPath(),
                     CODE_CACHE_NAME);
+            // NOTE: use adb install xxx.apk on Android N would cause the code_cache dir not
+            // writable, refer to https://code.google.com/p/android/issues/detail?id=225735
             odexDir.mkdirs();
+            if (!odexDir.canRead() || !odexDir.canWrite()) {
+                throw new RuntimeException("do not have access to " + odexDir);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Initiate amigo files failed (" + e.getMessage() + ").");
         }
@@ -133,14 +140,14 @@ public final class AmigoDirs {
     }
 
     public boolean isOptedDexExists(String checksum) {
-        return dexOptDir(checksum).listFiles() != null
-                && dexOptDir(checksum).listFiles().length > 0;
+        File[] odexes = dexOptDir(checksum).listFiles();
+        return odexes != null && odexes.length > 0;
     }
 
     // delete dex, odex, so files of a patch and also clear unused patches
     public void deletePatchExceptApk(String checksum) {
         FileUtils.removeFile(odexDir);
-        FileUtils.removeFile(amigoDir(), PatchApks.getInstance(context).patchFile(checksum));
+        clearAmigoDir(PatchApks.getInstance(context).patchFile(checksum));
         Log.d(TAG, "deletePatchExceptApk: " + checksum);
     }
 
@@ -150,9 +157,24 @@ public final class AmigoDirs {
         Log.d(TAG, "clear:");
     }
 
-    public void deleteAllPatches(String excludeFile) {
-        FileUtils.removeFile(amigoDir, new File(amigoDir, excludeFile));
-        FileUtils.removeFile(odexDir, new File(odexDir, excludeFile));
-        Log.d(TAG, "deleteAllPatches: " + excludeFile);
+    public void deleteAllPatches(String excludeChecksum) {
+        FileUtils.removeFile(odexDir, new File(odexDir, excludeChecksum));
+        File excludeDir = new File(amigoDir, excludeChecksum);
+        clearAmigoDir(excludeDir);
+        Log.d(TAG, "deleted old patches");
+    }
+
+    private void clearAmigoDir(File excludeFile) {
+        File[] subFiles = amigoDir.listFiles();
+        if (subFiles == null) {
+            return;
+        }
+
+        File patchInfoFile = patchInfoFile();
+        for (File subFile : subFiles) {
+            if (!subFile.equals(patchInfoFile) && !subFile.equals(excludeFile)) {
+                FileUtils.removeFile(subFile, excludeFile);
+            }
+        }
     }
 }
