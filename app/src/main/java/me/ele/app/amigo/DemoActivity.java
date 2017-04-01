@@ -42,10 +42,6 @@ public class DemoActivity extends BaseActivity {
             return;
         }
         boolean patchWorked = Amigo.hasWorked();
-        if (!patchWorked) {
-            Amigo.work(this, patchApkFile);
-            return;
-        }
         Amigo.work(this, patchApkFile);
     }
 
@@ -58,23 +54,10 @@ public class DemoActivity extends BaseActivity {
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        boolean patchWorked = Amigo.hasWorked();
-        if (!patchWorked) {
-            Amigo.workLater(this, patchApkFile, new Amigo.WorkLaterCallback() {
-                @Override
-                public void onPatchApkReleased() {
-                    Toast.makeText(DemoActivity.this, "dex opt done!", Toast.LENGTH_SHORT).show();
-                }
-            });
-            Toast.makeText(this,
-                    "waiting for seconds, and kill this app and relaunch the app to check result",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
         Amigo.workLater(this, patchApkFile, new Amigo.WorkLaterCallback() {
             @Override
-            public void onPatchApkReleased() {
-                Toast.makeText(DemoActivity.this, "dex opt done!", Toast.LENGTH_SHORT).show();
+            public void onPatchApkReleased(boolean success) {
+                Toast.makeText(DemoActivity.this, "dex-opt finished : " + success , Toast.LENGTH_SHORT).show();
             }
         });
         Toast.makeText(this,

@@ -3,125 +3,176 @@ package me.ele.amigo.release;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
-
+import dalvik.system.DexFile;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import dalvik.system.DexFile;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import me.ele.amigo.AmigoDirs;
 import me.ele.amigo.AmigoService;
 import me.ele.amigo.PatchApks;
 import me.ele.amigo.PatchInfoUtil;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
-import me.ele.amigo.utils.DexReleaser;
+import me.ele.amigo.utils.DexExtractor;
 
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 
 public class ApkReleaser {
-    private static final int MSG_ID_DEX_OPT_DONE = 1;
     private static final String TAG = ApkReleaser.class.getSimpleName();
     private static final String DEX_SUFFIX = ".dex";
-    private static boolean isReleasing = false;
+
+    private volatile boolean isReleasing = false;
     private Context context;
     private ExecutorService service;
     private AmigoDirs amigoDirs;
     private PatchApks patchApks;
-    private Handler handler;
-    private Handler msgHandler;
 
     public ApkReleaser(final Context appContext) {
         this.context = appContext;
-        handler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                return handleMsg(msg, context);
-            }
-        });
-        this.service = Executors.newFixedThreadPool(3);
-        this.amigoDirs = AmigoDirs.getInstance(context);
-        this.patchApks = PatchApks.getInstance(context);
+        int processorCount = Runtime.getRuntime().availableProcessors();
+        final int dexCountInApkCommonly = 3;
+        this.service =
+                Executors.newFixedThreadPool(Math.min(dexCountInApkCommonly, processorCount));
     }
 
-    private boolean handleMsg(Message msg, Context context) {
-        switch (msg.what) {
-            case MSG_ID_DEX_OPT_DONE:
-                isReleasing = false;
-                String checksum = (String) msg.obj;
-                saveDexAndSoChecksum(checksum);
-                PatchInfoUtil.updateDexFileOptStatus(context, checksum, true);
-                PatchInfoUtil.setWorkingChecksum(context, checksum);
-                if (msgHandler != null)
-                    msgHandler.sendEmptyMessage(AmigoService.MSG_ID_DEX_OPT_FINISHED);
-                return true;
-            default:
-                break;
+    private void handleDexOptSuccess(String checksum, Handler msgHandler) {
+        saveDexAndSoChecksum(checksum);
+        PatchInfoUtil.updateDexFileOptStatus(context, checksum, true);
+        PatchInfoUtil.setWorkingChecksum(context, checksum);
+        if (msgHandler != null) {
+            msgHandler.sendEmptyMessage(AmigoService.MSG_ID_DEX_OPT_SUCCESS);
         }
+    }
 
-        return false;
+    private void handleDexOptFailure(String checksum, Handler msgHandler) {
+        PatchInfoUtil.setWorkingChecksum(context, "");
+        PatchInfoUtil.updateDexFileOptStatus(context, checksum, true);
+        if (msgHandler != null) {
+            msgHandler.sendEmptyMessage(AmigoService.MSG_ID_DEX_OPT_FAILURE);
+        }
     }
 
     public void release(final String checksum, final Handler msgHandler) {
-        Log.e(TAG, "release doing--->" + isReleasing + ", checksum: " + checksum);
         if (isReleasing) {
+            Log.w(TAG, "release : been busy now, skip release " + checksum);
             return;
         }
-        this.msgHandler = msgHandler;
+
+        Log.d(TAG, "release: start release " + checksum);
+        try {
+            this.amigoDirs = AmigoDirs.getInstance(context);
+            this.patchApks = PatchApks.getInstance(context);
+        } catch (Exception e) {
+            Log.e(TAG,
+                    "release: unable to create amigo dir and patch apk dir, abort release dex files",
+                    e);
+            handleDexOptFailure(checksum, msgHandler);
+            return;
+        }
+        isReleasing = true;
         service.submit(new Runnable() {
             @Override
             public void run() {
-                isReleasing = true;
-                DexReleaser.releaseDexes(patchApks.patchFile(checksum), amigoDirs.dexDir(checksum));
-                NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
-                        amigoDirs.libDir(checksum));
-                dexOptimization(checksum);
+                if (!new DexExtractor(context, checksum).extractDexFiles()) {
+                    Log.e(TAG, "releasing dex failed");
+                    handleDexOptFailure(checksum, msgHandler);
+                    isReleasing = false;
+                    return;
+                }
+                int errorCode;
+                if ((errorCode =
+                        NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
+                                amigoDirs.libDir(checksum))) < 0) {
+                    Log.e(TAG, "coping native binaries failed, errorCode = " + errorCode);
+                    handleDexOptFailure(checksum, msgHandler);
+                    isReleasing = false;
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT >= 21 ? dexOptimizationOnArt(checksum)
+                        : dexOptimizationOnDalvik(checksum)) {
+                    Log.e(TAG, "optimize dex succeed");
+                    handleDexOptSuccess(checksum, msgHandler);
+                    isReleasing = false;
+                    return;
+                }
+
+                Log.e(TAG, "optimize dex failed");
+                handleDexOptFailure(checksum, msgHandler);
+                isReleasing = false;
             }
         });
     }
 
-    private void dexOptimization(final String checksum) {
-        Log.e(TAG, "dexOptimization");
-        File[] validDexes = amigoDirs.dexDir(checksum).listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                    return pathname.getName().endsWith(".apk");
-                } else {
-                    return pathname.getName().endsWith(".dex");
+    private boolean dexOptimizationOnArt(final String checksum) {
+        Log.e(TAG, "dexOptimizationOnArt");
+        String apk = patchApks.patchPath(checksum);
+        String optimizedPath = optimizedPathFor(apk, amigoDirs.dexOptDir(checksum));
+        DexFile dexFile = null;
+        boolean success = true;
+        try {
+            dexFile = DexFile.loadDex(apk, optimizedPath, 0);
+        } catch (IOException e) {
+            e.printStackTrace();
+            success = false;
+        } finally {
+            if (dexFile != null) {
+                try {
+                    dexFile.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+            }
+        }
+
+        return success;
+    }
+
+    private boolean dexOptimizationOnDalvik(final String checksum) {
+        Log.e(TAG, "dexOptimizationOnDalvik");
+        final ArrayList<String> validDexPaths = new ArrayList<String>();
+        amigoDirs.dexDir(checksum).listFiles(new FileFilter() {
+            @Override public boolean accept(File pathname) {
+                if (pathname.getName().endsWith(".zip")) {
+                    validDexPaths.add(pathname.getAbsolutePath());
+                }
+                return false;
             }
         });
 
-        final CountDownLatch countDownLatch = new CountDownLatch(validDexes.length);
+        if (validDexPaths.isEmpty()) {
+            Log.e(TAG, "dexOptimizationOnDalvik: no dex to optmize");
+            return false;
+        }
 
-        for (final File dex : validDexes) {
+        final CountDownLatch countDownLatch = new CountDownLatch(validDexPaths.size());
+        final AtomicBoolean allDexOptimized = new AtomicBoolean(true);
+        final AtomicInteger optimizedDexCount = new AtomicInteger(validDexPaths.size());
+        for (final String dexPath : validDexPaths) {
             service.submit(new Runnable() {
                 @Override
                 public void run() {
-                    long startTime = System.currentTimeMillis();
-                    String optimizedPath = optimizedPathFor(dex, amigoDirs.dexOptDir(checksum));
-                    DexFile dexFile = null;
-                    try {
-                        dexFile = DexFile.loadDex(dex.getPath(), optimizedPath, 0);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } finally {
-                        if (dexFile != null) {
-                            try {
-                                dexFile.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
+                    if (!allDexOptimized.get()) {
+                        Log.e(TAG, "abort optimizing dex["
+                                + dexPath
+                                + "] because an error occurred before");
+                        countDownLatch.countDown();
+                        return;
                     }
-                    Log.e(TAG, String.format("dex %s consume %d ms", dex.getAbsolutePath(),
-                            System.currentTimeMillis() - startTime));
+                    String optimizedPath = optimizedPathFor(dexPath, amigoDirs.dexOptDir(checksum));
+                    boolean success = doOptimizeDex(dexPath, optimizedPath);
+                    if (!success) {
+                        allDexOptimized.compareAndSet(true, false);
+                    } else {
+                        optimizedDexCount.decrementAndGet();
+                    }
                     countDownLatch.countDown();
                 }
             });
@@ -132,12 +183,37 @@ public class ApkReleaser {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Log.e(TAG, "dex opt done");
-        handler.sendMessage(handler.obtainMessage(MSG_ID_DEX_OPT_DONE, checksum));
+        Log.d(TAG, "dex opt job finished");
+        return allDexOptimized.get() && optimizedDexCount.get() == 0;
     }
 
-    private String optimizedPathFor(File path, File optimizedDirectory) {
-        String fileName = path.getName();
+    private boolean doOptimizeDex(String dexPath, String odexPath) {
+        long startTime = System.currentTimeMillis();
+        DexFile dexFile = null;
+        IOException exception = null;
+        try {
+            dexFile = DexFile.loadDex(dexPath, odexPath, 0);
+        } catch (IOException e) {
+            exception = e;
+        } finally {
+            if (dexFile != null) {
+                try {
+                    dexFile.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        boolean success = exception == null;
+        Log.e(TAG, String.format("optimizing dex %s %s, consumed %d mills",
+                dexPath, (success ? "succeed" : "failed"),
+                System.currentTimeMillis() - startTime), exception);
+        return success;
+    }
+
+    private String optimizedPathFor(String path, File optimizedDirectory) {
+        File dexFile = new File(path);
+        String fileName = dexFile.getName();
         if (!fileName.endsWith(DEX_SUFFIX)) {
             int lastDot = fileName.lastIndexOf(".");
             if (lastDot < 0) {
@@ -176,5 +252,4 @@ public class ApkReleaser {
         }
         PatchInfoUtil.updatePatchFileChecksum(context, apkChecksum, checksumMap);
     }
-
 }

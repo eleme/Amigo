@@ -42,7 +42,7 @@ public class ApkReleaseActivity extends Activity {
         AmigoService.startReleaseDex(this.getApplicationContext(), checksum, new Amigo
                 .WorkLaterCallback() {
             @Override
-            public void onPatchApkReleased() {
+            public void onPatchApkReleased(boolean success) {
                 finish();
                 overridePendingTransition(0, 0);
             }
