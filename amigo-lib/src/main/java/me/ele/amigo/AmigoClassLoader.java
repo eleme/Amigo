@@ -42,7 +42,7 @@ public class AmigoClassLoader extends DexClassLoader {
         return AmigoDirs.getInstance(context).libDir(checksum).getAbsolutePath();
     }
 
-    private static String joinPath(File folder) {
+    protected static String joinPath(File folder) {
         StringBuilder path = new StringBuilder();
         File[] libFiles = folder.listFiles();
         if (libFiles == null || libFiles.length == 0) {

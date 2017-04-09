@@ -58,6 +58,9 @@ public class ProcessUtils {
     public static void startLauncherIntent(Context context) {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context
                 .getPackageName());
+        if (launchIntent == null) {
+            return; // must running in test mode
+        }
         launchIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(launchIntent);
     }

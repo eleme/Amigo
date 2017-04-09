@@ -11,7 +11,7 @@ public final class NativeLibLoader {
             try {
                 System.loadLibrary(libName);
                 return true;
-            } catch (Exception e) {
+            } catch (UnsatisfiedLinkError e) {
                 e.printStackTrace();
                 return false;
             }

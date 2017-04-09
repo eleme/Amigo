@@ -9,6 +9,7 @@ import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -51,10 +52,12 @@ public class DexExtractor {
 
     public static boolean contentEquals(InputStream newDex, InputStream oldDex) {
         try {
-            byte[] hash1 = DigestUtils.md5(newDex);
-            byte[] hash2 = DigestUtils.md5(oldDex);
+            byte[] hash1 = DigestUtils.md5Digest(newDex);
+            byte[] hash2 = DigestUtils.md5Digest(oldDex);
             return Arrays.equals(hash1, hash2);
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return false;

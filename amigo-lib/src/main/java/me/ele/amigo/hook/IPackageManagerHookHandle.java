@@ -61,7 +61,7 @@ public class IPackageManagerHookHandle extends BaseHookHandle {
                                     (workingPatchApk, PackageManager.GET_META_DATA)
                                     .applicationInfo.metaData;
                             if (metaData == null) {
-                                metaData = CommonUtils.getPackageArchiveInfo(workingPatchApk,
+                                metaData = CommonUtils.getPackageInfoBelowICS(workingPatchApk,
                                         PackageManager.GET_META_DATA).applicationInfo.metaData;
                             }
                         }
