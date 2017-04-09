@@ -49,6 +49,12 @@ public class Amigo extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        try {
+            setAPKApplication(realApplication);
+        } catch (Exception e) {
+            // should not happen, if it does happen, we just let it die
+            throw new RuntimeException(e);
+        }
         if(shouldHookAmAndPm) {
             try {
                 installAndHook();
@@ -280,7 +286,6 @@ public class Amigo extends Application {
         realApplication =
                 (Application) getClassLoader().loadClass(applicationName).newInstance();
         invokeMethod(realApplication, "attach", getBaseContext());
-        setAPKApplication(realApplication);
     }
 
     private void revertAll() throws Exception {
@@ -304,7 +309,6 @@ public class Amigo extends Application {
         realApplication = (Application) getClassLoader().loadClass(appName).newInstance();
         FieldUtils.writeField(getBaseContext(), "mOuterContext", realApplication);
         invokeMethod(realApplication, "attach", getBaseContext());
-        setAPKApplication(realApplication);
     }
 
     private String getPatchApplicationName(String patchApkCheckSum) throws Exception {
