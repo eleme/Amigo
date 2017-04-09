@@ -1,9 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="me.ele.amigo">
 
-    <application
-        android:allowBackup="true"
-        android:supportsRtl="true">
+    <application>
 
         <service
             android:name=".AmigoService"
