@@ -49,7 +49,7 @@ public class DexExtractor {
         return false;
     }
 
-    private static boolean equals(InputStream newDex, InputStream oldDex) {
+    public static boolean contentEquals(InputStream newDex, InputStream oldDex) {
         try {
             byte[] hash1 = DigestUtils.md5(newDex);
             byte[] hash2 = DigestUtils.md5(oldDex);
@@ -204,7 +204,7 @@ public class DexExtractor {
             InputStream patchDexInputStream = apk.getInputStream(dexFile);
             baseApk = new ZipFile(preExistedDexPath);
             baseDexInputStream = baseApk.getInputStream(new ZipEntry("classes.dex"));
-            canReuse = equals(patchDexInputStream, baseDexInputStream);
+            canReuse = contentEquals(patchDexInputStream, baseDexInputStream);
         } catch (IOException e) {
             e.printStackTrace();
             canReuse = false;
