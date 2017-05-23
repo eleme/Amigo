@@ -41,6 +41,165 @@ public class Amigo extends Application {
     private Object originalCallback = null;
     private boolean shouldHookAmAndPm;
 
+    private static Handler.Callback replaceHandlerCallback(Context context) throws Exception {
+        Handler handler = (Handler) readField(instance(), "mH", true);
+        Object callback = readField(handler, "mCallback", true);
+        if (callback != null && callback.getClass().getName().equals(AmigoCallback.class.getName
+                ())) {
+            return null;
+        }
+        AmigoCallback value = new AmigoCallback(context, (Handler.Callback) callback);
+        writeField(handler, "mCallback", value);
+        return value;
+    }
+
+    private static Object getLoadedApk() throws Exception {
+        @SuppressWarnings("unchecked")
+        Map<String, WeakReference<Object>> mPackages =
+                (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
+        for (String s : mPackages.keySet()) {
+            WeakReference wr = mPackages.get(s);
+            if (wr != null && wr.get() != null) {
+                return wr.get();
+            }
+        }
+        return null;
+    }
+
+    public static void work(Context context, File patchFile) {
+        work(context, patchFile, true);
+    }
+
+    public static void workWithoutCheckingSignature(Context context, File patchFile) {
+        work(context, patchFile, false);
+    }
+
+    private static void work(Context context, File patchFile, boolean checkSignature) {
+        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
+        if (!PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) return;
+        KillSelfActivity.start(context);
+    }
+
+    private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {
+        if (Amigo.hasWorked() && PatchInfoUtil.getWorkingChecksum(context).equals(patchChecksum)) {
+            Log.e(TAG, "#checkWithWorking : cannot apply the same patch twice");
+            return true;
+        }
+        return false;
+    }
+
+    public static void workLater(Context context, File patchFile) {
+        workLater(context, patchFile, true, null);
+    }
+
+    public static void workLater(Context context, File patchFile, WorkLaterCallback callback) {
+        workLater(context, patchFile, true, callback);
+    }
+
+    public static void workLaterWithoutCheckingSignature(Context context, File patchFile,
+            WorkLaterCallback callback) {
+        workLater(context, patchFile, false, callback);
+    }
+
+    public static void workLaterWithoutCheckingSignature(Context context, File patchFile) {
+        workLater(context, patchFile, false, null);
+    }
+
+    private static void workLater(Context context, File patchFile, boolean checkSignature,
+            WorkLaterCallback callback) {
+        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
+        if (checkWithWorkingPatch(context, patchChecksum)) return;
+        if (patchChecksum == null) {
+            Log.e(TAG, "#workLater: empty checksum");
+            return;
+        }
+
+        if (callback != null) {
+            AmigoService.startReleaseDex(context, patchChecksum, callback);
+        } else {
+            AmigoService.startReleaseDex(context, patchChecksum);
+        }
+    }
+
+    public static boolean hasWorked() {
+        ClassLoader classLoader = null;
+        try {
+            classLoader = (ClassLoader) readField(getLoadedApk(), "mClassLoader");
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return classLoader != null
+                && classLoader.getClass().getName().equals(AmigoClassLoader.class.getName());
+    }
+
+    public static PackageInfo getHostPackageInfo(Context context, int flags) {
+        String hostApkPath = context.getApplicationInfo().sourceDir;
+        return CommonUtils.getPackageInfo(context, new File(hostApkPath), flags);
+    }
+
+    public static String getWorkingPatchApkChecksum(Context ctx) {
+        if (!hasWorked()) return "";
+        return PatchInfoUtil.getWorkingChecksum(ctx);
+    }
+
+    public static void clear(Context context) {
+        PatchInfoUtil.setWorkingChecksum(context, "");
+    }
+
+    public static LoadPatchError getLoadPatchError() {
+        return loadPatchError;
+    }
+
+    /**
+     * this is for some extreme condition,
+     * like some safety app or malicious software replaces Amigo's hook
+     */
+    public static boolean rollAmigoBack(Context context) {
+        return checkAndSetAmigoCallback(context) || checkAndSetAmigoClassLoader(context);
+    }
+
+    private static boolean checkAndSetAmigoCallback(Context context) {
+        try {
+            //revert current handler callback to null
+            Handler handler = (Handler) readField(instance(), "mH", true);
+            Object callback = readField(handler, "mCallback", true);
+            if (callback != null) {
+                Field[] fields = callback.getClass().getDeclaredFields();
+                for (Field field : fields) {
+                    Object obj = readField(field, callback, true);
+                    if (obj == null || !obj.getClass()
+                            .getName()
+                            .equals(AmigoCallback.class.getName())) {
+                        continue;
+                    }
+                    writeField(field, callback, null, true);
+                }
+            }
+            return replaceHandlerCallback(context.getApplicationContext()) != null;
+        } catch (Exception e) {
+            //ignore
+        }
+        return false;
+    }
+
+    private static boolean checkAndSetAmigoClassLoader(Context context) {
+        try {
+            String classloaderName = context.getClassLoader().getClass().getName();
+            if (classloaderName.equals(AmigoClassLoader.class.getName())) {
+                return false;
+            }
+            Context app = context.getApplicationContext();
+            ClassLoader classLoader = app.getClass().getClassLoader();
+            writeField(getLoadedApk(), "mClassLoader", classLoader);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     @Override protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         attachApplication();
@@ -185,18 +344,6 @@ public class Amigo extends Application {
         Log.i(TAG, "hook handler success");
     }
 
-    private static Handler.Callback replaceHandlerCallback(Context context) throws Exception {
-        Handler handler = (Handler) readField(instance(), "mH", true);
-        Object callback = readField(handler, "mCallback", true);
-        if (callback != null && callback.getClass().getName().equals(AmigoCallback.class.getName
-                ())) {
-            return null;
-        }
-        AmigoCallback value = new AmigoCallback(context, (Handler.Callback) callback);
-        writeField(handler, "mCallback", value);
-        return value;
-    }
-
     private void dynamicRegisterNewReceivers() {
         ReceiverFinder.registerNewReceivers(getApplicationContext(), getClassLoader());
         Log.i(TAG, "dynamic register new receivers done");
@@ -332,7 +479,7 @@ public class Amigo extends Application {
             throw new RuntimeException("can't resolve original application name");
         }
 
-        if(Amigo.class.getName().equals(applicationName)){
+        if (Amigo.class.getName().equals(applicationName)) {
             // this shouldn't happen, we just throw a exception to avoid
             // infinite #attachBaseContext recursion
             throw new RuntimeException("can't resolve original application name");
@@ -351,150 +498,7 @@ public class Amigo extends Application {
         writeField(instance(), "mInitialApplication", application);
     }
 
-    private static Object getLoadedApk() throws Exception {
-        @SuppressWarnings("unchecked")
-        Map<String, WeakReference<Object>> mPackages =
-                (Map<String, WeakReference<Object>>) readField(instance(), "mPackages", true);
-        for (String s : mPackages.keySet()) {
-            WeakReference wr = mPackages.get(s);
-            if (wr != null && wr.get() != null) {
-                return wr.get();
-            }
-        }
-        return null;
-    }
-
-    public static void work(Context context, File patchFile) {
-        work(context, patchFile, true);
-    }
-
-    public static void workWithoutCheckingSignature(Context context, File patchFile) {
-        work(context, patchFile, false);
-    }
-
-    private static void work(Context context, File patchFile, boolean checkSignature) {
-        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
-        if (checkWithWorkingPatch(context, patchChecksum)) return;
-        if (!PatchInfoUtil.setWorkingChecksum(context, patchChecksum)) return;
-        KillSelfActivity.start(context);
-    }
-
-    private static boolean checkWithWorkingPatch(Context context, String patchChecksum) {
-        if (Amigo.hasWorked() && PatchInfoUtil.getWorkingChecksum(context).equals(patchChecksum)) {
-            Log.e(TAG, "#checkWithWorking : cannot apply the same patch twice");
-            return true;
-        }
-        return false;
-    }
-
-    public static void workLater(Context context, File patchFile) {
-        workLater(context, patchFile, true, null);
-    }
-
-    public static void workLater(Context context, File patchFile, WorkLaterCallback callback) {
-        workLater(context, patchFile, true, callback);
-    }
-
-    public static void workLaterWithoutCheckingSignature(Context context, File patchFile) {
-        workLater(context, patchFile, false, null);
-    }
-
     public interface WorkLaterCallback {
         void onPatchApkReleased(boolean success);
-    }
-
-    private static void workLater(Context context, File patchFile, boolean checkSignature,
-                                  WorkLaterCallback callback) {
-        String patchChecksum = PatchChecker.checkPatchAndCopy(context, patchFile, checkSignature);
-        if (checkWithWorkingPatch(context, patchChecksum)) return;
-        if (patchChecksum == null) {
-            Log.e(TAG, "#workLater: empty checksum");
-            return;
-        }
-
-        if (callback != null) {
-            AmigoService.startReleaseDex(context, patchChecksum, callback);
-        } else {
-            AmigoService.startReleaseDex(context, patchChecksum);
-        }
-    }
-
-    public static boolean hasWorked() {
-        ClassLoader classLoader = null;
-        try {
-            classLoader = (ClassLoader) readField(getLoadedApk(), "mClassLoader");
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return classLoader != null
-                && classLoader.getClass().getName().equals(AmigoClassLoader.class.getName());
-    }
-
-    public static PackageInfo getHostPackageInfo(Context context, int flags) {
-        String hostApkPath = context.getApplicationInfo().sourceDir;
-        return CommonUtils.getPackageInfo(context, new File(hostApkPath), flags);
-    }
-
-    public static String getWorkingPatchApkChecksum(Context ctx) {
-        if (!hasWorked()) return "";
-        return PatchInfoUtil.getWorkingChecksum(ctx);
-    }
-
-    public static void clear(Context context) {
-        PatchInfoUtil.setWorkingChecksum(context, "");
-    }
-
-    public static LoadPatchError getLoadPatchError() {
-        return loadPatchError;
-    }
-
-    /**
-     * this is for some extreme condition,
-     * like some safety app or malicious software replaces Amigo's hook
-     *
-     * @param context
-     * @return
-     */
-    public static boolean rollAmigoBack(Context context) {
-        return checkAndSetAmigoCallback(context) || checkAndSetAmigoClassLoader(context);
-    }
-
-    private static boolean checkAndSetAmigoCallback(Context context) {
-        try {
-            //revert current handler callback to null
-            Handler handler = (Handler) readField(instance(), "mH", true);
-            Object callback = readField(handler, "mCallback", true);
-            if (callback != null) {
-                Field[] fields = callback.getClass().getDeclaredFields();
-                for (Field field : fields) {
-                    Object obj = readField(field, callback, true);
-                    if (obj == null || !obj.getClass().getName().equals(AmigoCallback.class.getName())) {
-                        continue;
-                    }
-                    writeField(field, callback, null, true);
-                }
-            }
-            return replaceHandlerCallback(context.getApplicationContext()) != null;
-        } catch (Exception e) {
-            //ignore
-        }
-        return false;
-    }
-
-    private static boolean checkAndSetAmigoClassLoader(Context context) {
-        try {
-            String classloaderName = context.getClassLoader().getClass().getName();
-            if (classloaderName.equals(AmigoClassLoader.class.getName())) {
-                return false;
-            }
-            Context app = context.getApplicationContext();
-            ClassLoader classLoader = app.getClass().getClassLoader();
-            writeField(getLoadedApk(), "mClassLoader", classLoader);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
     }
 }

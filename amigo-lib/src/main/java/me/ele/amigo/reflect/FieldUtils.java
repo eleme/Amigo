@@ -9,11 +9,16 @@ import java.util.Map;
 
 public class FieldUtils {
 
-    private static Map<String, Field> sFieldCache = new HashMap<String, Field>();
+    private static final Map<String, Field> sFieldCache = new HashMap<String, Field>();
 
     private static String getKey(Class<?> cls, String fieldName) {
         StringBuilder sb = new StringBuilder();
-        sb.append(cls.toString()).append("#").append(fieldName);
+        // note : [class full name + classloader] define a class, but not only its full name
+        sb.append(cls.toString())
+                .append("@")
+                .append(cls.getClassLoader())
+                .append("#")
+                .append(fieldName);
         return sb.toString();
     }
 

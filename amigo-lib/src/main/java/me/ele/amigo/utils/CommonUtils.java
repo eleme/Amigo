@@ -53,7 +53,7 @@ public class CommonUtils {
             return context.getPackageManager().getPackageArchiveInfo(patchApk.getAbsolutePath(),
                     PackageManager.GET_SIGNATURES).signatures[0];
         } else {
-            return getPackageArchiveInfo(patchApk.getAbsolutePath(),
+            return getPackageInfoBelowICS(patchApk.getAbsolutePath(),
                     PackageManager.GET_SIGNATURES).signatures[0];
         }
 
@@ -80,7 +80,7 @@ public class CommonUtils {
     }
 
 
-    public static PackageInfo getPackageArchiveInfo(String archiveFilePath, int flags) {
+    public static PackageInfo getPackageInfoBelowICS(String archiveFilePath, int flags) {
         // Workaround for https://code.google.com/p/android/issues/detail?id=9151#c8
         try {
             Class packageParserClass = Class.forName("android.content.pm.PackageParser");

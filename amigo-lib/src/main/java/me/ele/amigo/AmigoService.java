@@ -26,11 +26,11 @@ public class AmigoService extends Service {
     public static final int MSG_ID_DEX_OPT_SUCCESS = 1;
     public static final int MSG_ID_DEX_OPT_FAILURE = 2;
     private static final String TAG = "AmigoService";
-    private static final String ACTION_RELEASE_DEX = "release_dex";
-    private static final String ACTION_RESTART_MANI_PROCESS = "restart_main_process";
-    private static final String EXTRA_APK_CHECKSUM = "apk_checksum";
-    private static final String REMOTE_PROCESS_REQUEST_ID = "remote_process_request_id";
-    private static final String REMOTE_PROCESS_MSG_RECEIVER = "remote_process_msg_receiver";
+    public static final String ACTION_RELEASE_DEX = "release_dex";
+    public static final String ACTION_RESTART_MANI_PROCESS = "restart_main_process";
+    public static final String EXTRA_APK_CHECKSUM = "apk_checksum";
+    public static final String REMOTE_PROCESS_REQUEST_ID = "remote_process_request_id";
+    public static final String REMOTE_PROCESS_MSG_RECEIVER = "remote_process_msg_receiver";
 
     private ApkReleaser apkReleaser;
 

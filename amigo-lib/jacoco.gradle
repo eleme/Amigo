@@ -1,0 +1,41 @@
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion "0.7.6.201602180812"
+}
+// run ./gradlew clean createDebugCoverageReport jacocoTestReport
+
+task jacocoTestReport(type: JacocoReport, dependsOn: "testDebugUnitTest") {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports"
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilter = ['**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      'android/**/*.*',
+                      '**/Lambda$*.class', //Retrolambda
+                      '**/Lambda.class',
+                      '**/*Lambda.class',
+                      '**/*Lambda*.class',
+                      '**/*Lambda*.*',
+                      '**/*Builder.*',
+                      '**/*_MembersInjector.class',  //Dagger2 generated code
+                      '**/*_MembersInjector*.*',  //Dagger2 generated code
+                      '**/*_*Factory*.*', //Dagger2 generated code
+                      '**/*Component*.*', //Dagger2 generated code
+                      '**/*Module*.*' //Dagger2 generated code
+    ]
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories = files([mainSrc])
+    classDirectories = files([debugTree])
+    executionData = fileTree(dir: project.projectDir, includes:
+            ['**/*.exec' , '**/*.ec'])
+}

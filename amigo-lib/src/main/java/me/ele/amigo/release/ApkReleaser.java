@@ -21,6 +21,7 @@ import me.ele.amigo.PatchApks;
 import me.ele.amigo.PatchInfoUtil;
 import me.ele.amigo.compat.NativeLibraryHelperCompat;
 import me.ele.amigo.utils.DexExtractor;
+import me.ele.amigo.utils.FileUtils;
 
 import static me.ele.amigo.utils.CrcUtils.getCrc;
 
@@ -36,10 +37,7 @@ public class ApkReleaser {
 
     public ApkReleaser(final Context appContext) {
         this.context = appContext;
-        int processorCount = Runtime.getRuntime().availableProcessors();
-        final int dexCountInApkCommonly = 3;
-        this.service =
-                Executors.newFixedThreadPool(Math.min(dexCountInApkCommonly, processorCount));
+        this.service = Executors.newFixedThreadPool(3);
     }
 
     private void handleDexOptSuccess(String checksum, Handler msgHandler) {
@@ -84,20 +82,28 @@ public class ApkReleaser {
                     Log.e(TAG, "releasing dex failed");
                     handleDexOptFailure(checksum, msgHandler);
                     isReleasing = false;
+                    FileUtils.removeFile(amigoDirs.dexDir(checksum), false);
                     return;
                 }
+
+                // todo
+                // just create a link point to /data/app/{package_name}/libs
+                // if none of the native libs are changed
                 int errorCode;
                 if ((errorCode =
                         NativeLibraryHelperCompat.copyNativeBinaries(patchApks.patchFile(checksum),
                                 amigoDirs.libDir(checksum))) < 0) {
                     Log.e(TAG, "coping native binaries failed, errorCode = " + errorCode);
                     handleDexOptFailure(checksum, msgHandler);
+                    FileUtils.removeFile(amigoDirs.dexDir(checksum), false);
+                    FileUtils.removeFile(amigoDirs.libDir(checksum), false);
                     isReleasing = false;
                     return;
                 }
 
-                if (Build.VERSION.SDK_INT >= 21 ? dexOptimizationOnArt(checksum)
-                        : dexOptimizationOnDalvik(checksum)) {
+                final boolean dexOptimized = Build.VERSION.SDK_INT >= 21 ? dexOptimizationOnArt(checksum)
+                        : dexOptimizationOnDalvik(checksum);
+                if (dexOptimized) {
                     Log.e(TAG, "optimize dex succeed");
                     handleDexOptSuccess(checksum, msgHandler);
                     isReleasing = false;
@@ -105,6 +111,9 @@ public class ApkReleaser {
                 }
 
                 Log.e(TAG, "optimize dex failed");
+                FileUtils.removeFile(amigoDirs.dexDir(checksum), false);
+                FileUtils.removeFile(amigoDirs.libDir(checksum), false);
+                FileUtils.removeFile(amigoDirs.dexOptDir(checksum), false);
                 handleDexOptFailure(checksum, msgHandler);
                 isReleasing = false;
             }

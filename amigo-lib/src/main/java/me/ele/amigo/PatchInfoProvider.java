@@ -6,18 +6,14 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.text.TextUtils;
-
+import android.util.Log;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.json.JSONException;
+import me.ele.amigo.utils.FileLockUtil;
 import org.json.JSONObject;
 
 /**
@@ -25,14 +21,13 @@ import org.json.JSONObject;
  */
 
 public class PatchInfoProvider {
-
     private static final String WORKING_PATCH_APK_CHECKSUM = "working_patch_apk_checksum";
     private static final String PARAM_KEY_CHECKSUM = "checksum";
-
+    private static final String TAG = "PatchInfoProvider";
     private Context context;
 
-    public PatchInfoProvider(Context context) {
-        this.context = context;
+    public PatchInfoProvider(Context application) {
+        this.context = application;
     }
 
     private static Map<String, String> parseQuery(String query) {
@@ -59,6 +54,7 @@ public class PatchInfoProvider {
 
     public Cursor query(Uri uri) {
         String command = uri.getLastPathSegment();
+
         if ("query_working_checksum".equals(command)) {
             String result = queryWorkingChecksum();
             MatrixCursor matrixCursor = new MatrixCursor(new String[] {PARAM_KEY_CHECKSUM}, 1);
@@ -87,7 +83,8 @@ public class PatchInfoProvider {
 
     public int update(Uri uri, ContentValues values) {
         String command = uri.getLastPathSegment();
-        Map<String, String> params = parseQuery(uri.getEncodedQuery());
+        Map<String, String> params = parseQuery(uri.getQuery());
+
         if ("clear_all".equals(command)) {
             clearLocked();
             return 0;
@@ -104,16 +101,92 @@ public class PatchInfoProvider {
         }
 
         if ("update_patch_file_checksum_map".equals(command)) {
-            String map = values.getAsString("checkSumMap");
+            String map = values.getAsString("map");
             return updatePatchChecksumMap(checksum, map) ? 1 : 0;
         }
 
         return 0;
     }
 
+    /*
+      in order to sharing data between the main process and load patch process, we have to make sure
+      the two of them don't modify the underlying file concurrently and ensure the changes made by
+      any of them are visible to the other
+     */
+    private void clearLocked() {
+        synchronized (PatchInfoProvider.class) {
+            File file = getPatchInfoFile();
+            FileLockUtil.ExclusiveFileLock fileLock = null;
+            try {
+                fileLock = FileLockUtil.getFileLock(file);
+                fileLock.lock();
+                fileLock.write(null);
+            } catch (IOException e) {
+                Log.e(TAG, "clearLocked: clearing file[" + file + "] failed", e);
+            } finally {
+                if (fileLock != null) {
+                    fileLock.release();
+                }
+            }
+        }
+    }
+
+    private File getPatchInfoFile() {
+        return AmigoDirs.getInstance(context).patchInfoFile();
+    }
+
+    private boolean writeLocked(String key, Object value) {
+        synchronized (PatchInfoProvider.class) {
+            File file = getPatchInfoFile();
+            FileLockUtil.ExclusiveFileLock fileLock = null;
+            try {
+                fileLock = FileLockUtil.getFileLock(file);
+                fileLock.lock();
+                JSONObject object = fileLock.getFileLength() > 0 ? new JSONObject(
+                        new String(fileLock.readFully()))
+                        : new JSONObject();
+                object.put(key, value);
+                fileLock.write(object.toString().getBytes("UTF-8"));
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "writeLocked: writing [key=" + key + ", value=" + value + "] failed",
+                        e);
+                return false;
+            } finally {
+                if (fileLock != null) {
+                    fileLock.release();
+                }
+            }
+        }
+    }
+
+    private Object readLocked(String key) {
+        synchronized (PatchInfoProvider.class) {
+            File file = getPatchInfoFile();
+            FileLockUtil.ExclusiveFileLock fileLock = null;
+            try {
+                fileLock = FileLockUtil.getFileLock(file);
+                fileLock.lock();
+
+                if (fileLock.getFileLength() == 0) {
+                    return null;
+                }
+
+                byte[] content = fileLock.readFully();
+                return new JSONObject(new String(content)).optString(key);
+            } catch (Exception e) {
+                Log.e(TAG, "readLocked: read key=" + key + " failed", e);
+                return null;
+            } finally {
+                if (fileLock != null) {
+                    fileLock.release();
+                }
+            }
+        }
+    }
+
     private boolean updateWorkingChecksum(String newChecksum) {
-        writeLocked(WORKING_PATCH_APK_CHECKSUM, newChecksum);
-        return true;
+        return writeLocked(WORKING_PATCH_APK_CHECKSUM, newChecksum);
     }
 
     private String queryWorkingChecksum() {
@@ -141,117 +214,5 @@ public class PatchInfoProvider {
         }
 
         return writeLocked("patch_checksum_map_" + newChecksum, jsonMap);
-    }
-
-    /*
-     in order to sharing data between the main process and load patch process, we have to make sure
-     the two of them don't modify the underlying file concurrently and ensure the changes made by
-     any of them are visible to the other
-    */
-    private void clearLocked() {
-        synchronized (PatchInfoProvider.class) {
-            FileLock lock = null;
-            RandomAccessFile raf = null;
-            try {
-                File file = getPatchInfoFile();
-                if (!file.exists()) {
-                    return;
-                }
-                raf = new RandomAccessFile(file, "rw");
-                FileChannel channel = raf.getChannel();
-                lock = channel.lock();
-                raf.setLength(0);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (lock != null) {
-                        lock.release();
-                    }
-                    if (raf != null) {
-                        raf.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private boolean writeLocked(String key, Object value) {
-        synchronized (PatchInfoProvider.class) {
-            FileLock lock = null;
-            RandomAccessFile raf = null;
-            try {
-                File file = getPatchInfoFile();
-                raf = new RandomAccessFile(file, "rw");
-                FileChannel channel = raf.getChannel();
-                lock = channel.lock();
-                byte[] content = new byte[(int) raf.length()];
-                raf.read(content);
-                JSONObject object = content.length > 0 ? new JSONObject(new String(content))
-                        : new JSONObject();
-                object.put(key, value);
-                raf.setLength(0);
-                raf.write(object.toString().getBytes("UTF-8"));
-                return true;
-            } catch (JSONException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (lock != null) {
-                        lock.release();
-                    }
-                    if (raf != null) {
-                        raf.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return false;
-        }
-    }
-
-    private Object readLocked(String key) {
-        synchronized (PatchInfoProvider.class) {
-            FileLock lock = null;
-            RandomAccessFile raf = null;
-            try {
-                File file = getPatchInfoFile();
-                raf = new RandomAccessFile(file, "rw");
-                FileChannel channel = raf.getChannel();
-                lock = channel.lock();
-                int contentLength = (int) raf.length();
-                if (contentLength == 0) {
-                    return null;
-                }
-                byte[] content = new byte[contentLength];
-                raf.read(content);
-                return new JSONObject(new String(content)).optString(key);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (lock != null) {
-                        lock.release();
-                    }
-                    if (raf != null) {
-                        raf.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return null;
-        }
-    }
-
-    private File getPatchInfoFile() {
-        return AmigoDirs.getInstance(context).patchInfoFile();
     }
 }
