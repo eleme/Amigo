@@ -107,6 +107,10 @@ public class ActivityFinder extends ComponentFinder {
             if (!activityInfo.name.equals(activityClassName)) {
                 continue;
             }
+            //MiUI weird issue
+            if (activityClassName.equals(activityInfo.targetActivity)) {
+                return activityInfo;
+            }
             boolean isAlias = !TextUtils.isEmpty(activityInfo.targetActivity);
             if (!isAlias) {
                 return activityInfo;
