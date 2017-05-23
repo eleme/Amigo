@@ -1,3 +1,8 @@
+
+## Version 0.6.7
+_2017-01-10_
+* fix [241](https://github.com/eleme/Amigo/issues/241) [239](https://github.com/eleme/Amigo/issues/239) 
+
 ## Version 0.6.3
 _2017-01-10_
 * add `autoDisableInInstantRunMode` for amigo extension

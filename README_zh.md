@@ -21,7 +21,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.ele:amigo:0.6.6'
+        classpath 'me.ele:amigo:0.6.7'
     }
 }
 ```
@@ -37,7 +37,7 @@ android {
 
 dependencies {
     ...
-    compile 'me.ele:amigo-lib:0.6.6'
+    compile 'me.ele:amigo-lib:0.6.7'
 }
 
 //开发过程中你可以不想开启Amigo，可以把这个值设置为true
