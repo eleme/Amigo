@@ -5,6 +5,7 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.io.FileType
 import groovy.xml.QName
 import groovy.xml.XmlUtil
+import net.lingala.zip4j.core.ZipFile
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -137,10 +138,12 @@ class AmigoPlugin implements Plugin<Project> {
         }
     }
 
+
     void collectMultiDexInfo(Project project, ApkVariant variant) {
         if (!hasProguard(project, variant)) {
             File dir = new File("${project.buildDir}/intermediates/exploded-aar/me.ele/amigo-lib")
             JarFile jarFile
+            File localCacheFile
             if (dir.exists()) {
                 dir.eachFileRecurse(FileType.FILES) { File file ->
                     if (file.name == 'classes.jar') {
@@ -148,7 +151,31 @@ class AmigoPlugin implements Plugin<Project> {
                         return
                     }
                 }
+            } else {
+                String version = ""
+                Configuration configuration = project.configurations.getByName('compile')
+                configuration.allDependencies.all { Dependency dependency ->
+                    if (dependency.group == 'me.ele' && dependency.name == 'amigo-lib') {
+                        version = dependency.version
+                    }
+                }
+                String amigoCacheDir = "${project.gradle.gradleUserHomeDir}/caches/modules-2/files-2.1/me.ele/amigo-lib/${version}"
+                File aarFile
+                new File(amigoCacheDir).eachFileRecurse(FileType.FILES) { File file ->
+                    if (file.name.endsWith('.aar')) {
+                        aarFile = file
+                        return
+                    }
+                }
+
+                localCacheFile = new File("${amigoCacheDir}/classes.jar")
+
+                ZipFile zipFile = new ZipFile(aarFile.absolutePath)
+                zipFile.extractFile("classes.jar", amigoCacheDir)
+
+                jarFile = new JarFile(localCacheFile)
             }
+
             Enumeration<JarEntry> enumeration = jarFile.entries()
             while (enumeration.hasMoreElements()) {
                 JarEntry entry = enumeration.nextElement()
@@ -157,6 +184,11 @@ class AmigoPlugin implements Plugin<Project> {
             }
             content += "\n"
             content += "me/ele/amigo/acd.class"
+
+            if (localCacheFile != null) {
+                localCacheFile.delete();
+            }
+
             return
         }
 
@@ -206,3 +238,7 @@ class AmigoPlugin implements Plugin<Project> {
     }
 
 }
+
+
+
+
