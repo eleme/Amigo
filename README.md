@@ -1,7 +1,7 @@
 
 [中文版](https://github.com/eleme/Amigo/blob/master/README_zh.md#amigo)
 
-[wiki](https://github.com/eleme/Amigo/wiki)
+[wiki](https://github.com/eleme/Amigo/wiki) (deprecated)
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
 
