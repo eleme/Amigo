@@ -1,5 +1,5 @@
 
-[wiki](https://github.com/eleme/Amigo/wiki)
+[wiki](https://github.com/eleme/Amigo/wiki) (已废弃)
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
 
