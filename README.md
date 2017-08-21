@@ -5,7 +5,7 @@
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
 
-[Amigo Service Platform](https://amigo.ele.me) (Amigo backend service is online finally :v:)
+~~Amigo Service Platform~~ (Amigo backend service is **no longer supported**)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
