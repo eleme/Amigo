@@ -3,7 +3,7 @@
 
 [changelog](https://github.com/eleme/Amigo/blob/master/CHANGELOG.md)
 
-[Amigo平台](https://amigo.ele.me) (Amigo后端管理服务上线啦 :v:)
+~~Amigo平台~~ (Amigo服务**将不再支持**)
 
 ![amigo.png](http://amigotheband.com/wp-content/uploads/2015/02/logo_amigo-yellow.png)  
 
